@@ -1503,6 +1503,7 @@ footer{border-top:1px solid var(--ligne);padding:56px 0 36px;background:#030617}
 }
 .wiz-otp input:focus{outline:none;border-color:var(--vert-vif);background:#0D182C}
 .wiz-otp.invalid input{border-color:#E2634F}
+.wiz-demo[hidden]{display:none}
 .wiz-demo{
   display:flex;align-items:flex-start;gap:9px;padding:11px 13px;border-radius:var(--r-sm);
   background:rgba(201,164,76,.09);border:1px solid rgba(201,164,76,.28);
@@ -3327,9 +3328,9 @@ details p{font-size:15.5px;line-height:1.72;color:#CBD8E4}
               <input type="text" inputmode="numeric" maxlength="1" aria-label="6">
             </div>
             <span class="field-err" id="wizOtpErr" style="display:none;text-align:center" data-i18n="wiz_v_err">Kòd la pa kòrèk</span>
-            <div class="wiz-demo">
+            <div class="wiz-demo" id="wizDemoBox" hidden>
               <svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 8v5M12 16.5v.5"/><circle cx="12" cy="12" r="9"/></svg>
-              <span><span data-i18n="wiz_v_demo">Mòd demonstrasyon — kòd ou a se</span> <b id="wizDemoCode"></b></span>
+              <span><span data-i18n="wiz_v_fallback">Nou pa t kapab voye imèl la — itilize kòd sa a pou kontinye</span> <b id="wizDemoCode"></b></span>
             </div>
             <p class="authpage-switch" style="margin:0">
               <span data-i18n="wiz_v_noreceive">Ou pa resevwa l?</span><button type="button" class="authpage-switch-link" id="wizResend" data-i18n="wiz_v_resend">Voye l ankò</button>
@@ -3444,9 +3445,9 @@ details p{font-size:15.5px;line-height:1.72;color:#CBD8E4}
                 <input type="text" inputmode="numeric" maxlength="1" aria-label="6">
               </div>
               <span class="field-err" id="pwrOtpErr" style="display:none;text-align:center" data-i18n="wiz_v_err">Kòd la pa kòrèk</span>
-              <div class="wiz-demo">
+              <div class="wiz-demo" id="pwrDemoBox" hidden>
                 <svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 8v5M12 16.5v.5"/><circle cx="12" cy="12" r="9"/></svg>
-                <span><span data-i18n="wiz_v_demo">Mòd demonstrasyon — kòd ou a se</span> <b id="pwrDemoCode"></b></span>
+                <span><span data-i18n="wiz_v_fallback">Nou pa t kapab voye imèl la — itilize kòd sa a pou kontinye</span> <b id="pwrDemoCode"></b></span>
               </div>
               <p class="authpage-switch" style="margin:0">
                 <span data-i18n="wiz_v_noreceive">Ou pa resevwa l?</span><button type="button" class="authpage-switch-link" id="pwrResend" data-i18n="wiz_v_resend">Voye l ankò</button>
@@ -4026,6 +4027,10 @@ pay_timeout_p:"Par sécurité, veuillez recommencer.",
 session_stale_h:"Compte ouvert ailleurs",
 session_stale_p:"Ce compte est ouvert dans une autre fenêtre. Rafraîchissez la page pour continuer.",
 dash_menu_lang:"Langue",
+wiz_sending:"Voye...",
+wiz_v_fallback:"Nous n'avons pas pu envoyer l'e-mail — utilisez ce code pour continuer",
+toast_mail_err_h:"Envoi impossible",
+toast_mail_err_p:"L'e-mail n'a pas pu être envoyé. Réessayez dans un instant.",
 plan_changed_lifetime:"Vous avez débloqué l'accès à vie !", dash_menu_exit:"Quitter le tableau de bord",
 wiz_p_moncash:"MonCash otomatik", wiz_p_natcash:"NatCash otomatik",
 auth_err_email_taken:"Cette adresse e-mail est déjà enregistrée",
@@ -4237,6 +4242,10 @@ pay_timeout_p:"For security, please start again.",
 session_stale_h:"Account open elsewhere",
 session_stale_p:"This account is open in another window. Refresh the page to continue.",
 dash_menu_lang:"Language",
+wiz_sending:"Sending...",
+wiz_v_fallback:"We couldn't send the email — use this code to continue",
+toast_mail_err_h:"Couldn't send email",
+toast_mail_err_p:"The email couldn't be sent. Please try again in a moment.",
 plan_changed_lifetime:"You have unlocked lifetime access!", dash_menu_exit:"Leave the dashboard",
 wiz_p_moncash:"MonCash automatic", wiz_p_natcash:"NatCash automatic",
 auth_err_email_taken:"This email address is already registered",
@@ -4448,6 +4457,10 @@ pay_timeout_p:"Pou sekirite, tanpri rekòmanse.",
 session_stale_h:"Kont ouvri yon lòt kote",
 session_stale_p:"Kont sa a ouvri nan yon lòt fenèt. Rafrechi paj la pou kontinye.",
 dash_menu_lang:"Lang",
+wiz_sending:"Ap voye...",
+wiz_v_fallback:"Nou pa t kapab voye imèl la — itilize kòd sa a pou kontinye",
+toast_mail_err_h:"Nou pa ka voye imèl la",
+toast_mail_err_p:"Imèl la pa t kapab voye. Tanpri eseye ankò nan yon ti moman.",
 plan_changed_lifetime:"Ou debloke aksè a vi a !", dash_menu_exit:"Kite dashboard la",
 wiz_p_moncash:"MonCash otomatik", wiz_p_natcash:"NatCash otomatik",
 auth_err_email_taken:"Imèl sa a deja anrejistre",
@@ -5168,7 +5181,9 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
       save();
       closeInlineOtp();
       openInlineOtp();
-      if(window.VB_toast)window.VB_toast('toast_mail_h',t('toast_mail_p').replace('{email}',state.email));
+      window.VB_sendCode(state.email,state.code,submitBtn,'wizDemoBox').then(ok=>{
+        if(ok&&window.VB_toast)window.VB_toast('toast_mail_h',t('toast_mail_p').replace('{email}',state.email));
+      });
       return;
     }
     state.step=3;
@@ -5281,12 +5296,14 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
       otpInputs[Math.min(d.length,5)].focus();
     });
   });
-  document.getElementById('wizResend').addEventListener('click',()=>{
+  document.getElementById('wizResend').addEventListener('click',ev=>{
     state.code=String(Math.floor(100000+Math.random()*900000));
     state.codeFor=state.email;
     save();
     openInlineOtp();
-    if(window.VB_toast)window.VB_toast('toast_mail_h',t('toast_mail_p').replace('{email}',state.email));
+    window.VB_sendCode(state.email,state.code,ev.currentTarget,'wizDemoBox').then(ok=>{
+      if(ok&&window.VB_toast)window.VB_toast('toast_mail_h',t('toast_mail_p').replace('{email}',state.email));
+    });
   });
   // toute modification de l'e-mail invalide le code deja envoye
   f1.querySelector('[name=email]').addEventListener('input',()=>{
@@ -5585,17 +5602,18 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
     });
   });
 
-  function pwrSendCode(){
+  function pwrSendCode(btn){
     pwr.code=String(Math.floor(100000+Math.random()*900000));
     pwr.verified=false;
     document.getElementById('pwrMailTo').textContent=pwr.email;
-    document.getElementById('pwrDemoCode').textContent=pwr.code;
     pwrOtpInputs.forEach(i=>i.value='');
     pwrOtpErr.style.display='none';
     pwrOtp.classList.remove('invalid');
-    if(window.VB_toast)window.VB_toast('toast_mail_h',t('toast_mail_p').replace('{email}',pwr.email));
+    window.VB_sendCode(pwr.email,pwr.code,btn,'pwrDemoBox').then(ok=>{
+      if(ok&&window.VB_toast)window.VB_toast('toast_mail_h',t('toast_mail_p').replace('{email}',pwr.email));
+    });
   }
-  document.getElementById('pwrResend').addEventListener('click',()=>{pwrSendCode();pwrShow('code');});
+  document.getElementById('pwrResend').addEventListener('click',ev=>{pwrSendCode(ev.currentTarget);pwrShow('code');});
 
   fPwr.addEventListener('submit',ev=>{
     ev.preventDefault();
@@ -5608,7 +5626,7 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
       if(!isComplete(acc)){setErr(em.closest('.field'),'pwr_err_nouser');return;}
       setErr(em.closest('.field'),null);
       pwr.email=val;
-      pwrSendCode();
+      pwrSendCode(pwrSubmit);
       pwrShow('code');
       return;
     }
@@ -6659,6 +6677,42 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
   });
 
   window.VB_openDash=openDash;
+})();
+
+/* ---------- Envoi reel du code de verification (Resend via Netlify) ---------- */
+(function(){
+  const ENDPOINT='https://monvipbetcote.netlify.app/.netlify/functions/send-code';
+
+  /* Retourne une promesse resolue a true si l'e-mail est parti reellement,
+     false sinon (le filet de secours prend alors le relais). */
+  window.VB_sendCode=async function(email,code,btn,demoBoxId){
+    let orig=null;
+    if(btn){orig=btn.textContent;btn.disabled=true;btn.textContent=(translations[currentLang]||translations.fr).wiz_sending||orig;}
+    const demoBox=demoBoxId?document.getElementById(demoBoxId):null;
+    if(demoBox)demoBox.hidden=true;
+    try{
+      const resp=await fetch(ENDPOINT,{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({email:email,code:code})
+      });
+      if(!resp.ok)throw new Error('send failed');
+      return true;
+    }catch(e){
+      // Filet de secours : le code s'affiche a l'ecran pour ne jamais bloquer
+      // l'utilisateur si l'envoi reel echoue (fonction pas encore prete, etc.).
+      if(demoBox){
+        const codeEl=demoBox.querySelector('b');
+        if(codeEl)codeEl.textContent=code;
+        demoBox.hidden=false;
+      }
+      const d=translations[currentLang]||translations.fr;
+      if(window.VB_toast)window.VB_toast('toast_mail_err_h',d.toast_mail_err_p||'');
+      return false;
+    }finally{
+      if(btn){btn.disabled=false;btn.textContent=orig;}
+    }
+  };
 })();
 
 /* ---------- Animation de lancement ---------- */
