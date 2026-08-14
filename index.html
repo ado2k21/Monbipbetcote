@@ -6763,15 +6763,26 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
     if(btn){orig=btn.textContent;btn.disabled=true;btn.textContent=(translations[currentLang]||translations.fr).wiz_sending||orig;}
     const demoBox=demoBoxId?document.getElementById(demoBoxId):null;
     if(demoBox)demoBox.hidden=true;
+    let raison='';
     try{
       const resp=await fetch(ENDPOINT,{
         method:'POST',
         headers:{'Content-Type':'application/json'},
         body:JSON.stringify({email:email,code:code})
       });
-      if(!resp.ok)throw new Error('send failed');
+      if(!resp.ok){
+        // On lit le corps de la reponse pour recuperer la VRAIE raison
+        // (celle que Netlify/Resend renvoie), utile le temps de mettre
+        // le service au point.
+        try{
+          const data=await resp.json();
+          raison=(data&&data.error)?JSON.stringify(data.error).slice(0,200):('HTTP '+resp.status);
+        }catch(e2){raison='HTTP '+resp.status;}
+        throw new Error(raison);
+      }
       return true;
     }catch(e){
+      if(!raison)raison=(e&&e.message)?e.message:'';
       // Filet de secours : le code s'affiche a l'ecran pour ne jamais bloquer
       // l'utilisateur si l'envoi reel echoue (fonction pas encore prete, etc.).
       if(demoBox){
@@ -6780,7 +6791,8 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
         demoBox.hidden=false;
       }
       const d=translations[currentLang]||translations.fr;
-      if(window.VB_toast)window.VB_toast('toast_mail_err_h',d.toast_mail_err_p||'');
+      const msg=(d.toast_mail_err_p||'')+(raison?' — '+raison:'');
+      if(window.VB_toast)window.VB_toast('toast_mail_err_h',msg);
       return false;
     }finally{
       if(btn){btn.disabled=false;btn.textContent=orig;}
