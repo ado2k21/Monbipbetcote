@@ -2618,6 +2618,11 @@ details p{font-size:15.5px;line-height:1.72;color:#CBD8E4}
   .h2-cta .btn{flex:0 0 auto;width:100%;max-width:460px}
 }
 </style>
+<!-- Client Supabase : necessaire des lors qu'on parle a une vraie base de
+     donnees. Ce script CDN est le seul lien externe du site ; l'ancien
+     principe "zero dependance" ne tient plus des l'instant ou l'on veut
+     de vrais comptes utilisateurs partages entre appareils. -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
 </head>
 <body>
 
@@ -5150,6 +5155,7 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
 
   /* ================= ETAPE 1 : creation du compte ================= */
   const f1=document.getElementById('wizStep1');
+  let pendingPlainPassword=null;   // en memoire uniquement, jamais persiste
   const fVerify=document.getElementById('wizVerify');  // declare tot : utilise par le submit de l'etape 1
   function setErr(field,key){
     field.classList.toggle('invalid',!!key);
@@ -5217,6 +5223,10 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
     state.site=sitePickValue();          // site prefere, facultatif
     state.email=em.value.trim().toLowerCase();   // normalisee : jamais de casse imprevisible
     state.pass=fingerprint(pw.value);
+    // Le mot de passe REEL ne reste qu'en memoire (jamais dans localStorage/state),
+    // le temps strictement necessaire pour creer le compte Supabase apres
+    // verification du code. Efface des utilisation ou en cas d'abandon.
+    pendingPlainPassword=pw.value;
     state.started=true;                       // inscription reellement commencee
     state.startedAt=state.startedAt||Date.now();
 
@@ -5239,6 +5249,35 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
   });
 
   /* Page de verification : controle du code */
+  /* Creation du compte reel dans Supabase, juste apres verification du
+     code. C'est le moment ou l'on a prouve que l'utilisateur possede
+     reellement cette adresse — le point de confiance naturel pour
+     enregistrer un compte durable, visible depuis n'importe quel appareil. */
+  async function creerCompteSupabase(){
+    const sb=window.VB_getSupabase&&window.VB_getSupabase();
+    const motdepasse=pendingPlainPassword;
+    pendingPlainPassword=null;              // efface de la memoire aussitot utilise
+    if(!sb||!motdepasse)return {ok:true,hors_ligne:true};  // degrade sans jamais bloquer
+    try{
+      const {data,error}=await sb.auth.signUp({
+        email:state.email,
+        password:motdepasse,
+        options:{data:{username:state.fullname,preferred_site:state.site||'paryajpam'}}
+      });
+      if(error){
+        // Email deja enregistre cote Supabase : verification REELLE,
+        // plus fiable que l'ancien registre local.
+        if(/already|existe|registered/i.test(error.message||''))
+          return {ok:false,raison:'existe_deja'};
+        return {ok:true,hors_ligne:true,erreur:error.message};  // ne bloque pas l'inscription locale
+      }
+      state.supabaseUserId=data&&data.user?data.user.id:null;
+      return {ok:true};
+    }catch(e){
+      return {ok:true,hors_ligne:true,erreur:e.message};  // reseau indisponible : on degrade, jamais on ne bloque
+    }
+  }
+
   fVerify.addEventListener('submit',ev=>{
     ev.preventDefault();
     const entered=otpInputs.map(i=>i.value).join('');
@@ -5249,12 +5288,25 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
       otpInputs[0].focus();
       return;
     }
-    state.emailVerified=true;
-    state.step=3;
-    save();
-    showStep(3);
+    const submitBtnVerify=fVerify.querySelector('button[type=submit]');
+    submitBtnVerify.disabled=true;
+    creerCompteSupabase().then(res=>{
+      submitBtnVerify.disabled=false;
+      if(!res.ok&&res.raison==='existe_deja'){
+        // Compte reellement deja existant : meme traitement que l'ancienne
+        // detection locale, mais fiable sur tous les appareils.
+        showMode('login');
+        if(window.VB_toast)window.VB_toast('auth_taken_h',t('auth_taken_sub'));
+        return;
+      }
+      state.emailVerified=true;
+      state.step=3;
+      save();
+      showStep(3);
+    });
   });
   document.getElementById('wizVerifyBack').addEventListener('click',()=>{
+    pendingPlainPassword=null;   // on quitte la verification : plus besoin, on efface
     closeInlineOtp();
     showStep(1);
   });
@@ -5906,6 +5958,7 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
 
   function signupEntry(){
     if(requiredStep(state)===4){
+      pendingPlainPassword=null;   // nouvelle inscription : on repart propre
       state=blank();
       save();
       f1.reset();
@@ -6834,6 +6887,50 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
       return false;
     }finally{
       if(btn){btn.disabled=false;btn.textContent=orig;}
+    }
+  };
+})();
+
+/* ---------- Connexion a Supabase (base de donnees reelle) ----------
+   La cle "anon" ci-dessous est publique par conception : elle ne donne
+   AUCUN acces qui ne soit deja controle par les regles de securite (RLS)
+   ecrites dans la base elle-meme. C'est la base qui protege les donnees,
+   jamais le navigateur — contrairement a l'ancien systeme en localStorage. */
+(function(){
+  const SUPABASE_URL='https://llqifjfcpyddwjkferpn.supabase.co';
+  const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxscWlmamZjcHlkZHdqa2ZlcnBuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY3MTU2MjcsImV4cCI6MjEwMjI5MTYyN30.Bw7-CHFDYV4LmNtt6WyIc5gSt3UCe7n5agbyBEo6-Zc';
+
+  function initSupabase(){
+    if(typeof window.supabase==='undefined'||!window.supabase.createClient){
+      // Le script CDN n'est pas encore charge (ou bloque) : on reessaiera.
+      return null;
+    }
+    if(!window.VB_supabase){
+      window.VB_supabase=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+    }
+    return window.VB_supabase;
+  }
+
+  // Le script CDN a l'attribut "defer" : on tente immediatement, puis on
+  // reessaie apres le chargement complet de la page par securite.
+  initSupabase();
+  window.addEventListener('load',initSupabase);
+  window.VB_getSupabase=initSupabase;
+
+  /* Auto-test, utilisable depuis la console du navigateur :
+     VB_testSupabase() puis regarder le resultat affiche. Ne modifie rien
+     dans la base, se contente de lire la table publique "plans". */
+  window.VB_testSupabase=async function(){
+    const sb=initSupabase();
+    if(!sb){console.log('Supabase : client non charge (verifier la connexion internet / le CDN)');return false;}
+    try{
+      const {data,error}=await sb.from('plans').select('id,name,price_htg').order('rank');
+      if(error){console.log('Supabase : erreur ->',error.message);return false;}
+      console.log('Supabase : connexion OK, plans recus ->',data);
+      return true;
+    }catch(e){
+      console.log('Supabase : echec reseau ->',e.message);
+      return false;
     }
   };
 })();
