@@ -4074,6 +4074,7 @@ pay_timeout_p:"Par sécurité, veuillez recommencer.",
 session_stale_h:"Compte ouvert ailleurs",
 session_stale_p:"Ce compte est ouvert dans une autre fenêtre. Rafraîchissez la page pour continuer.",
 dash_menu_lang:"Langue",
+pwr_back_dash:"Retour au tableau de bord",
 wiz_sending:"Voye...",
 wiz_v_fallback:"Nous n'avons pas pu envoyer l'e-mail — utilisez ce code pour continuer",
 toast_mail_err_h:"Envoi impossible",
@@ -4290,6 +4291,7 @@ pay_timeout_p:"For security, please start again.",
 session_stale_h:"Account open elsewhere",
 session_stale_p:"This account is open in another window. Refresh the page to continue.",
 dash_menu_lang:"Language",
+pwr_back_dash:"Back to dashboard",
 wiz_sending:"Sending...",
 wiz_v_fallback:"We couldn't send the email — use this code to continue",
 toast_mail_err_h:"Couldn't send email",
@@ -4506,6 +4508,7 @@ pay_timeout_p:"Pou sekirite, tanpri rekòmanse.",
 session_stale_h:"Kont ouvri yon lòt kote",
 session_stale_p:"Kont sa a ouvri nan yon lòt fenèt. Rafrechi paj la pou kontinye.",
 dash_menu_lang:"Lang",
+pwr_back_dash:"Retounen nan Dashboard la",
 wiz_sending:"Ap voye...",
 wiz_v_fallback:"Nou pa t kapab voye imèl la — itilize kòd sa a pou kontinye",
 toast_mail_err_h:"Nou pa ka voye imèl la",
@@ -5619,6 +5622,11 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
 
   function pwrShow(stage){
     pwr.stage=stage;
+    if(pwr.origin==='dashboard'){
+      const lbl=backBtn.querySelector('span');
+      lbl.removeAttribute('data-i18n');
+      lbl.textContent=t('pwr_back_dash');
+    }
     pwrStages.forEach(x=>x.classList.toggle('on',x.dataset.pwr===stage));
     const titles={mail:'pwr_h_mail',code:'pwr_h_code',newpass:'pwr_h_new'};
     const subs={mail:'pwr_sub_mail',code:'pwr_sub_code',newpass:'pwr_sub_new'};
@@ -5633,7 +5641,10 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
   function openPwReset(origin,prefill){
     fillLogos();
     renewMode=false;
-    setChrome(false);
+    /* Ouvert depuis le Dashboard : seul un bouton "Retour au Dashboard"
+       est visible, jamais le X qui menerait vers la page d'accueil. */
+    const depuisDash=(origin==='dashboard');
+    setChrome(depuisDash);
     modeWizard.classList.remove('renew');
     modeWizard.classList.add('pwreset');
     pwr={stage:'mail',email:'',code:null,verified:false,origin:origin||'login'};
@@ -5863,6 +5874,10 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
     fillLogos();
     modeWizard.classList.remove('pwreset');
     renewMode=true;
+    // Le libelle du bouton peut avoir ete change par la reinitialisation
+    // de mot de passe (Retour au Dashboard) : toujours le remettre a "Retounen".
+    backBtn.querySelector('span').setAttribute('data-i18n','auth_back');
+    backBtn.querySelector('span').textContent=t('auth_back');
     setChrome(true);
     opener=from||null;
     // Premiere ouverture d'un renouvellement : on part du plan actif.
@@ -5957,6 +5972,17 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
 
   document.getElementById('authpageClose').addEventListener('click',closeAuth);
   backBtn.addEventListener('click',()=>{
+    // Reinitialisation du mot de passe ouverte depuis le Dashboard : le
+    // bouton ramene UNIQUEMENT a l'interface principale du Dashboard.
+    if(modeWizard.classList.contains('pwreset')&&pwr.origin==='dashboard'){
+      leavePwReset();
+      backBtn.querySelector('span').setAttribute('data-i18n','auth_back');
+      backBtn.querySelector('span').textContent=t('auth_back');
+      setChrome(false);
+      closeAuth();
+      requestAnimationFrame(()=>{if(window.VB_openDash)window.VB_openDash();});
+      return;
+    }
     // 1er retour : si la liste des plans est ouverte, on la replie
     if(planPick.classList.contains('on')){
       planPick.classList.remove('on');
@@ -5974,9 +6000,21 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
       requestAnimationFrame(()=>{if(window.VB_openDash)window.VB_openDash();});
     }
   });
-  page.addEventListener('click',ev=>{if(ev.target===page)closeAuth()});
+  page.addEventListener('click',ev=>{
+    if(ev.target!==page)return;
+    if(modeWizard.classList.contains('pwreset')&&pwr.origin==='dashboard'){backBtn.click();return;}
+    closeAuth();
+  });
   document.addEventListener('keydown',ev=>{
-    if(ev.key==='Escape'&&page.classList.contains('open'))closeAuth();
+    if(ev.key!=='Escape'||!page.classList.contains('open'))return;
+    // Meme regle que le bouton : Echap ne doit jamais sortir directement
+    // vers la page d'accueil depuis la reinitialisation de mot de passe
+    // ouverte depuis le Dashboard.
+    if(modeWizard.classList.contains('pwreset')&&pwr.origin==='dashboard'){
+      backBtn.click();
+      return;
+    }
+    closeAuth();
   });
   document.querySelectorAll('[data-auth-tab],[data-auth-switch]').forEach(b=>{
     const target=b.dataset.authTab||b.dataset.authSwitch;
