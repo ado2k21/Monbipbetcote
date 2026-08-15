@@ -293,6 +293,13 @@ nav{
   border:1px solid rgba(244,243,237,.22);
 }
 .btn-ghost:hover{border-color:var(--vert-vif);color:var(--vert-vif)}
+/* Actions admin : valider / refuser un paiement */
+.btn-confirm{background:var(--vert-vif);color:#062E1A;font-weight:700}
+.btn-confirm:hover{background:#3EE694;transform:translateY(-1px)}
+.btn-confirm:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.btn-reject{background:transparent;color:#E2634F;font-weight:700;border:1.5px solid rgba(226,99,79,.5)}
+.btn-reject:hover{background:rgba(226,99,79,.1);border-color:#E2634F}
+.btn-reject:disabled{opacity:.4;cursor:not-allowed}
 .btn-link{background:none;border:none;color:var(--gris);font-weight:600;padding:11px 14px}
 .btn-link:hover{color:#F4F3ED}
 
@@ -1010,6 +1017,58 @@ footer{border-top:1px solid var(--ligne);padding:56px 0 36px;background:#030617}
   .vbsplash-word{font-size:18px;letter-spacing:.13em}
 }
 
+
+/* ---------- DASHBOARD ADMIN ----------
+   Reutilise volontairement les classes du dashboard utilisateur
+   (.dash, .dash-top, .dash-brand, .dash-menu, .dash-kpi, .dash-back...)
+   pour rester visuellement identique au reste du site. */
+.admdash{z-index:150}  /* toujours au-dessus du dashboard utilisateur */
+.admdash-badge{background:rgba(46,212,127,.13);border-color:rgba(46,212,127,.4);color:var(--vert-vif)}
+.admdash-refresh-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:6px}
+.admdash-updated{font-size:11.5px;color:var(--gris);font-family:var(--mono)}
+.admdash-count{font-size:12.5px;color:var(--gris);font-family:var(--mono);margin:10px 0 4px}
+.admdash-list{display:flex;flex-direction:column;gap:8px}
+.admdash-row{
+  display:flex;align-items:center;gap:12px;width:100%;text-align:left;cursor:pointer;
+  background:#0B1425;border:1px solid var(--ligne);border-radius:var(--r-md);padding:13px 14px;
+  transition:border-color .2s,background .2s;
+}
+.admdash-row:hover{border-color:rgba(46,212,127,.35);background:#0D1729}
+.admdash-row-av{
+  flex-shrink:0;width:38px;height:38px;border-radius:50%;display:grid;place-items:center;
+  background:rgba(201,164,76,.14);color:var(--or-clair);font-family:var(--display);font-weight:800;font-size:14px;
+}
+.admdash-row-tx{flex:1;min-width:0}
+.admdash-row-tx b{display:block;font-size:13.5px;color:#F4F3ED;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.admdash-row-tx span{font-size:11.5px;color:var(--gris)}
+.admdash-row-badge{
+  flex-shrink:0;font-family:var(--mono);font-size:9.5px;font-weight:800;letter-spacing:.06em;
+  border-radius:999px;padding:4px 9px;text-transform:uppercase;
+}
+.admdash-row-badge.actif{background:rgba(46,212,127,.14);color:var(--vert-vif)}
+.admdash-row-badge.expire{background:rgba(226,99,79,.13);color:#E2634F}
+.admdash-row-badge.aucun{background:rgba(244,243,237,.06);color:var(--gris)}
+.admdash-row-badge.pending{background:rgba(201,164,76,.14);color:var(--or-clair)}
+.admdash-empty{text-align:center;padding:40px 20px;color:var(--gris);font-size:13.5px}
+
+.admdash-detail-h{display:flex;align-items:center;gap:14px;margin-bottom:20px}
+.admdash-detail-av{
+  flex-shrink:0;width:52px;height:52px;border-radius:50%;display:grid;place-items:center;
+  background:rgba(201,164,76,.14);color:var(--or-clair);font-family:var(--display);font-weight:800;font-size:19px;
+}
+.admdash-detail-name{font-family:var(--display);font-weight:700;font-size:18px;color:#F4F3ED}
+.admdash-detail-email{font-size:12.5px;color:var(--gris);font-family:var(--mono)}
+.admdash-section-h{
+  font-family:var(--display);font-weight:700;font-size:14px;color:#F4F3ED;
+  margin:22px 0 10px;padding-top:16px;border-top:1px solid var(--ligne);
+}
+.admdash-section-h:first-of-type{border-top:none;padding-top:0;margin-top:0}
+.admdash-hist{display:flex;flex-direction:column;gap:1px;border-radius:var(--r-sm);overflow:hidden}
+.admdash-hist-row{display:flex;justify-content:space-between;gap:14px;padding:11px 13px;background:rgba(3,8,23,.42);font-size:12.5px}
+.admdash-hist-row dt{color:var(--gris)}
+.admdash-hist-row dd{color:#F4F3ED;font-weight:600;text-align:right}
+.admdash-hist-empty{padding:16px 4px;text-align:center;color:var(--gris);font-size:12.5px}
+
   .burger{width:36px;height:36px}
 }
 </style>
@@ -1296,14 +1355,15 @@ footer{border-top:1px solid var(--ligne);padding:56px 0 36px;background:#030617}
 
 .field{display:flex;flex-direction:column;gap:7px}
 .field-lbl{font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#93A8B8}
-.field input{
+.field input,.field textarea{
   width:100%;background:#0A1322;border:1.5px solid rgba(244,243,237,.1);border-radius:11px;
   padding:12.5px 14px;color:#F4F3ED;font-family:var(--body);font-size:14.5px;
   box-shadow:0 1px 3px rgba(0,0,0,.24) inset;
   transition:border-color .2s,background .2s,box-shadow .2s;
 }
-.field input::placeholder{color:#5C6B7A}
-.field input:focus{outline:none;border-color:var(--vert-vif);background:#0C1729;box-shadow:0 0 0 3px rgba(46,212,127,.13)}
+.field textarea{resize:vertical;min-height:76px;line-height:1.5}
+.field input::placeholder,.field textarea::placeholder{color:#5C6B7A}
+.field input:focus,.field textarea:focus{outline:none;border-color:var(--vert-vif);background:#0C1729;box-shadow:0 0 0 3px rgba(46,212,127,.13)}
 .field.invalid input{border-color:#E2634F}
 .field-err{display:none;color:#E2634F;font-size:12px;font-weight:600}
 .field.invalid .field-err{display:block}
@@ -1661,6 +1721,9 @@ footer{border-top:1px solid var(--ligne);padding:56px 0 36px;background:#030617}
   width:64px;height:64px;border-radius:50%;display:grid;place-items:center;
   background:rgba(46,212,127,.14);color:var(--vert-vif);border:2px solid rgba(46,212,127,.42);
 }
+.wiz-done-ic.is-pending{
+  background:rgba(201,164,76,.14);color:var(--or-clair);border-color:rgba(201,164,76,.42);
+}
 .wiz-done h3{font-family:var(--display);font-size:21px;color:#F4F3ED}
 .wiz-done p{color:var(--gris);font-size:14px;max-width:340px;line-height:1.6}
 .wiz-done-sum{
@@ -1920,6 +1983,22 @@ footer{border-top:1px solid var(--ligne);padding:56px 0 36px;background:#030617}
 .dash-expired .btn{flex-shrink:0;padding:10px 18px;font-size:13px}
 @media (max-width:640px){.dash-expired .btn{width:100%}}
 
+/* bandeau de paiement en attente de validation admin (theme dore, pas une erreur) */
+.dash-pending{
+  display:flex;align-items:center;gap:13px;flex-wrap:wrap;
+  padding:15px 17px;margin-bottom:22px;border-radius:var(--r-md);
+  background:linear-gradient(140deg,rgba(201,164,76,.13),rgba(11,20,37,0) 62%),#100E18;
+  border:1px solid rgba(201,164,76,.34);
+}
+.dash-pending[hidden]{display:none}
+.dash-pending-ic{
+  flex-shrink:0;width:38px;height:38px;border-radius:50%;display:grid;place-items:center;
+  background:rgba(201,164,76,.14);color:var(--or-clair);border:1px solid rgba(201,164,76,.32);
+}
+.dash-pending-tx{flex:1;min-width:190px}
+.dash-pending-tx b{display:block;font-size:14px;color:#F4F3ED;font-weight:700;margin-bottom:3px}
+.dash-pending-tx span{font-size:12.5px;color:var(--gris);line-height:1.5}
+
 .dash-hi{margin-bottom:22px}
 .dash-hi h2{font-family:var(--display);font-weight:700;font-size:clamp(20px,2.4vw,25px);color:#F4F3ED;letter-spacing:-.01em}
 .dash-hi p{color:var(--gris);font-size:13.5px;margin-top:5px}
@@ -2079,6 +2158,8 @@ footer{border-top:1px solid var(--ligne);padding:56px 0 36px;background:#030617}
 .dash-sub-state::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--vert-vif)}
 .dash-sub-state.is-expired{color:#E2634F}
 .dash-sub-state.is-expired::before{background:#E2634F}
+.dash-sub-state.is-pending{color:var(--or-clair)}
+.dash-sub-state.is-pending::before{background:var(--or-clair)}
 .dash-sub-prix{font-family:var(--display);font-weight:800;font-size:22px;color:var(--or-clair);white-space:nowrap}
 .dash-sub-rows{display:flex;flex-direction:column;gap:1px;border-radius:var(--r-sm);overflow:hidden}
 .dash-sub-row{display:flex;justify-content:space-between;gap:14px;padding:12px 14px;background:rgba(3,8,23,.42);font-size:13.5px}
@@ -3451,9 +3532,9 @@ details p{font-size:15.5px;line-height:1.72;color:#CBD8E4}
           <!-- ETAPE 4 : acces -->
           <div class="wiz-panel" data-step="4" id="wizStep4">
             <div class="wiz-done">
-              <span class="wiz-done-ic"><svg class="ic" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l4 4 10-10"/></svg></span>
-              <h3 data-i18n="wiz_d_h">Abònman ou aktive</h3>
-              <p data-i18n="wiz_d_sub">Kont ou prè. Ou ka jwenn fich VIP yo kounye a.</p>
+              <span class="wiz-done-ic" id="wizDoneIc"><svg class="ic" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l4 4 10-10"/></svg></span>
+              <h3 id="wizDoneH">Abònman ou aktive</h3>
+              <p id="wizDoneSub">Kont ou prè. Ou ka jwenn fich VIP yo kounye a.</p>
               <dl class="wiz-done-sum">
                 <div><dt data-i18n="wiz_d_plan">Plan</dt><dd id="wizDonePlan"></dd></div>
                 <div><dt data-i18n="wiz_d_start">Dat kòmansman</dt><dd id="wizDoneStart"></dd></div>
@@ -3698,6 +3779,15 @@ details p{font-size:15.5px;line-height:1.72;color:#CBD8E4}
         <svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
         <span data-i18n="dash_back">Retounen</span>
       </button>
+      <div class="dash-pending" id="dashPending" hidden>
+        <span class="dash-pending-ic">
+          <svg class="ic" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>
+        </span>
+        <span class="dash-pending-tx">
+          <b data-i18n="dash_pending_h">Peman ap tann verifikasyon</b>
+          <span id="dashPendingSub" data-i18n="dash_pending_sub">Peman ou an ap tann yon admin konfime li. Pronostik yo ap debloke otomatikman apre sa.</span>
+        </span>
+      </div>
       <div class="dash-expired" id="dashExpired" hidden>
         <span class="dash-expired-ic">
           <svg class="ic" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
@@ -3829,6 +3919,131 @@ details p{font-size:15.5px;line-height:1.72;color:#CBD8E4}
           <span data-i18n="dash_change_pass">Chanje modpas</span>
         </button>
       </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ================= DASHBOARD ADMIN ================= -->
+<div class="dash admdash" id="admDash" role="dialog" aria-modal="true" aria-labelledby="admHiH">
+
+  <div class="dash-top">
+    <div class="dash-top-in">
+      <div class="dash-brand">
+        <img id="admLogo" src="" alt="VIPBETCOTE — logo ofisyèl">
+        <span class="dash-brand-txt"><b>VIPBETCOTE</b><small>ADMIN</small></span>
+      </div>
+      <span class="dash-top-sp"></span>
+      <span class="dash-plan admdash-badge" id="admRoleBadge">
+        <svg class="ic" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 7v5c0 5 3.5 8 8 9 4.5-1 8-4 8-9V7Z"/></svg>
+        <span data-i18n="adm_role_badge">ADMIN</span>
+      </span>
+      <div style="position:relative">
+        <button class="dash-iconbtn" id="admMenuBtn" type="button" aria-label="Menu" aria-expanded="false">
+          <svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+        </button>
+        <div class="dash-menu" id="admMenu" role="menu">
+          <div class="dash-menu-h" id="admMenuUser"></div>
+          <button class="dash-menu-item on" type="button" role="menuitem" data-adm="home">
+            <svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 10h8M8 14h5"/></svg>
+            <span data-i18n="adm_nav_home">Vue d'ensemble</span>
+          </button>
+          <button class="dash-menu-item" type="button" role="menuitem" data-adm="users">
+            <svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 19c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><circle cx="17.5" cy="9" r="2.4"/><path d="M15.3 13.2c2.6.4 4.7 2.3 4.7 5.3"/></svg>
+            <span data-i18n="adm_nav_users">Itilizatè</span>
+          </button>
+          <button class="dash-menu-item" type="button" role="menuitem" data-adm="payments">
+            <svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="2.2"/><path d="M2.5 10h19M6 15h4"/></svg>
+            <span data-i18n="adm_nav_payments">Peman</span>
+          </button>
+          <div class="dash-menu-sep"></div>
+          <button class="dash-menu-item danger" type="button" role="menuitem" id="admMenuExit">
+            <svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M15 17l5-5-5-5M20 12H9M12 20H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h6"/></svg>
+            <span data-i18n="adm_menu_exit">Kite Dashboard Admin</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dash-body">
+
+    <!-- VUE : ACCUEIL -->
+    <div class="dash-view on" data-adview="home">
+      <div class="dash-hi">
+        <h2 id="admHiH" data-i18n="adm_home_h">Vue d'ensemble</h2>
+        <p data-i18n="adm_home_p">Chif reyèl, dirèkteman soti nan baz done a.</p>
+      </div>
+      <div class="dash-kpis" id="admKpisHome">
+        <div class="dash-kpi"><b>—</b><span data-i18n="adm_k_loading">Chajman...</span></div>
+      </div>
+      <div class="admdash-refresh-row">
+        <span class="admdash-updated" id="admHomeUpdated"></span>
+        <button type="button" class="wiz-change" id="admHomeRefresh">
+          <svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 5v6h-6"/></svg>
+          <span data-i18n="adm_refresh">Rafrechi</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- VUE : UTILISATEURS -->
+    <div class="dash-view" data-adview="users">
+      <button class="dash-back" type="button" data-adback>
+        <svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
+        <span data-i18n="dash_back">Retounen</span>
+      </button>
+      <div class="dash-hi">
+        <h2 data-i18n="adm_users_h">Itilizatè</h2>
+        <p data-i18n="adm_users_p">Rechèch ak detay chak kont, dirèkteman soti nan baz done a.</p>
+      </div>
+      <label class="field">
+        <span class="field-ic-wrap">
+          <svg class="ic field-ic" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+          <input type="text" id="admUserSearch" data-i18n-ph="adm_users_search_ph" placeholder="Chèche pa imèl...">
+        </span>
+      </label>
+      <div class="admdash-count" id="admUserCount"></div>
+      <div id="admUserList" class="admdash-list"></div>
+    </div>
+
+    <!-- VUE : DETAIL UTILISATEUR -->
+    <div class="dash-view" data-adview="userdetail">
+      <button class="dash-back" type="button" data-adback>
+        <svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
+        <span data-i18n="dash_back">Retounen</span>
+      </button>
+      <div id="admUserDetail"></div>
+    </div>
+
+    <!-- VUE : PAIEMENTS -->
+    <div class="dash-view" data-adview="payments">
+      <button class="dash-back" type="button" data-adback>
+        <svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
+        <span data-i18n="dash_back">Retounen</span>
+      </button>
+      <div class="dash-hi">
+        <h2 data-i18n="adm_pay_h">Peman</h2>
+        <p data-i18n="adm_pay_p">Valide oswa refize peman yo, dirèkteman soti nan baz done a.</p>
+      </div>
+      <div class="dash-filters">
+        <div class="dash-fgroup" id="admPayFilter">
+          <button class="dash-fbtn on" data-val="pending" type="button" data-i18n="adm_pay_f_pending">An atant</button>
+          <button class="dash-fbtn" data-val="confirmed" type="button" data-i18n="adm_pay_f_confirmed">Konfime</button>
+          <button class="dash-fbtn" data-val="rejected" type="button" data-i18n="adm_pay_f_rejected">Refize</button>
+          <button class="dash-fbtn" data-val="all" type="button" data-i18n="dash_f_all">Tout</button>
+        </div>
+        <span class="dash-count" id="admPayCount"></span>
+      </div>
+      <div id="admPayList" class="admdash-list"></div>
+    </div>
+
+    <!-- VUE : DETAIL PAIEMENT -->
+    <div class="dash-view" data-adview="paydetail">
+      <button class="dash-back" type="button" data-adback>
+        <svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
+        <span data-i18n="dash_back">Retounen</span>
+      </button>
+      <div id="admPayDetail"></div>
     </div>
 
   </div>
@@ -3993,6 +4208,7 @@ wiz_p_secure:"Paiement sécurisé — aucune donnée bancaire n'est conservée",
 wiz_d_h:"Votre abonnement est actif", wiz_d_sub:"Votre compte est prêt. Vous pouvez accéder aux fiches VIP.",
 wiz_d_plan:"Plan", wiz_d_start:"Date de début", wiz_d_end:"Date d'expiration", wiz_d_ref:"Référence",
 wiz_d_never:"Sans expiration", wiz_d_cta:"Accéder au tableau de bord",
+wiz_d_h_pending:"Paiement en cours de vérification", wiz_d_sub_pending:"Votre compte est prêt. Vos pronostics seront débloqués dès que notre équipe aura validé votre paiement.",
 wiz_lock_h:"Tableau de bord verrouillé", wiz_lock_cta:"Continuer mon inscription",
 wiz_lock_r1:"Vous devez d'abord créer un compte pour accéder au tableau de bord.",
 wiz_lock_r2:"Votre adresse e-mail n'est pas encore vérifiée. Terminez la vérification pour continuer.",
@@ -4020,7 +4236,7 @@ dash_stats_bysport:"Par discipline",
 dash_stats_note:"Le taux de réussite porte sur les fiches ayant un résultat final. Les fiches en cours ne sont pas comptées. Les performances passées ne garantissent pas les résultats futurs.",
 dash_note:"Les scores de confiance sont une évaluation de notre équipe d'experts, pas une garantie. Les résultats passés ne garantissent jamais les résultats futurs. Jouez de façon responsable.",
 dash_sub_h:"Mon abonnement", dash_sub_p:"Détails de votre plan et de vos dates.",
-dash_sub_active:"Actif", dash_sub_holder:"Titulaire", dash_sub_email:"E-mail", dash_sub_method:"Moyen de paiement",
+dash_sub_active:"Actif", dash_sub_pending:"En attente de validation", dash_sub_holder:"Titulaire", dash_sub_email:"E-mail", dash_sub_method:"Moyen de paiement",
 dash_sub_left:"Temps restant", dash_sub_days:"{n} jour(s)", dash_sub_upgrade:"Changer ou renouveler mon plan",
 mk_btts_l:"Les deux équipes marquent", mk_over_l:"Plus / Moins de buts", mk_1x2_l:"1X2",
 mk_dc_l:"Double chance", mk_total_l:"Total NBA", mk_hand_l:"Handicap", mk_score_l:"Score exact",
@@ -4074,11 +4290,35 @@ lifetime_toast_h:"Aucun changement nécessaire",
 change_toast_h:"Changement de plan impossible",
 renew_success_h:"Abonnement renouvelé",
 renew_success_p:"Votre abonnement a été renouvelé avec succès.",
+pay_pending_note:"Ce paiement est en attente de validation par notre équipe.",
 pay_timeout_h:"Session de paiement expirée",
 pay_timeout_p:"Par sécurité, veuillez recommencer.",
 session_stale_h:"Compte ouvert ailleurs",
 session_stale_p:"Ce compte est ouvert dans une autre fenêtre. Rafraîchissez la page pour continuer.",
 dash_menu_lang:"Langue",
+adm_role_badge:"ADMIN",
+adm_nav_home:"Vue d'ensemble", adm_nav_users:"Utilisateurs", adm_nav_payments:"Paiements",
+adm_menu_exit:"Quitter le Dashboard Admin",
+adm_home_h:"Vue d'ensemble", adm_home_p:"Chiffres réels, directement issus de la base de données.",
+adm_refresh:"Rafraîchir", adm_updated_at:"Mis à jour à {t}",
+adm_k_loading:"Chargement...", adm_k_offline:"Connexion indisponible", adm_k_error:"Erreur de lecture",
+adm_k_users:"Utilisateurs", adm_k_subs_active:"Abonnements actifs", adm_k_pay_pending:"Paiements en attente", adm_k_tickets:"Fiches",
+adm_users_h:"Utilisateurs", adm_users_p:"Recherche et détail de chaque compte, directement depuis la base de données.",
+adm_users_search_ph:"Chercher par e-mail...", adm_users_count:"{n} compte(s)", adm_users_empty:"Aucun compte trouvé.",
+adm_badge_none:"Aucun plan", adm_badge_expired:"expiré", adm_no_name:"Sans nom",
+adm_section_subs:"Abonnements", adm_section_pays:"Paiements", adm_none_yet:"Aucun pour l'instant.",
+adm_pay_h:"Paiements", adm_pay_p:"Validez ou refusez les paiements soumis, directement depuis la base de données.",
+adm_pay_f_pending:"En attente", adm_pay_f_confirmed:"Confirmés", adm_pay_f_rejected:"Refusés",
+adm_pay_count:"{n} paiement(s)", adm_pay_empty:"Aucun paiement dans cette catégorie.",
+adm_pay_plan:"Plan", adm_pay_amount:"Montant", adm_pay_method:"Moyen de paiement", adm_pay_ref:"Référence",
+adm_pay_date:"Date", adm_pay_status:"Statut",
+adm_pay_reason_h:"Raison du refus", adm_pay_action_h:"Décision",
+adm_pay_reason_lbl:"Raison (obligatoire si refus)", adm_pay_reason_ph:"Ex. : référence introuvable, montant incorrect...",
+adm_pay_valider:"Valider", adm_pay_refuser:"Refuser",
+adm_pay_reason_required:"Une raison est obligatoire pour refuser un paiement.",
+adm_pay_action_error:"Action impossible. Vérifiez la connexion et réessayez.",
+adm_pay_toast_confirmed_h:"Paiement validé", adm_pay_toast_confirmed_p:"L'abonnement est désormais actif.",
+adm_pay_toast_rejected_h:"Paiement refusé", adm_pay_toast_rejected_p:"L'utilisateur verra la raison du refus.",
 sb_sync_err_h:"Compte créé localement uniquement",
 sb_sync_err_p:"La synchronisation avec le serveur a échoué. Réessayez plus tard depuis Mon abonnement.",
 pwr_back_dash:"Retour au tableau de bord",
@@ -4102,6 +4342,9 @@ dash_expired_sub:"Vous gardez l'accès au tableau de bord, mais toutes les cotes
 dash_expired_cta:"Renouveler mon plan",
 dash_expired_p:"Votre abonnement a expiré. Renouvelez pour revoir les cotes.",
 dash_sub_expired:"Expiré",
+dash_pending_h:"Paiement en cours de vérification",
+dash_pending_sub:"Votre paiement est en attente de confirmation par notre équipe. Vos pronostics seront débloqués automatiquement dès validation.",
+dash_pending_ov_p:"En attente de validation de votre paiement.",
 faq2_q:"Garantissez-vous des gains ?",
 legal_tag_cgu:"Légal", legal_tag_confid:"Légal", legal_tag_jeu:"Légal",
 legal_note:"Ce document est une version générale. Avant publication officielle, il doit être relu par un conseiller juridique.",
@@ -4212,6 +4455,7 @@ wiz_p_secure:"Secure payment — no banking data is stored",
 wiz_d_h:"Your plan is active", wiz_d_sub:"Your account is ready. You can now access the VIP picks.",
 wiz_d_plan:"Plan", wiz_d_start:"Start date", wiz_d_end:"Expiry date", wiz_d_ref:"Reference",
 wiz_d_never:"No expiry", wiz_d_cta:"Go to dashboard",
+wiz_d_h_pending:"Payment under verification", wiz_d_sub_pending:"Your account is ready. Your picks will unlock as soon as our team confirms your payment.",
 wiz_lock_h:"Dashboard locked", wiz_lock_cta:"Continue my sign-up",
 wiz_lock_r1:"You need to create an account first to access the dashboard.",
 wiz_lock_r2:"Your email address isn't verified yet. Complete verification to continue.",
@@ -4239,7 +4483,7 @@ dash_stats_bysport:"By sport",
 dash_stats_note:"The success rate covers slips with a final result. Pending slips aren't counted. Past performance does not guarantee future results.",
 dash_note:"Confidence scores are an assessment by our expert team, not a guarantee. Past results never guarantee future ones. Please play responsibly.",
 dash_sub_h:"My plan", dash_sub_p:"Your plan details and dates.",
-dash_sub_active:"Active", dash_sub_holder:"Account holder", dash_sub_email:"Email", dash_sub_method:"Payment method",
+dash_sub_active:"Active", dash_sub_pending:"Pending verification", dash_sub_holder:"Account holder", dash_sub_email:"Email", dash_sub_method:"Payment method",
 dash_sub_left:"Time remaining", dash_sub_days:"{n} day(s)", dash_sub_upgrade:"Change or renew my plan",
 mk_btts_l:"Both teams to score", mk_over_l:"Over / Under goals", mk_1x2_l:"1X2",
 mk_dc_l:"Double chance", mk_total_l:"NBA total", mk_hand_l:"Handicap", mk_score_l:"Correct score",
@@ -4293,11 +4537,35 @@ lifetime_toast_h:"No change needed",
 change_toast_h:"Plan change not possible",
 renew_success_h:"Plan renewed",
 renew_success_p:"Your subscription has been successfully renewed.",
+pay_pending_note:"This payment is awaiting verification by our team.",
 pay_timeout_h:"Payment session expired",
 pay_timeout_p:"For security, please start again.",
 session_stale_h:"Account open elsewhere",
 session_stale_p:"This account is open in another window. Refresh the page to continue.",
 dash_menu_lang:"Language",
+adm_role_badge:"ADMIN",
+adm_nav_home:"Overview", adm_nav_users:"Users", adm_nav_payments:"Payments",
+adm_menu_exit:"Leave Admin Dashboard",
+adm_home_h:"Overview", adm_home_p:"Real figures, taken directly from the database.",
+adm_refresh:"Refresh", adm_updated_at:"Updated at {t}",
+adm_k_loading:"Loading...", adm_k_offline:"Connection unavailable", adm_k_error:"Read error",
+adm_k_users:"Users", adm_k_subs_active:"Active subscriptions", adm_k_pay_pending:"Pending payments", adm_k_tickets:"Slips",
+adm_users_h:"Users", adm_users_p:"Search and detail for each account, straight from the database.",
+adm_users_search_ph:"Search by email...", adm_users_count:"{n} account(s)", adm_users_empty:"No accounts found.",
+adm_badge_none:"No plan", adm_badge_expired:"expired", adm_no_name:"No name",
+adm_section_subs:"Subscriptions", adm_section_pays:"Payments", adm_none_yet:"None yet.",
+adm_pay_h:"Payments", adm_pay_p:"Approve or reject submitted payments, directly from the database.",
+adm_pay_f_pending:"Pending", adm_pay_f_confirmed:"Confirmed", adm_pay_f_rejected:"Rejected",
+adm_pay_count:"{n} payment(s)", adm_pay_empty:"No payments in this category.",
+adm_pay_plan:"Plan", adm_pay_amount:"Amount", adm_pay_method:"Payment method", adm_pay_ref:"Reference",
+adm_pay_date:"Date", adm_pay_status:"Status",
+adm_pay_reason_h:"Reason for rejection", adm_pay_action_h:"Decision",
+adm_pay_reason_lbl:"Reason (required if rejecting)", adm_pay_reason_ph:"E.g.: reference not found, wrong amount...",
+adm_pay_valider:"Approve", adm_pay_refuser:"Reject",
+adm_pay_reason_required:"A reason is required to reject a payment.",
+adm_pay_action_error:"Action failed. Check your connection and try again.",
+adm_pay_toast_confirmed_h:"Payment approved", adm_pay_toast_confirmed_p:"The subscription is now active.",
+adm_pay_toast_rejected_h:"Payment rejected", adm_pay_toast_rejected_p:"The user will see the rejection reason.",
 sb_sync_err_h:"Account created locally only",
 sb_sync_err_p:"Server sync failed. Try again later from My subscription.",
 pwr_back_dash:"Back to dashboard",
@@ -4321,6 +4589,9 @@ dash_expired_sub:"You keep access to the dashboard, but all odds are locked. Ren
 dash_expired_cta:"Renew my plan",
 dash_expired_p:"Your plan has expired. Renew to see the odds again.",
 dash_sub_expired:"Expired",
+dash_pending_h:"Payment under verification",
+dash_pending_sub:"Your payment is awaiting confirmation by our team. Your picks will unlock automatically once validated.",
+dash_pending_ov_p:"Awaiting validation of your payment.",
 faq2_q:"Do you guarantee winnings?",
 legal_tag_cgu:"Legal", legal_tag_confid:"Legal", legal_tag_jeu:"Legal",
 legal_note:"This document is a general version. Before official publication it must be reviewed by a legal adviser.",
@@ -4431,6 +4702,7 @@ wiz_p_secure:"Peman sekirize — nou pa konsève okenn done bankè",
 wiz_d_h:"Abònman ou aktive", wiz_d_sub:"Kont ou prè. Ou ka jwenn fich VIP yo kounye a.",
 wiz_d_plan:"Plan", wiz_d_start:"Dat kòmansman", wiz_d_end:"Dat ekspirasyon", wiz_d_ref:"Referans",
 wiz_d_never:"San ekspirasyon", wiz_d_cta:"Ale nan dashboard la",
+wiz_d_h_pending:"Peman an ap verifye", wiz_d_sub_pending:"Kont ou pare. Pronostik ou yo ap debloke depi ekip nou konfime peman an.",
 wiz_lock_h:"Dashboard la fèmen", wiz_lock_cta:"Kontinye enskripsyon m",
 wiz_lock_r1:"Ou dwe kreye yon kont anvan pou w jwenn dashboard la.",
 wiz_lock_r2:"Imèl ou poko verifye. Fini verifikasyon an pou w kontinye.",
@@ -4458,7 +4730,7 @@ dash_stats_bysport:"Pa disiplin",
 dash_stats_note:"To reyisit la kalkile sou fich ki gen yon rezilta final. Fich kap tann yo pa konte. Pèfòmans ki pase pa garanti rezilta kap vini.",
 dash_note:"Nòt konfyans yo se yon evalyasyon ekip ekspè nou an, se pa yon garanti. Rezilta ki pase pa janm garanti rezilta kap vini. Jwe ak responsablite.",
 dash_sub_h:"Abònman m", dash_sub_p:"Detay plan ou ak dat yo.",
-dash_sub_active:"Aktif", dash_sub_holder:"Titilè", dash_sub_email:"Imèl", dash_sub_method:"Mwayen peman",
+dash_sub_active:"Aktif", dash_sub_pending:"Ap tann validasyon", dash_sub_holder:"Titilè", dash_sub_email:"Imèl", dash_sub_method:"Mwayen peman",
 dash_sub_left:"Tan ki rete", dash_sub_days:"{n} jou", dash_sub_upgrade:"Chanje oswa renouvle plan an",
 mk_btts_l:"De ekip yo make", mk_over_l:"Plis / Mwens gòl", mk_1x2_l:"1X2",
 mk_dc_l:"Doub chans", mk_total_l:"Total NBA", mk_hand_l:"Andikap", mk_score_l:"Eskò egzak",
@@ -4512,11 +4784,35 @@ lifetime_toast_h:"Pa gen chanjman ki nesesè",
 change_toast_h:"Pa ka chanje plan",
 renew_success_h:"Abònman renouvle",
 renew_success_p:"Abònman ou renouvle avèk siksè.",
+pay_pending_note:"Peman sa a ap tann verifikasyon ekip nou an.",
 pay_timeout_h:"Sesyon peman ekspire",
 pay_timeout_p:"Pou sekirite, tanpri rekòmanse.",
 session_stale_h:"Kont ouvri yon lòt kote",
 session_stale_p:"Kont sa a ouvri nan yon lòt fenèt. Rafrechi paj la pou kontinye.",
 dash_menu_lang:"Lang",
+adm_role_badge:"ADMIN",
+adm_nav_home:"Vi jeneral", adm_nav_users:"Itilizatè", adm_nav_payments:"Peman",
+adm_menu_exit:"Kite Dashboard Admin",
+adm_home_h:"Vi jeneral", adm_home_p:"Chif reyèl, dirèkteman soti nan baz done a.",
+adm_refresh:"Rafrechi", adm_updated_at:"Mizajou a {t}",
+adm_k_loading:"Chajman...", adm_k_offline:"Koneksyon pa disponib", adm_k_error:"Erè lekti",
+adm_k_users:"Itilizatè", adm_k_subs_active:"Abònman aktif", adm_k_pay_pending:"Peman ki ap tann", adm_k_tickets:"Fich",
+adm_users_h:"Itilizatè", adm_users_p:"Rechèch ak detay chak kont, dirèkteman soti nan baz done a.",
+adm_users_search_ph:"Chèche pa imèl...", adm_users_count:"{n} kont", adm_users_empty:"Pa gen okenn kont.",
+adm_badge_none:"Pa gen plan", adm_badge_expired:"ekspire", adm_no_name:"San non",
+adm_section_subs:"Abònman", adm_section_pays:"Peman", adm_none_yet:"Pa gen ankò.",
+adm_pay_h:"Peman", adm_pay_p:"Valide oswa refize peman ki soumèt yo, dirèkteman soti nan baz done a.",
+adm_pay_f_pending:"An atant", adm_pay_f_confirmed:"Konfime", adm_pay_f_rejected:"Refize",
+adm_pay_count:"{n} peman", adm_pay_empty:"Pa gen peman nan kategori sa a.",
+adm_pay_plan:"Plan", adm_pay_amount:"Montan", adm_pay_method:"Mwayen peman", adm_pay_ref:"Referans",
+adm_pay_date:"Dat", adm_pay_status:"Estati",
+adm_pay_reason_h:"Rezon refi a", adm_pay_action_h:"Desizyon",
+adm_pay_reason_lbl:"Rezon (obligatwa si refi)", adm_pay_reason_ph:"Egz. : referans pa jwenn, move montan...",
+adm_pay_valider:"Valide", adm_pay_refuser:"Refize",
+adm_pay_reason_required:"Yon rezon obligatwa pou refize yon peman.",
+adm_pay_action_error:"Aksyon an echwe. Verifye koneksyon an epi eseye ankò.",
+adm_pay_toast_confirmed_h:"Peman valide", adm_pay_toast_confirmed_p:"Abònman an aktif kounye a.",
+adm_pay_toast_rejected_h:"Peman refize", adm_pay_toast_rejected_p:"Itilizatè a ap wè rezon refi a.",
 sb_sync_err_h:"Kont kreye sèlman lokalman",
 sb_sync_err_p:"Senkronizasyon ak sèvè a echwe. Eseye ankò pita.",
 pwr_back_dash:"Retounen nan Dashboard la",
@@ -4540,6 +4836,9 @@ dash_expired_sub:"Ou toujou gen aksè nan dashboard la, men tout cotes yo fèmen
 dash_expired_cta:"Renouvle plan an",
 dash_expired_p:"Abònman ou ekspire. Renouvle pou w wè cotes yo ankò.",
 dash_sub_expired:"Ekspire",
+dash_pending_h:"Peman ap tann verifikasyon",
+dash_pending_sub:"Peman ou an ap tann yon admin konfime li. Pronostik yo ap debloke otomatikman apre sa.",
+dash_pending_ov_p:"Ap tann validasyon peman ou.",
 faq2_q:"Èske nou garanti benefis?",
 legal_tag_cgu:"Legal", legal_tag_confid:"Legal", legal_tag_jeu:"Legal",
 legal_note:"Dokiman sa a se yon vèsyon jeneral. Anvan piblikasyon ofisyèl la, li dwe reli pa yon konseye jiridik.",
@@ -5002,7 +5301,12 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
   const isComplete=a=>!!(a&&a.emailVerified&&a.paid);
 
   /* ---- Etat du parcours ---- */
-  const blank=()=>({step:1,started:false,fullname:'',email:'',site:'paryajpam',pass:null,planId:null,pendingPlanId:null,emailVerified:false,paid:false,payMethod:null,code:null,startedAt:null,ref:null,startDate:null,endDate:null});
+  /* payStatus : etat REEL du paiement, distinct de "paid" qui ne veut dire
+     que "a termine le parcours de paiement" (donne acces au Dashboard).
+     'none' = jamais paye ; 'pending' = paiement soumis, en attente de
+     validation admin ; 'confirmed' = valide par un admin (ou passerelle
+     automatique) ; 'rejected' = refuse par un admin, raison obligatoire. */
+  const blank=()=>({step:1,started:false,fullname:'',email:'',site:'paryajpam',pass:null,planId:null,pendingPlanId:null,emailVerified:false,paid:false,payStatus:'none',payMethod:null,code:null,startedAt:null,ref:null,startDate:null,endDate:null});
   let state=store.read()||blank();
   const save=()=>store.write(state);
 
@@ -5015,8 +5319,9 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
   function requiredStep(st){
     if(!st||!st.email)return 1;      // pas de compte
     if(!st.emailVerified)return 1;   // email non verifie : on reste a l'etape Kont
-    if(!st.paid)return 3;            // n'a jamais paye : dashboard interdit
-    return 4;                        // acces au dashboard autorise
+    if(!st.paid)return 3;            // n'a jamais tente de paiement : dashboard interdit
+    return 4;                        // parcours de paiement termine : entree Dashboard autorisee
+                                      // (le CONTENU reste verrouille tant que payStatus n'est pas 'confirmed' — voir isPending())
   }
 
   /*
@@ -5592,8 +5897,20 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
       }
       if(!uid)return;   // compte pas encore reconnu par Supabase : rien a synchroniser
       const pl=planById(state.planId);
+      /* Avant d'ecrire le nouvel abonnement, on cloture tout abonnement
+         "actif" precedent de cet utilisateur (renouvellement ou
+         changement de plan). Sans ca, un renouvellement laisserait
+         plusieurs lignes "active" empilees pour la meme personne, ce qui
+         fausserait les statistiques (nombre d'abonnements actifs, etc.)
+         que l'admin devra un jour afficher sans aucun chiffre invente. */
+      try{
+        await sb.from('subscriptions').update({status:'cancelled'})
+          .eq('user_id',uid).eq('status','active');
+      }catch(e){ /* si la cloture echoue, on ecrit quand meme le nouvel abonnement */ }
+      // status:'pending' — jamais 'active' ici : seul un admin (module Paiements)
+      // pourra faire passer un abonnement a 'active', jamais ce parcours client.
       const {data:subData,error:subErr}=await sb.from('subscriptions').insert({
-        user_id:uid, plan_id:state.planId, status:'active',
+        user_id:uid, plan_id:state.planId, status:'pending',
         starts_at:state.startDate, expires_at:state.endDate
       }).select('id').single();
       if(subErr)return;
@@ -5636,10 +5953,14 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
       const reste=new Date(state.endDate).getTime()-now.getTime();
       if(reste>0)bonus=reste;
     }
-    // Le plan ACTIF n'est engage qu'ici, apres validation reelle du paiement.
+    // Le plan choisi est engage ici, mais son CONTENU reste verrouille
+    // (payStatus='pending') tant qu'un admin ne l'a pas confirme.
+    // paid=true ouvre seulement la porte du Dashboard (voir requiredStep) ;
+    // ce n'est jamais une preuve de paiement reel.
     state.planId=pl.id;
     state.pendingPlanId=null;
     state.paid=true;
+    state.payStatus='pending';
     state.startDate=now.toISOString();
     state.endDate=pl.days?new Date(now.getTime()+pl.days*86400000+bonus).toISOString():null;
     state.carryDays=bonus?Math.ceil(bonus/86400000):0;
@@ -5647,12 +5968,13 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
     state.step=4;
     state.started=false;                      // inscription terminee : plus de reprise
     save();
-    // Le compte devient utilisable pour se connecter
+    // Le compte devient utilisable pour se connecter (identite verifiee),
+    // meme si le paiement, lui, reste en attente de validation admin.
     accounts.put({
       email:state.email.trim().toLowerCase(),
       pass:state.pass,
       fullname:state.fullname, site:state.site,
-      emailVerified:true, paid:true,
+      emailVerified:true, paid:true, payStatus:'pending',
       planId:state.planId, payMethod:state.payMethod,
       startDate:state.startDate, endDate:state.endDate, ref:state.ref
     });
@@ -5665,16 +5987,16 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
       /* Passage au Lifetime : jamais de mention de "jours ajoutes"
          (le Lifetime n'a pas de duree). Message dedie a l'acces a vie. */
       if(state.planId==='p4'){
-        if(window.VB_toast)window.VB_toast('plan_changed_h',t('plan_changed_lifetime'));
+        if(window.VB_toast)window.VB_toast('plan_changed_h',t('plan_changed_lifetime')+' '+t('pay_pending_note'));
       }else{
         const sup=state.carryDays?' '+t('plan_changed_carry').replace('{n}',state.carryDays):'';
-        if(window.VB_toast)window.VB_toast('plan_changed_h',t('plan_changed_p')+sup);
+        if(window.VB_toast)window.VB_toast('plan_changed_h',t('plan_changed_p')+sup+' '+t('pay_pending_note'));
       }
       if(window.VB_notify)window.VB_notify('plan',t('notif_plan_change').replace('{plan}',
         String(t((planById(state.planId)||{}).nameKey||'')).replace(/<[^>]*>/g,'')));
     }else if(ancienPlan){
       // Meme plan reconduit : c'est un renouvellement, message dedie exact.
-      if(window.VB_toast)window.VB_toast('renew_success_h',t('renew_success_p'));
+      if(window.VB_toast)window.VB_toast('renew_success_h',t('renew_success_p')+' '+t('pay_pending_note'));
       if(window.VB_notify)window.VB_notify('plan',t('notif_renewed').replace('{plan}',
         String(t((planById(state.planId)||{}).nameKey||'')).replace(/<[^>]*>/g,'')));
     }
@@ -5698,6 +6020,14 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
   function renderStep4(){
     const pl=planById(state.planId);
     const fmt=iso=>iso?new Date(iso).toLocaleDateString(currentLang==='en'?'en-US':'fr-FR',{day:'2-digit',month:'short',year:'numeric'}):'—';
+    const pend=state.payStatus==='pending';
+    const ic=document.getElementById('wizDoneIc');
+    ic.classList.toggle('is-pending',pend);
+    ic.innerHTML=pend
+      ?'<svg class="ic" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>'
+      :'<svg class="ic" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l4 4 10-10"/></svg>';
+    document.getElementById('wizDoneH').textContent=t(pend?'wiz_d_h_pending':'wiz_d_h');
+    document.getElementById('wizDoneSub').textContent=t(pend?'wiz_d_sub_pending':'wiz_d_sub');
     document.getElementById('wizDonePlan').textContent=pl?stripTags(t(pl.nameKey)):'—';
     document.getElementById('wizDoneStart').textContent=fmt(state.startDate);
     document.getElementById('wizDoneEnd').textContent=state.endDate?fmt(state.endDate):t('wiz_d_never');
@@ -5947,6 +6277,21 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
         });
         loginBtn.disabled=false;
         if(!error&&data&&data.user){
+          /* Verification du role, toujours cote serveur : c'est la table
+             "profiles" (protegee par les regles de securite ecrites dans
+             la base) qui decide, jamais une donnee modifiable depuis le
+             navigateur. Un compte normal ne peut jamais s'attribuer le
+             role admin en trafiquant l'appareil. */
+          let role='user';
+          try{
+            const {data:prof}=await sb.from('profiles').select('role,username').eq('id',data.user.id).single();
+            if(prof&&prof.role)role=prof.role;
+          }catch(e){}
+          if(role==='admin'){
+            closeAuth();
+            requestAnimationFrame(()=>{if(window.VB_openAdminDash)window.VB_openAdminDash(data.user);});
+            return;
+          }
           const localAcc=accounts.find(data.user.email);
           if(localAcc&&isComplete(localAcc)){
             // Identite reelle confirmee ET abonnement connu sur cet appareil :
@@ -5954,7 +6299,8 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
             state=Object.assign(blank(),{
               step:4, started:false, fullname:localAcc.fullname, email:localAcc.email, pass:localAcc.pass,
               site:localAcc.site||'paryajpam', supabaseUserId:data.user.id,
-              planId:localAcc.planId, emailVerified:true, paid:true, payMethod:localAcc.payMethod,
+              planId:localAcc.planId, emailVerified:true, paid:true, payStatus:localAcc.payStatus||'pending',
+              payMethod:localAcc.payMethod,
               startDate:localAcc.startDate, endDate:localAcc.endDate, ref:localAcc.ref
             });
             save();
@@ -5974,9 +6320,12 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
           };
           let abonnementReel=null;
           try{
+            // On lit 'active' ET 'pending' : un paiement deja soumis mais
+            // pas encore valide par un admin ne doit jamais renvoyer
+            // l'utilisateur vers un nouveau paiement sur un autre appareil.
             const {data:subs}=await sb.from('subscriptions')
               .select('plan_id,status,starts_at,expires_at')
-              .eq('user_id',data.user.id).eq('status','active')
+              .eq('user_id',data.user.id).in('status',['active','pending'])
               .order('starts_at',{ascending:false}).limit(1);
             if(subs&&subs.length)abonnementReel=subs[0];
           }catch(e){ /* Supabase injoignable pour cette lecture : on degrade vers le paiement */ }
@@ -5990,6 +6339,7 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
             state=Object.assign(blank(),{
               step:4, started:false, ...identite, emailVerified:true,
               planId:abonnementReel.plan_id, paid:true,
+              payStatus:abonnementReel.status==='active'?'confirmed':'pending',
               startDate:abonnementReel.starts_at, endDate:abonnementReel.expires_at
             });
             save();
@@ -6234,6 +6584,33 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
   window.VB_getState=()=>state;
   window.VB_planById=planById;
   window.VB_isExpired=()=>subscriptionExpired(state);
+  window.VB_isPending=()=>!!(state&&state.paid&&state.payStatus==='pending');
+  /* Rafraichissement silencieux : verifie si un admin a valide/refuse le
+     paiement depuis la derniere visite, sans jamais bloquer l'affichage.
+     Ne fait rien si le compte n'est pas rattache a Supabase (compte
+     pre-migration, ou hors ligne) — degrade proprement dans ce cas. */
+  window.VB_syncPayStatus=async function(){
+    const sb=window.VB_getSupabase&&window.VB_getSupabase();
+    if(!sb||!state.supabaseUserId||!state.paid)return false;
+    try{
+      const {data:subs}=await sb.from('subscriptions')
+        .select('plan_id,status,starts_at,expires_at')
+        .eq('user_id',state.supabaseUserId)
+        .order('starts_at',{ascending:false}).limit(1);
+      if(!subs||!subs.length)return false;
+      const sub=subs[0];
+      const nouveau=sub.status==='active'?'confirmed':(sub.status==='cancelled'?'rejected':'pending');
+      if(nouveau===state.payStatus)return false;   // rien de nouveau
+      state.payStatus=nouveau;
+      if(sub.status==='active'){
+        state.planId=sub.plan_id;
+        state.startDate=sub.starts_at;
+        state.endDate=sub.expires_at;
+      }
+      save();
+      return true;
+    }catch(e){return false;}
+  };
   /* Renouvellement / changement de plan : on ouvre DIRECTEMENT la page
      de paiement. Aucun retour par la creation de compte ni la
      verification e-mail, qui sont deja faites. */
@@ -6482,11 +6859,12 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
 
   /* ---- Rendu d'une fiche ---- */
   const isExpired=()=>!!(window.VB_isExpired&&window.VB_isExpired());
+  const isPending=()=>!!(window.VB_isPending&&window.VB_isPending());
 
   function ticketEl(tk){
     // Abonnement expire : TOUTES les fiches sont verrouillees,
     // quel que soit le plan detenu.
-    const locked=isExpired()||tk.minPlan>userRank();
+    const locked=isExpired()||isPending()||tk.minPlan>userRank();
     const el=document.createElement('article');
     el.className='dtk'+(locked?' locked':'');
 
@@ -6531,17 +6909,24 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
       const ov=document.createElement('div');
       ov.className='dtk-lockover';
       const exp=isExpired();
+      const pend=isPending();
       // Nom du plan requis, lu depuis le catalogue existant (aucune duplication)
       const needPlan=(window.VB_planById?window.VB_planById('p'+tk.minPlan):null);
       const needName=needPlan?String(t(needPlan.nameKey)).replace(/<[^>]*>/g,''):'';
-      ov.innerHTML='<svg class="ic" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>'+
-        (exp?'':'<span class="dtk-need">'+t('dash_need_plan')+' <b>'+needName+'</b></span>')+
-        '<p>'+t(exp?'dash_expired_p':'dash_locked_p')+'</p>';
-      const b=document.createElement('button');
-      b.type='button';b.className='btn btn-or';
-      b.textContent=exp?t('dash_expired_cta'):t('dash_locked_cta').replace('{plan}',needName);
-      b.addEventListener('click',()=>{closeDash();if(window.VB_openWizardPay)window.VB_openWizardPay();});
-      ov.appendChild(b);
+      const icon=pend
+        ?'<svg class="ic" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>'
+        :'<svg class="ic" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>';
+      ov.innerHTML=icon+
+        (pend||exp?'':'<span class="dtk-need">'+t('dash_need_plan')+' <b>'+needName+'</b></span>')+
+        '<p>'+t(pend?'dash_pending_ov_p':(exp?'dash_expired_p':'dash_locked_p'))+'</p>';
+      if(!pend){
+        // Rien a cliquer pendant l'attente de validation : aucun bouton.
+        const b=document.createElement('button');
+        b.type='button';b.className='btn btn-or';
+        b.textContent=exp?t('dash_expired_cta'):t('dash_locked_cta').replace('{plan}',needName);
+        b.addEventListener('click',()=>{closeDash();if(window.VB_openWizardPay)window.VB_openWizardPay();});
+        ov.appendChild(b);
+      }
       el.appendChild(ov);
     }
     return el;
@@ -6570,7 +6955,7 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
   }
 
   function scoreCardEl(){
-    const locked=isExpired()||SCORE_MIN_PLAN>userRank();
+    const locked=isExpired()||isPending()||SCORE_MIN_PLAN>userRank();
     const liste=scoresDuJour();
     const el=document.createElement('article');
     el.className='dtk'+(locked?' locked':'');
@@ -6608,14 +6993,20 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
       const needPlan=(window.VB_planById?window.VB_planById('p'+SCORE_MIN_PLAN):null);
       const needName=needPlan?String(t(needPlan.nameKey)).replace(/<[^>]*>/g,''):'';
       const exp=isExpired();
-      ov.innerHTML='<svg class="ic" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>'+
-        (exp?'':'<span class="dtk-need">'+t('dash_need_plan')+' <b>'+needName+'</b></span>')+
-        '<p>'+t(exp?'dash_expired_p':'dash_locked_p')+'</p>';
-      const b=document.createElement('button');
-      b.type='button';b.className='btn btn-or';
-      b.textContent=exp?t('dash_expired_cta'):t('dash_locked_cta').replace('{plan}',needName);
-      b.addEventListener('click',()=>{closeDash();if(window.VB_openWizardPay)window.VB_openWizardPay();});
-      ov.appendChild(b);
+      const pend=isPending();
+      const icon=pend
+        ?'<svg class="ic" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>'
+        :'<svg class="ic" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>';
+      ov.innerHTML=icon+
+        (pend||exp?'':'<span class="dtk-need">'+t('dash_need_plan')+' <b>'+needName+'</b></span>')+
+        '<p>'+t(pend?'dash_pending_ov_p':(exp?'dash_expired_p':'dash_locked_p'))+'</p>';
+      if(!pend){
+        const b=document.createElement('button');
+        b.type='button';b.className='btn btn-or';
+        b.textContent=exp?t('dash_expired_cta'):t('dash_locked_cta').replace('{plan}',needName);
+        b.addEventListener('click',()=>{closeDash();if(window.VB_openWizardPay)window.VB_openWizardPay();});
+        ov.appendChild(b);
+      }
       el.appendChild(ov);
     }
     return el;
@@ -6654,7 +7045,17 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
 
   function renderToday(){
     const life=!!(window.VB_isLifetime&&window.VB_isLifetime());
-    document.getElementById('dashExpired').hidden=life||!isExpired();
+    const pend=isPending();
+    const pendBox=document.getElementById('dashPending');
+    pendBox.hidden=!pend;
+    if(pend){
+      const st=getState()||{};
+      document.getElementById('dashPendingSub').textContent=
+        t('dash_pending_sub')+(st.ref?' · '+st.ref:'');
+    }
+    // Bandeau "expire" sans objet tant que le paiement n'a jamais ete
+    // confirme : on ne montre jamais les deux bandeaux a la fois.
+    document.getElementById('dashExpired').hidden=pend||life||!isExpired();
     renderSoon();
     const st=getState();
     const name=(st&&st.fullname?st.fullname.split(' ')[0]:'');
@@ -6755,12 +7156,15 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
     const st=getState()||{};
     const stateEl=document.getElementById('dashSubState');
     const exp=isExpired();
-    stateEl.textContent=t(exp?'dash_sub_expired':'dash_sub_active');
-    stateEl.classList.toggle('is-expired',exp);
-    // Lifetime : aucune option de renouvellement n'apparait
+    const pend=isPending();
+    stateEl.textContent=t(pend?'dash_sub_pending':(exp?'dash_sub_expired':'dash_sub_active'));
+    stateEl.classList.toggle('is-expired',exp&&!pend);
+    stateEl.classList.toggle('is-pending',pend);
+    // Lifetime : aucune option de renouvellement n'apparait.
+    // Pendant l'attente de validation : rien a payer de plus non plus.
     const life=!!(window.VB_isLifetime&&window.VB_isLifetime());
     const upg=document.getElementById('dashSubUpgrade');
-    upg.hidden=life;
+    upg.hidden=life||pend;
     upg.textContent=t(exp?'dash_expired_cta':'dash_sub_upgrade');
     const pl=(window.VB_planById?window.VB_planById(st.planId):null);
     document.getElementById('dashSubName').textContent=pl?String(t(pl.nameKey)).replace(/<[^>]*>/g,''):'—';
@@ -6943,6 +7347,11 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
     viewStack=[];
     renderAll();
     document.getElementById('dashMenuBtn').focus();
+    // Rafraichissement silencieux : un admin a peut-etre valide/refuse
+    // le paiement depuis la derniere visite. Ne bloque jamais l'ouverture.
+    if(window.VB_syncPayStatus){
+      window.VB_syncPayStatus().then(changed=>{ if(changed)renderAll(); });
+    }
   }
   function closeDash(){
     dash.classList.remove('open');
@@ -6982,6 +7391,395 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
   });
 
   window.VB_openDash=openDash;
+})();
+
+/* ================= DASHBOARD ADMIN ================= */
+(function(){
+  const dash=document.getElementById('admDash');
+  if(!dash)return;
+  const T=()=>translations[currentLang]||translations.fr;
+  const t=k=>(T()[k]!=null?T()[k]:(translations.fr[k]||''));
+
+  let view='home';
+  let viewStack=[];
+  let currentUser=null;   // { id, email, username }
+  let selectedUserId=null;
+
+  function setView(next,fromBack){
+    if(next===view)return;
+    if(!fromBack)viewStack.push(view);
+    view=next;
+    document.querySelectorAll('#admDash .dash-menu-item[data-adm]').forEach(x=>x.classList.toggle('on',x.dataset.adm===view));
+    document.querySelectorAll('#admDash .dash-view').forEach(v=>v.classList.toggle('on',v.dataset.adview===view));
+    dash.scrollTop=0;
+    if(view==='home')renderHome();
+    if(view==='users')renderUsers();
+    if(view==='payments')renderPayments();
+  }
+  document.querySelectorAll('#admDash [data-adback]').forEach(b=>{
+    b.addEventListener('click',()=>{
+      if(viewStack.length)setView(viewStack.pop(),true);
+      else setView('home',true);
+      // Regle stricte : un bouton "Retour" ne fait jamais sortir du
+      // Dashboard Admin — au pire il ramene a l'accueil admin.
+    });
+  });
+  document.querySelectorAll('#admDash .dash-menu-item[data-adm]').forEach(b=>{
+    b.addEventListener('click',()=>{closeAdmMenu();setView(b.dataset.adm);});
+  });
+
+  /* ---- Menu ---- */
+  const menuBtn=document.getElementById('admMenuBtn');
+  const menuBox=document.getElementById('admMenu');
+  function closeAdmMenu(){menuBox.classList.remove('on');menuBtn.setAttribute('aria-expanded','false');}
+  menuBtn.addEventListener('click',ev=>{
+    ev.stopPropagation();
+    const on=menuBox.classList.toggle('on');
+    menuBtn.setAttribute('aria-expanded',on);
+    if(on){
+      document.getElementById('admMenuUser').textContent=(currentUser&&(currentUser.username||currentUser.email))||'';
+    }
+  });
+  document.addEventListener('click',ev=>{
+    if(!menuBox.contains(ev.target)&&ev.target!==menuBtn)closeAdmMenu();
+  });
+
+  /* ---- Ouverture / fermeture ----
+     Seul "Quitter le Dashboard Admin" peut fermer completement. Tout le
+     reste (Echap, clic hors-carte, bouton retour du navigateur) reste
+     confine a l'interieur, sur le meme principe deja valide et teste
+     pour le Dashboard utilisateur. */
+  function openAdminDash(user){
+    currentUser={id:user.id,email:user.email,username:(user.user_metadata&&user.user_metadata.username)||''};
+    const logo=document.querySelector('.logo-mark-img img');
+    const al=document.getElementById('admLogo');
+    if(logo&&logo.src&&!al.getAttribute('src'))al.src=logo.src;
+    viewStack=[];
+    dash.classList.add('open');
+    dash.scrollTop=0;
+    document.body.style.overflow='hidden';
+    history.pushState({admDash:true},'');
+    setView('home',true);
+  }
+  function closeAdminDash(){
+    dash.classList.remove('open');
+    closeAdmMenu();
+    document.body.style.overflow='';
+    currentUser=null;
+  }
+  document.getElementById('admMenuExit').addEventListener('click',()=>{
+    closeAdmMenu();
+    closeAdminDash();
+    try{
+      if(window.VB_getSupabase){
+        const sb=window.VB_getSupabase();
+        if(sb&&sb.auth&&typeof sb.auth.signOut==='function')sb.auth.signOut().catch(()=>{});
+      }
+    }catch(e){ /* la sortie du dashboard ne doit jamais dependre de ca */ }
+    // Redirection securisee vers la page de connexion du site.
+    if(document.querySelector('[data-auth-open=login]'))document.querySelector('[data-auth-open=login]').click();
+  });
+  document.addEventListener('keydown',ev=>{
+    if(ev.key!=='Escape'||!dash.classList.contains('open'))return;
+    if(menuBox.classList.contains('on')){closeAdmMenu();return;}
+    if(viewStack.length){setView(viewStack.pop(),true);return;}
+    // Jamais de fermeture complete via Echap : seule la vue s'en va vers l'accueil.
+  });
+  window.addEventListener('popstate',()=>{
+    if(!dash.classList.contains('open'))return;
+    // Le bouton "retour" du navigateur ne doit jamais faire sortir de
+    // l'admin : on reste dedans et on avance simplement dans l'historique interne.
+    if(viewStack.length)setView(viewStack.pop(),true);
+    history.pushState({admDash:true},'');
+  });
+
+  /* ---- Donnees reelles : accueil ---- */
+  function kpi(val,label,tone){
+    return '<div class="dash-kpi"><b'+(tone?' class="'+tone+'"':'')+'>'+val+'</b><span>'+label+'</span></div>';
+  }
+  async function renderHome(){
+    const sb=window.VB_getSupabase&&window.VB_getSupabase();
+    const box=document.getElementById('admKpisHome');
+    if(!sb){box.innerHTML=kpi('—',t('adm_k_offline'));return;}
+    box.innerHTML=kpi('—',t('adm_k_loading'));
+    try{
+      const [{count:users},{count:subsActives},{count:paysPending},{count:tickets}]=await Promise.all([
+        sb.from('profiles').select('id',{count:'exact',head:true}),
+        sb.from('subscriptions').select('id',{count:'exact',head:true}).eq('status','active'),
+        sb.from('payments').select('id',{count:'exact',head:true}).eq('status','pending'),
+        sb.from('tickets').select('id',{count:'exact',head:true})
+      ]);
+      box.innerHTML=
+        kpi(users!=null?users:'—',t('adm_k_users')) +
+        kpi(subsActives!=null?subsActives:'—',t('adm_k_subs_active'),'green') +
+        kpi(paysPending!=null?paysPending:'—',t('adm_k_pay_pending'),'gold') +
+        kpi(tickets!=null?tickets:'—',t('adm_k_tickets'));
+      document.getElementById('admHomeUpdated').textContent=t('adm_updated_at').replace('{t}',new Date().toLocaleTimeString(currentLang==='en'?'en-US':'fr-FR',{hour:'2-digit',minute:'2-digit'}));
+    }catch(e){
+      box.innerHTML=kpi('—',t('adm_k_error'));
+    }
+  }
+  document.getElementById('admHomeRefresh').addEventListener('click',renderHome);
+
+  /* ---- Donnees reelles : utilisateurs ---- */
+  function initiales(txt){
+    return (txt||'?').trim().split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase()||'?';
+  }
+  let usersCache=null;
+  async function chargerUsers(){
+    const sb=window.VB_getSupabase&&window.VB_getSupabase();
+    if(!sb)return [];
+    if(usersCache)return usersCache;
+    try{
+      const {data,error}=await sb.from('profiles')
+        .select('id,email,username,role,created_at')
+        .order('created_at',{ascending:false})
+        .limit(200);
+      usersCache=(!error&&data)?data:[];
+    }catch(e){
+      usersCache=[];   // jamais d'exception non interceptee : on degrade proprement
+    }
+    return usersCache;
+  }
+  async function renderUsers(){
+    const list=document.getElementById('admUserList');
+    const sb=window.VB_getSupabase&&window.VB_getSupabase();
+    if(!sb){list.innerHTML='<div class="admdash-empty">'+t('adm_k_offline')+'</div>';return;}
+    list.innerHTML='<div class="admdash-empty">'+t('adm_k_loading')+'</div>';
+    const users=await chargerUsers();
+    const q=(document.getElementById('admUserSearch').value||'').trim().toLowerCase();
+    const filtres=q?users.filter(u=>(u.email||'').toLowerCase().includes(q)):users;
+    document.getElementById('admUserCount').textContent=t('adm_users_count').replace('{n}',filtres.length);
+    if(!filtres.length){list.innerHTML='<div class="admdash-empty">'+t('adm_users_empty')+'</div>';return;}
+
+    // Abonnement actif de chacun, en un seul aller-retour.
+    let subsByUser={};
+    try{
+      const ids=filtres.map(u=>u.id);
+      const {data:subs}=await sb.from('subscriptions').select('user_id,plan_id,status,expires_at').in('user_id',ids).eq('status','active');
+      (subs||[]).forEach(s=>{subsByUser[s.user_id]=s;});
+    }catch(e){}
+
+    list.innerHTML=filtres.map(u=>{
+      const sub=subsByUser[u.id];
+      let badge='<span class="admdash-row-badge aucun">'+t('adm_badge_none')+'</span>';
+      if(sub){
+        const expire=sub.expires_at&&new Date(sub.expires_at).getTime()<=Date.now();
+        badge='<span class="admdash-row-badge '+(expire?'expire':'actif')+'">'+
+          (sub.plan_id||'').toUpperCase()+(expire?' · '+t('adm_badge_expired'):'')+'</span>';
+      }
+      return '<button type="button" class="admdash-row" data-uid="'+u.id+'">'+
+        '<span class="admdash-row-av">'+initiales(u.username||u.email)+'</span>'+
+        '<span class="admdash-row-tx"><b>'+(u.username||t('adm_no_name'))+'</b><span>'+u.email+'</span></span>'+
+        badge+
+        '</button>';
+    }).join('');
+    list.querySelectorAll('[data-uid]').forEach(b=>{
+      b.addEventListener('click',()=>{selectedUserId=b.dataset.uid;setView('userdetail');renderUserDetail();});
+    });
+  }
+  document.getElementById('admUserSearch').addEventListener('input',()=>{renderUsers();});
+
+  async function renderUserDetail(){
+    const box=document.getElementById('admUserDetail');
+    const sb=window.VB_getSupabase&&window.VB_getSupabase();
+    box.innerHTML='<div class="admdash-empty">'+t('adm_k_loading')+'</div>';
+    if(!sb||!selectedUserId)return;
+    const users=await chargerUsers();
+    const u=users.find(x=>x.id===selectedUserId);
+    if(!u){box.innerHTML='<div class="admdash-empty">'+t('adm_users_empty')+'</div>';return;}
+
+    let subs=[],pays=[];
+    try{
+      const [{data:s},{data:p}]=await Promise.all([
+        sb.from('subscriptions').select('plan_id,status,starts_at,expires_at').eq('user_id',u.id).order('starts_at',{ascending:false}),
+        sb.from('payments').select('plan_id,amount_htg,method,status,reference,created_at').eq('user_id',u.id).order('created_at',{ascending:false})
+      ]);
+      subs=s||[];pays=p||[];
+    }catch(e){}
+
+    const fmt=iso=>iso?new Date(iso).toLocaleDateString(currentLang==='en'?'en-US':'fr-FR',{day:'2-digit',month:'short',year:'numeric'}):'—';
+    const subsHtml=subs.length?subs.map(s=>
+      '<div class="admdash-hist-row"><dt>'+s.plan_id.toUpperCase()+' · '+s.status+'</dt>'+
+      '<dd>'+fmt(s.starts_at)+' → '+(s.expires_at?fmt(s.expires_at):t('wiz_d_never'))+'</dd></div>'
+    ).join('') : '<div class="admdash-hist-empty">'+t('adm_none_yet')+'</div>';
+
+    const paysHtml=pays.length?pays.map(p=>
+      '<div class="admdash-hist-row"><dt>'+p.plan_id.toUpperCase()+' · '+p.method+' · '+p.status+'</dt>'+
+      '<dd>'+p.amount_htg+' HTG · '+fmt(p.created_at)+'</dd></div>'
+    ).join('') : '<div class="admdash-hist-empty">'+t('adm_none_yet')+'</div>';
+
+    box.innerHTML=
+      '<div class="admdash-detail-h">'+
+        '<span class="admdash-detail-av">'+initiales(u.username||u.email)+'</span>'+
+        '<span><span class="admdash-detail-name">'+(u.username||t('adm_no_name'))+'</span>'+
+        '<br><span class="admdash-detail-email">'+u.email+'</span></span>'+
+      '</div>'+
+      '<div class="admdash-section-h">'+t('adm_section_subs')+'</div>'+
+      '<div class="admdash-hist">'+subsHtml+'</div>'+
+      '<div class="admdash-section-h">'+t('adm_section_pays')+'</div>'+
+      '<div class="admdash-hist">'+paysHtml+'</div>';
+  }
+
+  /* ---- Donnees reelles : paiements ----
+     Le statut 'confirmed'/'rejected' d'un paiement ne peut JAMAIS etre
+     atteint autrement que par cette action admin (regle de securite
+     ecrite dans les policies Supabase, pas seulement ici). */
+  let payFilter='pending';
+  let paysCache=null;
+  let selectedPayId=null;
+  async function chargerPaiements(){
+    const sb=window.VB_getSupabase&&window.VB_getSupabase();
+    if(!sb)return [];
+    if(paysCache)return paysCache;
+    try{
+      const {data,error}=await sb.from('payments')
+        .select('id,user_id,subscription_id,plan_id,amount_htg,method,status,reference,reject_reason,created_at')
+        .order('created_at',{ascending:false}).limit(300);
+      paysCache=(!error&&data)?data:[];
+    }catch(e){
+      paysCache=[];   // jamais d'exception non interceptee : on degrade proprement
+    }
+    return paysCache;
+  }
+  async function renderPayments(){
+    const list=document.getElementById('admPayList');
+    const sb=window.VB_getSupabase&&window.VB_getSupabase();
+    if(!sb){list.innerHTML='<div class="admdash-empty">'+t('adm_k_offline')+'</div>';return;}
+    list.innerHTML='<div class="admdash-empty">'+t('adm_k_loading')+'</div>';
+    const [pays,users]=await Promise.all([chargerPaiements(),chargerUsers()]);
+    const usersById={};users.forEach(u=>{usersById[u.id]=u;});
+    const filtres=payFilter==='all'?pays:pays.filter(p=>p.status===payFilter);
+    document.getElementById('admPayCount').textContent=t('adm_pay_count').replace('{n}',filtres.length);
+    if(!filtres.length){list.innerHTML='<div class="admdash-empty">'+t('adm_pay_empty')+'</div>';return;}
+    const fmt=iso=>iso?new Date(iso).toLocaleDateString(currentLang==='en'?'en-US':'fr-FR',{day:'2-digit',month:'short',year:'numeric'}):'—';
+    const badgeCls={pending:'pending',confirmed:'actif',rejected:'expire'};
+    const badgeLbl={pending:'adm_pay_f_pending',confirmed:'adm_pay_f_confirmed',rejected:'adm_pay_f_rejected'};
+    list.innerHTML=filtres.map(p=>{
+      const u=usersById[p.user_id];
+      const nom=u?(u.username||u.email):p.user_id;
+      return '<button type="button" class="admdash-row" data-pid="'+p.id+'">'+
+        '<span class="admdash-row-av">'+(p.plan_id||'?').toUpperCase().slice(0,2)+'</span>'+
+        '<span class="admdash-row-tx"><b>'+nom+'</b><span>'+(p.amount_htg||0)+' HTG · '+
+        (p.method||'—')+' · '+fmt(p.created_at)+'</span></span>'+
+        '<span class="admdash-row-badge '+(badgeCls[p.status]||'aucun')+'">'+t(badgeLbl[p.status]||'adm_badge_none')+'</span>'+
+        '</button>';
+    }).join('');
+    list.querySelectorAll('[data-pid]').forEach(b=>{
+      b.addEventListener('click',()=>{selectedPayId=b.dataset.pid;setView('paydetail');renderPayDetail();});
+    });
+  }
+  document.querySelectorAll('#admPayFilter .dash-fbtn').forEach(b=>{
+    b.addEventListener('click',()=>{
+      payFilter=b.dataset.val;
+      document.querySelectorAll('#admPayFilter .dash-fbtn').forEach(x=>x.classList.toggle('on',x===b));
+      renderPayments();
+    });
+  });
+
+  async function renderPayDetail(){
+    const box=document.getElementById('admPayDetail');
+    const sb=window.VB_getSupabase&&window.VB_getSupabase();
+    box.innerHTML='<div class="admdash-empty">'+t('adm_k_loading')+'</div>';
+    if(!sb||!selectedPayId)return;
+    const [pays,users]=await Promise.all([chargerPaiements(),chargerUsers()]);
+    const p=pays.find(x=>x.id===selectedPayId);
+    if(!p){box.innerHTML='<div class="admdash-empty">'+t('adm_pay_empty')+'</div>';return;}
+    const u=users.find(x=>x.id===p.user_id);
+    const fmt=iso=>iso?new Date(iso).toLocaleDateString(currentLang==='en'?'en-US':'fr-FR',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}):'—';
+    const methodLbl={moncash:'MonCash',natcash:'NatCash',stripe:'Stripe (Carte/PayPal)'};
+    const statusLbl={pending:t('adm_pay_f_pending'),confirmed:t('adm_pay_f_confirmed'),rejected:t('adm_pay_f_rejected')};
+
+    box.innerHTML=
+      '<div class="admdash-detail-h">'+
+        '<span class="admdash-detail-av">'+(p.plan_id||'?').toUpperCase().slice(0,2)+'</span>'+
+        '<span><span class="admdash-detail-name">'+(u?(u.username||t('adm_no_name')):t('adm_no_name'))+'</span>'+
+        '<br><span class="admdash-detail-email">'+(u?u.email:'—')+'</span></span>'+
+      '</div>'+
+      '<dl class="wiz-done-sum" style="margin-top:16px">'+
+        '<div><dt>'+t('adm_pay_plan')+'</dt><dd>'+(p.plan_id||'—').toUpperCase()+'</dd></div>'+
+        '<div><dt>'+t('adm_pay_amount')+'</dt><dd>'+(p.amount_htg||0)+' HTG</dd></div>'+
+        '<div><dt>'+t('adm_pay_method')+'</dt><dd>'+(methodLbl[p.method]||p.method||'—')+'</dd></div>'+
+        '<div><dt>'+t('adm_pay_ref')+'</dt><dd>'+(p.reference||'—')+'</dd></div>'+
+        '<div><dt>'+t('adm_pay_date')+'</dt><dd>'+fmt(p.created_at)+'</dd></div>'+
+        '<div><dt>'+t('adm_pay_status')+'</dt><dd>'+statusLbl[p.status]+'</dd></div>'+
+      '</dl>'+
+      (p.status==='rejected'&&p.reject_reason?
+        '<div class="admdash-section-h">'+t('adm_pay_reason_h')+'</div>'+
+        '<div class="admdash-hist"><div class="admdash-hist-row"><dd>'+p.reject_reason+'</dd></div></div>'
+        :'')+
+      (p.status==='pending'?
+        '<div class="admdash-section-h">'+t('adm_pay_action_h')+'</div>'+
+        '<label class="field"><span class="field-lbl">'+t('adm_pay_reason_lbl')+'</span>'+
+        '<textarea id="admPayReason" placeholder="'+t('adm_pay_reason_ph')+'"></textarea></label>'+
+        '<div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap">'+
+        '<button type="button" class="btn btn-confirm" id="admPayValider" style="flex:1">'+t('adm_pay_valider')+'</button>'+
+        '<button type="button" class="btn btn-reject" id="admPayRefuser" style="flex:1">'+t('adm_pay_refuser')+'</button>'+
+        '</div><div id="admPayActionErr" class="field-err" style="display:none;margin-top:8px"></div>'
+        :'');
+
+    if(p.status==='pending'){
+      document.getElementById('admPayValider').addEventListener('click',()=>traiterPaiement(p,'confirmed'));
+      document.getElementById('admPayRefuser').addEventListener('click',()=>{
+        const raison=(document.getElementById('admPayReason').value||'').trim();
+        const err=document.getElementById('admPayActionErr');
+        if(!raison){err.textContent=t('adm_pay_reason_required');err.style.display='block';return;}
+        err.style.display='none';
+        traiterPaiement(p,'rejected',raison);
+      });
+    }
+  }
+
+  /* 1 raison reelle = 1 action. La validation/refus est TOUJOURS ecrite
+     cote serveur (jamais reproductible depuis le navigateur d'un
+     utilisateur normal) — c'est cette fonction, et elle seule, qui fait
+     passer un paiement a 'confirmed'/'rejected' et l'abonnement associe
+     a 'active'/'cancelled'. */
+  async function traiterPaiement(p,newStatus,raison){
+    const sb=window.VB_getSupabase&&window.VB_getSupabase();
+    if(!sb)return;
+    const btnV=document.getElementById('admPayValider');
+    const btnR=document.getElementById('admPayRefuser');
+    if(btnV)btnV.disabled=true;
+    if(btnR)btnR.disabled=true;
+    try{
+      const payUpdate={status:newStatus};
+      if(newStatus==='rejected')payUpdate.reject_reason=raison||null;
+      const {error:payErr}=await sb.from('payments').update(payUpdate).eq('id',p.id);
+      if(payErr)throw payErr;
+      if(p.subscription_id){
+        const subStatus=newStatus==='confirmed'?'active':'cancelled';
+        await sb.from('subscriptions').update({status:subStatus}).eq('id',p.subscription_id);
+      }
+      // Journal d'audit — schema reel : id, admin_id, action, target_user_id,
+      // old_value (jsonb), new_value (jsonb), reason, created_at.
+      // Degrade silencieusement si l'ecriture echoue (ne bloque jamais
+      // l'action principale, deja ecrite ci-dessus).
+      try{
+        await sb.from('audit_log').insert({
+          admin_id:(currentUser&&currentUser.id)||null,
+          action:newStatus==='confirmed'?'payment_confirmed':'payment_rejected',
+          target_user_id:p.user_id||null,
+          old_value:{payment_id:p.id, status:'pending'},
+          new_value:{payment_id:p.id, status:newStatus, subscription_id:p.subscription_id||null},
+          reason:newStatus==='rejected'?(raison||null):null
+        });
+      }catch(e){}
+      paysCache=null;   // le prochain affichage relira l'etat reel
+      if(window.VB_toast)window.VB_toast(
+        newStatus==='confirmed'?'adm_pay_toast_confirmed_h':'adm_pay_toast_rejected_h',
+        t(newStatus==='confirmed'?'adm_pay_toast_confirmed_p':'adm_pay_toast_rejected_p')
+      );
+      if(viewStack.length)setView(viewStack.pop(),true);else setView('payments',true);
+    }catch(e){
+      const err=document.getElementById('admPayActionErr');
+      if(err){err.textContent=t('adm_pay_action_error');err.style.display='block';}
+      if(btnV)btnV.disabled=false;
+      if(btnR)btnR.disabled=false;
+    }
+  }
+
+  window.VB_openAdminDash=openAdminDash;
 })();
 
 /* ---------- Envoi reel du code de verification (Resend via Netlify) ---------- */
