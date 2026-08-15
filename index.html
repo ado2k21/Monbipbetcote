@@ -5562,6 +5562,35 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
   /* MonCash et NatCash sont en paiement automatique : aucun numero n'est
      demande avant le clic sur "Payer". Le prestataire collecte le numero
      sur sa propre page, ce qui evite de le saisir deux fois. */
+  /* Enregistrement reel de l'abonnement et du paiement dans Supabase.
+     Jamais bloquant : le parcours local (deja engage de facon synchrone
+     juste avant) ne depend jamais du reseau. Le paiement est toujours
+     ecrit avec le statut "pending" — seul un admin pourra le confirmer,
+     jamais le site lui-meme (regle de securite ecrite dans la base). */
+  async function syncAbonnementSupabase(){
+    const sb=window.VB_getSupabase&&window.VB_getSupabase();
+    if(!sb)return;
+    try{
+      let uid=state.supabaseUserId;
+      if(!uid){
+        const {data:sessionData}=await sb.auth.getSession();
+        uid=(sessionData&&sessionData.session&&sessionData.session.user)?sessionData.session.user.id:null;
+      }
+      if(!uid)return;   // compte pas encore reconnu par Supabase : rien a synchroniser
+      const pl=planById(state.planId);
+      const {data:subData,error:subErr}=await sb.from('subscriptions').insert({
+        user_id:uid, plan_id:state.planId, status:'active',
+        starts_at:state.startDate, expires_at:state.endDate
+      }).select('id').single();
+      if(subErr)return;
+      await sb.from('payments').insert({
+        user_id:uid, subscription_id:subData?subData.id:null, plan_id:state.planId,
+        amount_htg:pl?pl.prix:0, method:state.payMethod,
+        status:'pending', reference:state.ref
+      });
+    }catch(e){ /* degrade silencieusement : le parcours local n'est jamais bloque */ }
+  }
+
   function completePayment(method){
     if(sessionPerimee){
       if(window.VB_toast)window.VB_toast('session_stale_h',t('session_stale_p'));
@@ -5635,6 +5664,7 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
       if(window.VB_notify)window.VB_notify('plan',t('notif_renewed').replace('{plan}',
         String(t((planById(state.planId)||{}).nameKey||'')).replace(/<[^>]*>/g,'')));
     }
+    syncAbonnementSupabase();   // en parallele, sans jamais bloquer l'affichage
     showStep(4);
   }
 
@@ -5869,13 +5899,96 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
 
   /* ================= CONNEXION ================= */
   const fL=document.getElementById('authFormLogin');
-  fL.addEventListener('submit',ev=>{
+  fL.addEventListener('submit',async ev=>{
     ev.preventDefault();
     const id=fL.querySelector('[name=loginId]'),pw=fL.querySelector('[name=loginPassword]');
     let ok=true;
     if(!id.value.trim()){setErr(id.closest('.field'),'auth_err_required');ok=false}else setErr(id.closest('.field'),null);
     if(!pw.value){setErr(pw.closest('.field'),'auth_err_required');ok=false}else setErr(pw.closest('.field'),null);
     if(!ok)return;
+
+    /* Connexion reelle via Supabase, en priorite. Si Supabase est
+       injoignable (reseau, CDN), on se replie sur l'ancien registre local
+       ci-dessous, sans jamais laisser l'utilisateur bloque. */
+    const sb=window.VB_getSupabase&&window.VB_getSupabase();
+    if(sb&&isEmail(id.value.trim())){
+      const loginBtn=fL.querySelector('button[type=submit]');
+      loginBtn.disabled=true;
+      try{
+        const {data,error}=await sb.auth.signInWithPassword({
+          email:id.value.trim().toLowerCase(),
+          password:pw.value
+        });
+        loginBtn.disabled=false;
+        if(!error&&data&&data.user){
+          const localAcc=accounts.find(data.user.email);
+          if(localAcc&&isComplete(localAcc)){
+            // Identite reelle confirmee ET abonnement connu sur cet appareil :
+            // comportement inchange, acces direct au dashboard.
+            state=Object.assign(blank(),{
+              step:4, started:false, fullname:localAcc.fullname, email:localAcc.email, pass:localAcc.pass,
+              site:localAcc.site||'paryajpam', supabaseUserId:data.user.id,
+              planId:localAcc.planId, emailVerified:true, paid:true, payMethod:localAcc.payMethod,
+              startDate:localAcc.startDate, endDate:localAcc.endDate, ref:localAcc.ref
+            });
+            save();
+            closeAuth();
+            requestAnimationFrame(()=>{if(window.VB_openDash)window.VB_openDash();});
+            return;
+          }
+
+          // Rien sur CET appareil : on va chercher l'abonnement REEL dans
+          // Supabase avant de conclure qu'il n'y en a pas. C'est ce qui
+          // permet desormais de se connecter depuis un nouvel appareil
+          // sans perdre son abonnement.
+          const meta=data.user.user_metadata||{};
+          const identite={
+            email:data.user.email, fullname:meta.username||'',
+            site:meta.preferred_site||'paryajpam', supabaseUserId:data.user.id
+          };
+          let abonnementReel=null;
+          try{
+            const {data:subs}=await sb.from('subscriptions')
+              .select('plan_id,status,starts_at,expires_at')
+              .eq('user_id',data.user.id).eq('status','active')
+              .order('starts_at',{ascending:false}).limit(1);
+            if(subs&&subs.length)abonnementReel=subs[0];
+          }catch(e){ /* Supabase injoignable pour cette lecture : on degrade vers le paiement */ }
+
+          if(abonnementReel){
+            /* "paid" signifie "a deja paye au moins une fois" — jamais remis
+               a false a l'expiration. C'est isExpired()/subscriptionExpired()
+               qui verrouille les cotes DANS le dashboard ; l'acces au
+               dashboard lui-meme reste ouvert, exactement comme pour un
+               compte cree localement. Ne pas confondre les deux notions. */
+            state=Object.assign(blank(),{
+              step:4, started:false, ...identite, emailVerified:true,
+              planId:abonnementReel.plan_id, paid:true,
+              startDate:abonnementReel.starts_at, endDate:abonnementReel.expires_at
+            });
+            save();
+            closeAuth();
+            requestAnimationFrame(()=>{if(window.VB_openDash)window.VB_openDash();});
+          }else{
+            // Aucun abonnement, ni localement ni dans Supabase : parcours
+            // de paiement, avec l'identite reelle deja restauree.
+            state=Object.assign(blank(),{...identite, emailVerified:true, started:false});
+            save();
+            showMode('wizard');
+            showStep(pageDe(requiredStep(state)));
+          }
+          return;
+        }
+        if(error&&/invalid/i.test(error.message||'')){
+          setErr(pw.closest('.field'),'auth_err_badpass');
+          return;
+        }
+        // Autre erreur Supabase (reseau, service indisponible) : on se
+        // replie silencieusement sur l'ancien systeme local ci-dessous.
+      }catch(e){
+        loginBtn.disabled=false;
+      }
+    }
 
     const acc=accounts.find(id.value);
     if(acc&&isComplete(acc)){
