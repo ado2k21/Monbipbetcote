@@ -32,21 +32,15 @@ exports.handler = async (event) => {
       };
     }
 
-    /*
-     * =========================================================
-     * CONTENU DES DIFFÉRENTS EMAILS
-     * =========================================================
-     */
-
     let subject;
     let title;
     let message;
     let securityMessage;
 
     /*
-     * ---------------------------------------------------------
-     * 1. VÉRIFICATION DE L'EMAIL
-     * ---------------------------------------------------------
+     * =========================================================
+     * VÉRIFICATION DE L'EMAIL
+     * =========================================================
      */
 
     if (type === 'verification') {
@@ -55,8 +49,8 @@ exports.handler = async (event) => {
       title = 'Vérification de votre adresse e-mail';
 
       message = `
-        Voici le code de vérification dont vous avez besoin
-        pour continuer sur VIPBETCOTE.
+        Voici votre code de vérification pour continuer
+        sur VIPBETCOTE.
       `;
 
       securityMessage = `
@@ -66,19 +60,18 @@ exports.handler = async (event) => {
     }
 
     /*
-     * ---------------------------------------------------------
-     * 2. RÉINITIALISATION DU MOT DE PASSE
-     * ---------------------------------------------------------
+     * =========================================================
+     * RÉINITIALISATION DU MOT DE PASSE
+     * =========================================================
      */
 
     else if (type === 'password_reset') {
-      subject = 'Réinitialisation de votre mot de passe VIPBETCOTE';
+      subject = 'Code de réinitialisation de votre mot de passe VIPBETCOTE';
 
       title = 'Réinitialisation de votre mot de passe';
 
       message = `
-        Vous avez demandé à réinitialiser le mot de passe
-        de votre compte VIPBETCOTE.
+        Voici votre code de réinitialisation de mot de passe.
       `;
 
       securityMessage = `
@@ -89,9 +82,9 @@ exports.handler = async (event) => {
     }
 
     /*
-     * ---------------------------------------------------------
+     * =========================================================
      * TYPE INCONNU
-     * ---------------------------------------------------------
+     * =========================================================
      */
 
     else {
@@ -106,10 +99,9 @@ exports.handler = async (event) => {
       };
     }
 
-
     /*
      * =========================================================
-     * TEMPLATE EMAIL VIPBETCOTE
+     * TEMPLATE EMAIL
      * =========================================================
      */
 
@@ -154,11 +146,7 @@ exports.handler = async (event) => {
 >
 
 
-  <!--
-  ============================================================
-  WRAPPER PRINCIPAL
-  ============================================================
-  -->
+  <!-- WRAPPER -->
 
   <table
     width="100%"
@@ -179,11 +167,7 @@ exports.handler = async (event) => {
       <td align="center">
 
 
-        <!--
-        ======================================================
-        CARTE EMAIL
-        ======================================================
-        -->
+        <!-- CARTE EMAIL -->
 
         <table
           width="100%"
@@ -202,50 +186,23 @@ exports.handler = async (event) => {
         >
 
 
-          <!--
-          ====================================================
-          HEADER
-          ====================================================
-          -->
+          <!-- HEADER SANS LOGO -->
 
           <tr>
 
             <td
               align="center"
               style="
-                padding:38px 25px 30px;
+                padding:35px 25px 28px;
                 background-color:#030617;
               "
             >
 
-
-              <!-- LOGO -->
-
-              <img
-                src="https://vipbet.netlify.app/logo-email.png"
-                alt="VIPBETCOTE"
-                width="190"
-                style="
-                  display:block;
-                  width:190px;
-                  max-width:80%;
-                  height:auto;
-                  margin:0 auto;
-                  border:0;
-                  outline:none;
-                  text-decoration:none;
-                "
-              >
-
-
-              <!-- NOM -->
-
               <div
                 style="
-                  margin-top:16px;
                   font-family:Arial,Helvetica,sans-serif;
-                  font-size:17px;
-                  line-height:22px;
+                  font-size:19px;
+                  line-height:25px;
                   font-weight:800;
                   letter-spacing:1px;
                   color:#F4F3ED;
@@ -265,25 +222,20 @@ exports.handler = async (event) => {
                   font-size:12px;
                   line-height:18px;
                   font-weight:600;
-                  letter-spacing:1.5px;
+                  letter-spacing:1.2px;
                   color:#C9A44C;
                   text-align:center;
                 "
               >
-                Genyen Chak Lè Jwe
+                Genyen chak lèw jwe
               </div>
-
 
             </td>
 
           </tr>
 
 
-          <!--
-          ====================================================
-          ACCENT VERT
-          ====================================================
-          -->
+          <!-- ACCENT VERT -->
 
           <tr>
 
@@ -302,11 +254,7 @@ exports.handler = async (event) => {
           </tr>
 
 
-          <!--
-          ====================================================
-          CONTENU
-          ====================================================
-          -->
+          <!-- CONTENU -->
 
           <tr>
 
@@ -318,7 +266,7 @@ exports.handler = async (event) => {
             >
 
 
-              <!-- PETIT LABEL -->
+              <!-- LABEL -->
 
               <div
                 style="
@@ -372,11 +320,7 @@ exports.handler = async (event) => {
               </p>
 
 
-              <!--
-              =================================================
-              CODE BOX
-              =================================================
-              -->
+              <!-- CODE -->
 
               <table
                 width="100%"
@@ -401,9 +345,6 @@ exports.handler = async (event) => {
                     "
                   >
 
-
-                    <!-- LABEL CODE -->
-
                     <div
                       style="
                         margin-bottom:12px;
@@ -419,8 +360,6 @@ exports.handler = async (event) => {
                     </div>
 
 
-                    <!-- CODE -->
-
                     <div
                       style="
                         font-family:'Courier New',Courier,monospace;
@@ -435,7 +374,6 @@ exports.handler = async (event) => {
                       ${code}
                     </div>
 
-
                   </td>
 
                 </tr>
@@ -443,11 +381,7 @@ exports.handler = async (event) => {
               </table>
 
 
-              <!--
-              =================================================
-              EXPIRATION
-              =================================================
-              -->
+              <!-- EXPIRATION -->
 
               <p
                 style="
@@ -474,11 +408,7 @@ exports.handler = async (event) => {
               </p>
 
 
-              <!--
-              =================================================
-              MESSAGE DE SÉCURITÉ
-              =================================================
-              -->
+              <!-- SÉCURITÉ -->
 
               <p
                 style="
@@ -500,11 +430,7 @@ exports.handler = async (event) => {
           </tr>
 
 
-          <!--
-          ====================================================
-          FOOTER
-          ====================================================
-          -->
+          <!-- FOOTER -->
 
           <tr>
 
@@ -516,9 +442,6 @@ exports.handler = async (event) => {
                 border-top:1px solid rgba(244,243,237,.09);
               "
             >
-
-
-              <!-- NOM -->
 
               <div
                 style="
@@ -535,8 +458,6 @@ exports.handler = async (event) => {
               </div>
 
 
-              <!-- SLOGAN -->
-
               <div
                 style="
                   margin-bottom:13px;
@@ -548,11 +469,9 @@ exports.handler = async (event) => {
                   color:#C9A44C;
                 "
               >
-                Genyen Chak Lè Jwe
+                Genyen chak lèw jwe
               </div>
 
-
-              <!-- COPYRIGHT -->
 
               <div
                 style="
@@ -565,14 +484,12 @@ exports.handler = async (event) => {
                 © 2026 VIPBETCOTE — Tous droits réservés.
               </div>
 
-
             </td>
 
           </tr>
 
 
         </table>
-
 
       </td>
 
@@ -589,7 +506,7 @@ exports.handler = async (event) => {
 
     /*
      * =========================================================
-     * ENVOI AVEC RESEND
+     * RESEND
      * =========================================================
      */
 
@@ -618,12 +535,6 @@ exports.handler = async (event) => {
     );
 
 
-    /*
-     * =========================================================
-     * RÉPONSE RESEND
-     * =========================================================
-     */
-
     const data = await resp.json();
 
 
@@ -641,12 +552,6 @@ exports.handler = async (event) => {
 
     }
 
-
-    /*
-     * =========================================================
-     * SUCCÈS
-     * =========================================================
-     */
 
     return {
 
