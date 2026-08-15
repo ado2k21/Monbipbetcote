@@ -4079,6 +4079,8 @@ pay_timeout_p:"Par sécurité, veuillez recommencer.",
 session_stale_h:"Compte ouvert ailleurs",
 session_stale_p:"Ce compte est ouvert dans une autre fenêtre. Rafraîchissez la page pour continuer.",
 dash_menu_lang:"Langue",
+sb_sync_err_h:"Compte créé localement uniquement",
+sb_sync_err_p:"La synchronisation avec le serveur a échoué. Réessayez plus tard depuis Mon abonnement.",
 pwr_back_dash:"Retour au tableau de bord",
 wiz_sending:"Voye...",
 wiz_v_fallback:"Nous n'avons pas pu envoyer l'e-mail — utilisez ce code pour continuer",
@@ -4296,6 +4298,8 @@ pay_timeout_p:"For security, please start again.",
 session_stale_h:"Account open elsewhere",
 session_stale_p:"This account is open in another window. Refresh the page to continue.",
 dash_menu_lang:"Language",
+sb_sync_err_h:"Account created locally only",
+sb_sync_err_p:"Server sync failed. Try again later from My subscription.",
 pwr_back_dash:"Back to dashboard",
 wiz_sending:"Sending...",
 wiz_v_fallback:"We couldn't send the email — use this code to continue",
@@ -4513,6 +4517,8 @@ pay_timeout_p:"Pou sekirite, tanpri rekòmanse.",
 session_stale_h:"Kont ouvri yon lòt kote",
 session_stale_p:"Kont sa a ouvri nan yon lòt fenèt. Rafrechi paj la pou kontinye.",
 dash_menu_lang:"Lang",
+sb_sync_err_h:"Kont kreye sèlman lokalman",
+sb_sync_err_p:"Senkronizasyon ak sèvè a echwe. Eseye ankò pita.",
 pwr_back_dash:"Retounen nan Dashboard la",
 wiz_sending:"Ap voye...",
 wiz_v_fallback:"Nou pa t kapab voye imèl la — itilize kòd sa a pou kontinye",
@@ -5298,6 +5304,14 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
         showMode('login');
         if(window.VB_toast)window.VB_toast('auth_taken_h',t('auth_taken_sub'));
         return;
+      }
+      /* Le compte local avance toujours (jamais bloque), mais si la
+         synchronisation avec le serveur a echoue, on le dit clairement —
+         plutot que de laisser croire a tort que le compte existe partout. */
+      if(res.hors_ligne){
+        const d=translations[currentLang]||translations.fr;
+        const detail=res.erreur?(' — '+String(res.erreur).slice(0,160)):'';
+        if(window.VB_toast)window.VB_toast('sb_sync_err_h',(d.sb_sync_err_p||'')+detail);
       }
       state.emailVerified=true;
       state.step=3;
