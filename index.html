@@ -5828,11 +5828,23 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
       if(state.email&&state.email.toLowerCase()===pwr.email.toLowerCase())
         {state.pass=acc.pass;save();}
     }
-    const backToDash=pwr.origin==='dashboard';
+    /* Apres un changement de mot de passe reussi : si ce compte a deja une
+       inscription complete (paiement reussi), on ouvre directement le
+       dashboard — inutile de faire retaper le nouveau mot de passe a
+       quelqu'un qui vient de le prouver a l'instant. Vrai quel que soit
+       le point d'entree (page de connexion ou depuis le dashboard). */
+    const compteComplet=isComplete(acc);
     pwr={stage:'mail',email:'',code:null,verified:false,origin:'login'};
     leavePwReset();
     if(window.VB_toast)window.VB_toast('pwr_toast_h',t('pwr_toast_p'));
-    if(backToDash){
+    if(compteComplet){
+      state=Object.assign(blank(),{
+        step:4, started:false, fullname:acc.fullname, email:acc.email, pass:acc.pass,
+        site:acc.site||'paryajpam',
+        planId:acc.planId, emailVerified:true, paid:true, payMethod:acc.payMethod,
+        startDate:acc.startDate, endDate:acc.endDate, ref:acc.ref
+      });
+      save();
       closeAuth();
       requestAnimationFrame(()=>{if(window.VB_openDash)window.VB_openDash();});
     }else{
@@ -5979,12 +5991,14 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
           }
           return;
         }
-        if(error&&/invalid/i.test(error.message||'')){
-          setErr(pw.closest('.field'),'auth_err_badpass');
-          return;
-        }
-        // Autre erreur Supabase (reseau, service indisponible) : on se
-        // replie silencieusement sur l'ancien systeme local ci-dessous.
+        /* Supabase renvoie EXACTEMENT le meme message "Invalid login
+           credentials" que l'email n'existe pas du tout chez lui OU que
+           le mot de passe soit faux (choix delibere de Supabase, pour
+           qu'on ne puisse pas deviner quels emails sont enregistres).
+           On ne peut donc PAS conclure "mauvais mot de passe" ici : un
+           compte cree avant la migration (comme footinedit@gmail.com)
+           n'existe simplement pas encore chez Supabase, et doit continuer
+           a fonctionner via l'ancien registre local ci-dessous. */
       }catch(e){
         loginBtn.disabled=false;
       }
