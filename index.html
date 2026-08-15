@@ -6589,23 +6589,32 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
      paiement depuis la derniere visite, sans jamais bloquer l'affichage.
      Ne fait rien si le compte n'est pas rattache a Supabase (compte
      pre-migration, ou hors ligne) — degrade proprement dans ce cas. */
+  /* CORRECTIF IMPORTANT : cette fonction ne doit JAMAIS se fier au
+     "dernier abonnement" de la personne — une ancienne ligne orpheline
+     (ex. un test anterieur, ou une ecriture qui a echoue puis reussi
+     plus tard) pourrait alors etre confondue avec le paiement EN COURS
+     et debloquer le contenu a tort. On va chercher, via la reference
+     unique de CE paiement precis (state.ref), le paiement qui lui
+     correspond exactement — jamais un autre. */
   window.VB_syncPayStatus=async function(){
     const sb=window.VB_getSupabase&&window.VB_getSupabase();
-    if(!sb||!state.supabaseUserId||!state.paid)return false;
+    if(!sb||!state.paid||!state.ref)return false;
     try{
-      const {data:subs}=await sb.from('subscriptions')
-        .select('plan_id,status,starts_at,expires_at')
-        .eq('user_id',state.supabaseUserId)
-        .order('starts_at',{ascending:false}).limit(1);
-      if(!subs||!subs.length)return false;
-      const sub=subs[0];
-      const nouveau=sub.status==='active'?'confirmed':(sub.status==='cancelled'?'rejected':'pending');
+      const {data:pays}=await sb.from('payments')
+        .select('status,subscription_id,plan_id')
+        .eq('reference',state.ref).limit(1);
+      if(!pays||!pays.length)return false;   // ce paiement precis n'existe pas encore cote serveur
+      const pay=pays[0];
+      const nouveau=pay.status==='confirmed'?'confirmed':(pay.status==='rejected'?'rejected':'pending');
       if(nouveau===state.payStatus)return false;   // rien de nouveau
       state.payStatus=nouveau;
-      if(sub.status==='active'){
-        state.planId=sub.plan_id;
-        state.startDate=sub.starts_at;
-        state.endDate=sub.expires_at;
+      if(nouveau==='confirmed'&&pay.subscription_id){
+        try{
+          const {data:sub}=await sb.from('subscriptions')
+            .select('plan_id,starts_at,expires_at')
+            .eq('id',pay.subscription_id).single();
+          if(sub){state.planId=sub.plan_id;state.startDate=sub.starts_at;state.endDate=sub.expires_at;}
+        }catch(e){ /* la date exacte n'a pas pu etre relue : le deverrouillage reste valide */ }
       }
       save();
       return true;
