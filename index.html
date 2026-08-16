@@ -4283,6 +4283,8 @@ wiz_v_sub2:"Nous avons envoyé un code à 6 chiffres à votre adresse.",
 wiz_v_back:"Changer d'adresse e-mail",
 dash_tag_pair:"À jouer par 2", dash_score_count:"{n} scores exacts",
 plan_changed_carry:"Vos {n} jour(s) restant(s) ont été ajoutés.",
+renew_err_pending:"Votre paiement précédent est encore en attente de validation par notre équipe. Vous pourrez changer ou renouveler votre plan une fois qu'il sera confirmé.",
+pending_toast_h:"Paiement en attente",
 renew_err_encours:"Ce plan est déjà en cours.",
 renew_err_lifetime:"Vous possédez déjà l'abonnement à vie (Lifetime) — aucun changement n'est nécessaire.",
 renew_toast_h:"Renouvellement impossible",
@@ -4530,6 +4532,8 @@ wiz_v_sub2:"We sent a 6-digit code to your address.",
 wiz_v_back:"Change email address",
 dash_tag_pair:"Play in pairs", dash_score_count:"{n} correct scores",
 plan_changed_carry:"Your {n} remaining day(s) were added.",
+renew_err_pending:"Your previous payment is still awaiting verification by our team. You'll be able to change or renew your plan once it's confirmed.",
+pending_toast_h:"Payment pending",
 renew_err_encours:"This plan is already active.",
 renew_err_lifetime:"You already own the Lifetime plan — no change is needed.",
 renew_toast_h:"Renewal not possible",
@@ -4777,6 +4781,8 @@ wiz_v_sub2:"Nou voye yon kòd 6 chif nan imèl ou.",
 wiz_v_back:"Chanje imèl la",
 dash_tag_pair:"Jwe pa de", dash_score_count:"{n} eskò egzak",
 plan_changed_carry:"{n} jou ki te rete ou yo ajoute.",
+renew_err_pending:"Peman anvan ou an toujou ap tann ekip nou an verifye li. W ap ka chanje oswa renouvle plan ou depi li konfime.",
+pending_toast_h:"Peman ap tann",
 renew_err_encours:"Plan sa a deja an kou.",
 renew_err_lifetime:"Ou gen deja abònman Lifetime a — pa gen chanjman ki nesesè.",
 renew_toast_h:"Nou pa ka renouvle",
@@ -5363,6 +5369,10 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
   */
   function renouvellementPermis(st,planVise){
     if(!st||!st.paid)return {ok:true};                       // 1re souscription
+    // Aucun deuxieme paiement possible tant que le premier n'est pas
+    // confirme : sinon deux paiements 'pending' s'empileraient pour la
+    // meme personne, et l'admin ne saurait plus lequel valider.
+    if(st.payStatus==='pending')return {ok:false,raison:'renew_err_pending'};
     if(st.planId==='p4')return {ok:false,raison:'renew_err_lifetime'};
 
     const fin=enPeriodeDeFin(st);
@@ -5933,7 +5943,7 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
     const permis=renouvellementPermis(state,planCible);
     if(!permis.ok){
       // 1 raison reelle = 1 message ; jamais de texte generique.
-      const TITRE={renew_err_encours:'renew_toast_h',renew_err_lifetime:'lifetime_toast_h',renew_err_inferieur:'change_toast_h'};
+      const TITRE={renew_err_encours:'renew_toast_h',renew_err_lifetime:'lifetime_toast_h',renew_err_inferieur:'change_toast_h',renew_err_pending:'pending_toast_h'};
       payErr.textContent=t(permis.raison);
       payErr.style.display='block';
       payErr.scrollIntoView({block:'nearest'});
@@ -6626,6 +6636,11 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
   window.VB_openWizardPay=function(from,fromDashboard){
     const need=requiredStep(state);
     if(need<3){openAuth('wizard',from,need);return;}   // parcours encore incomplet
+    // Aucun deuxieme paiement tant que le premier attend confirmation admin.
+    if(state.paid&&state.payStatus==='pending'){
+      if(window.VB_toast)window.VB_toast('pending_toast_h',t('renew_err_pending'));
+      return;
+    }
     // Le Lifetime ne se renouvelle jamais
     if(state.paid&&state.planId==='p4'){
       if(window.VB_toast)window.VB_toast('renew_toast_h',t('renew_err_lifetime'));
