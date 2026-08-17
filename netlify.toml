@@ -1,2 +1,4 @@
 [functions]
   directory = "netlify/functions"
+[functions."subscription-reminders"]
+  schedule = "0 14 * * *"
