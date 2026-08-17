@@ -58,8 +58,10 @@ exports.handler = async (event) => {
     }
 
     // Retrouver le vrai compte Supabase Auth correspondant a cet email.
+    // Meme correctif : lire la liste complete plutot que de dependre du
+    // filtre "?email=..." non garanti.
     const usersResp = await fetch(
-      `${SUPABASE_URL}/auth/v1/admin/users?email=${encodeURIComponent(emailNorm)}`,
+      `${SUPABASE_URL}/auth/v1/admin/users?per_page=1000`,
       { headers: { apikey: SUPABASE_SERVICE_ROLE_KEY, Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}` } }
     );
     if (!usersResp.ok) {
