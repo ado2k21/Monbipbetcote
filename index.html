@@ -4323,6 +4323,7 @@ adm_pay_toast_confirmed_h:"Paiement validé", adm_pay_toast_confirmed_p:"L'abonn
 adm_pay_toast_rejected_h:"Paiement refusé", adm_pay_toast_rejected_p:"L'utilisateur verra la raison du refus.",
 sb_sync_err_h:"Compte créé localement uniquement",
 sb_sync_err_p:"La synchronisation avec le serveur a échoué. Réessayez plus tard depuis Mon abonnement.",
+sb_pay_sync_err_p:"Le paiement n'a pas pu être enregistré côté serveur — il ne sera jamais visible dans l'espace admin en l'état.",
 pwr_back_dash:"Retour au tableau de bord",
 wiz_sending:"Voye...",
 wiz_v_fallback:"Nous n'avons pas pu envoyer l'e-mail — utilisez ce code pour continuer",
@@ -4572,6 +4573,7 @@ adm_pay_toast_confirmed_h:"Payment approved", adm_pay_toast_confirmed_p:"The sub
 adm_pay_toast_rejected_h:"Payment rejected", adm_pay_toast_rejected_p:"The user will see the rejection reason.",
 sb_sync_err_h:"Account created locally only",
 sb_sync_err_p:"Server sync failed. Try again later from My subscription.",
+sb_pay_sync_err_p:"The payment could not be saved on the server — it won't be visible in the admin area as-is.",
 pwr_back_dash:"Back to dashboard",
 wiz_sending:"Sending...",
 wiz_v_fallback:"We couldn't send the email — use this code to continue",
@@ -4821,6 +4823,7 @@ adm_pay_toast_confirmed_h:"Peman valide", adm_pay_toast_confirmed_p:"Abònman an
 adm_pay_toast_rejected_h:"Peman refize", adm_pay_toast_rejected_p:"Itilizatè a ap wè rezon refi a.",
 sb_sync_err_h:"Kont kreye sèlman lokalman",
 sb_sync_err_p:"Senkronizasyon ak sèvè a echwe. Eseye ankò pita.",
+sb_pay_sync_err_p:"Peman an pa t kapab anrejistre kote sèvè a — li pap parèt nan espas admin lan konsa.",
 pwr_back_dash:"Retounen nan Dashboard la",
 wiz_sending:"Ap voye...",
 wiz_v_fallback:"Nou pa t kapab voye imèl la — itilize kòd sa a pou kontinye",
@@ -5896,16 +5899,21 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
      juste avant) ne depend jamais du reseau. Le paiement est toujours
      ecrit avec le statut "pending" — seul un admin pourra le confirmer,
      jamais le site lui-meme (regle de securite ecrite dans la base). */
+  /* Meme principe que creerCompteSupabase() : ne JAMAIS bloquer le
+     parcours local, mais ne JAMAIS cacher un echec non plus. Renvoie
+     {ok:true} en cas de succes reel, ou {ok:true, hors_ligne:true,
+     erreur:'...'} si l'ecriture cote serveur a echoue — pour affichage
+     honnete a l'ecran, au lieu d'un "succes" silencieux mensonger. */
   async function syncAbonnementSupabase(){
     const sb=window.VB_getSupabase&&window.VB_getSupabase();
-    if(!sb)return;
+    if(!sb)return {ok:true,hors_ligne:true,erreur:'Supabase indisponible (script non charge)'};
     try{
       let uid=state.supabaseUserId;
       if(!uid){
         const {data:sessionData}=await sb.auth.getSession();
         uid=(sessionData&&sessionData.session&&sessionData.session.user)?sessionData.session.user.id:null;
       }
-      if(!uid)return;   // compte pas encore reconnu par Supabase : rien a synchroniser
+      if(!uid)return {ok:true,hors_ligne:true,erreur:'Aucune session Supabase active (auth.uid() est null)'};
       const pl=planById(state.planId);
       /* Avant d'ecrire le nouvel abonnement, on cloture tout abonnement
          "actif" precedent de cet utilisateur (renouvellement ou
@@ -5923,13 +5931,17 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
         user_id:uid, plan_id:state.planId, status:'pending',
         starts_at:state.startDate, expires_at:state.endDate
       }).select('id').single();
-      if(subErr)return;
-      await sb.from('payments').insert({
+      if(subErr)return {ok:true,hors_ligne:true,erreur:'subscriptions: '+(subErr.message||JSON.stringify(subErr))};
+      const {error:payErr}=await sb.from('payments').insert({
         user_id:uid, subscription_id:subData?subData.id:null, plan_id:state.planId,
         amount_htg:pl?pl.prix:0, method:state.payMethod,
         status:'pending', reference:state.ref
       });
-    }catch(e){ /* degrade silencieusement : le parcours local n'est jamais bloque */ }
+      if(payErr)return {ok:true,hors_ligne:true,erreur:'payments: '+(payErr.message||JSON.stringify(payErr))};
+      return {ok:true,hors_ligne:false};
+    }catch(e){
+      return {ok:true,hors_ligne:true,erreur:(e&&e.message)?e.message:String(e)};
+    }
   }
 
   function completePayment(method){
@@ -6010,7 +6022,13 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
       if(window.VB_notify)window.VB_notify('plan',t('notif_renewed').replace('{plan}',
         String(t((planById(state.planId)||{}).nameKey||'')).replace(/<[^>]*>/g,'')));
     }
-    syncAbonnementSupabase();   // en parallele, sans jamais bloquer l'affichage
+    syncAbonnementSupabase().then(res=>{
+      if(res&&res.hors_ligne){
+        const d=translations[currentLang]||translations.fr;
+        const detail=res.erreur?(' — '+String(res.erreur).slice(0,160)):'';
+        if(window.VB_toast)window.VB_toast('sb_sync_err_h',(d.sb_pay_sync_err_p||d.sb_sync_err_p||'')+detail);
+      }
+    });   // en parallele, sans jamais bloquer l'affichage — mais jamais silencieux non plus
     showStep(4);
   }
 
