@@ -4333,6 +4333,7 @@ adm_confirm_q_refuser:"Confirmer le refus de ce paiement ?",
 adm_confirm_q_planchange:"Confirmer le changement de plan ?",
 adm_confirm_q_suspend:"Confirmer la suspension de ce compte ?",
 adm_confirm_q_reactivate:"Confirmer la réactivation de ce compte ?",
+adm_user_pending_pay_h:"Paiement en attente",
 adm_user_profile_h:"Profil", adm_user_role:"Rôle", adm_user_site:"Site préféré", adm_user_since:"Membre depuis",
 adm_user_current_plan:"Plan actuel", adm_user_no_plan:"Aucun",
 adm_user_change_plan_h:"Changer le plan", adm_user_change_plan_lbl:"Nouveau plan",
@@ -4606,6 +4607,7 @@ adm_confirm_q_refuser:"Confirm rejection of this payment?",
 adm_confirm_q_planchange:"Confirm the plan change?",
 adm_confirm_q_suspend:"Confirm suspension of this account?",
 adm_confirm_q_reactivate:"Confirm reactivation of this account?",
+adm_user_pending_pay_h:"Pending payment",
 adm_user_profile_h:"Profile", adm_user_role:"Role", adm_user_site:"Preferred site", adm_user_since:"Member since",
 adm_user_current_plan:"Current plan", adm_user_no_plan:"None",
 adm_user_change_plan_h:"Change plan", adm_user_change_plan_lbl:"New plan",
@@ -4879,6 +4881,7 @@ adm_confirm_q_refuser:"Konfime refi peman sa a ?",
 adm_confirm_q_planchange:"Konfime chanjman plan an ?",
 adm_confirm_q_suspend:"Konfime sispansyon kont sa a ?",
 adm_confirm_q_reactivate:"Konfime reyaktivasyon kont sa a ?",
+adm_user_pending_pay_h:"Peman ap tann",
 adm_user_profile_h:"Pwofil", adm_user_role:"Wòl", adm_user_site:"Sit prefere", adm_user_since:"Manm depi",
 adm_user_current_plan:"Plan aktyèl", adm_user_no_plan:"Okenn",
 adm_user_change_plan_h:"Chanje plan", adm_user_change_plan_lbl:"Nouvo plan",
@@ -7789,7 +7792,7 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
     try{
       const [{data:s},{data:p}]=await Promise.all([
         sb.from('subscriptions').select('id,plan_id,status,starts_at,expires_at').eq('user_id',u.id).order('starts_at',{ascending:false}),
-        sb.from('payments').select('plan_id,amount_htg,method,status,reference,created_at').eq('user_id',u.id).order('created_at',{ascending:false})
+        sb.from('payments').select('id,subscription_id,plan_id,amount_htg,method,status,reference,created_at').eq('user_id',u.id).order('created_at',{ascending:false})
       ]);
       subs=s||[];pays=p||[];
     }catch(e){}
@@ -7812,6 +7815,11 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
     const planActif=subs.find(s=>s.status==='active')||null;
     const planActifObj=planActif?(window.VB_planById?window.VB_planById(planActif.plan_id):null):null;
     const estSuspendu=!!u.suspended_at;
+    // Un paiement en attente doit pouvoir etre traite DIRECTEMENT depuis
+    // cette fiche, exactement comme sur la page Paiements — jamais une
+    // deuxieme facon de faire, juste un deuxieme endroit d'ou la
+    // declencher (traiterPaiement() est la seule fonction qui ecrit).
+    const paiementEnAttente=pays.find(p=>p.status==='pending')||null;
 
     const optionsPlans=(window.VB_allPlans?window.VB_allPlans():[]).map(pl=>
       '<option value="'+pl.id+'"'+(planActif&&planActif.plan_id===pl.id?' selected':'')+'>'+
@@ -7832,6 +7840,22 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
           '<span class="dash-pending-tx"><b>'+t('adm_badge_suspended')+'</b>'+
           '<span>'+t('adm_user_suspended_since')+' '+fmtH(u.suspended_at)+(u.suspended_reason?' — '+u.suspended_reason:'')+'</span></span>'+
         '</div>'
+        :'')+
+      (paiementEnAttente?
+        '<div class="admdash-section-h">'+t('adm_user_pending_pay_h')+'</div>'+
+        '<div class="dash-pending">'+
+          '<span class="dash-pending-ic">'+
+            '<svg class="ic" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>'+
+          '</span>'+
+          '<span class="dash-pending-tx"><b>'+(paiementEnAttente.plan_id||'').toUpperCase()+' — '+(paiementEnAttente.amount_htg||0)+' HTG</b>'+
+          '<span>'+(paiementEnAttente.method||'—')+' · '+t('adm_pay_ref')+' '+(paiementEnAttente.reference||'—')+'</span></span>'+
+        '</div>'+
+        '<label class="field" style="margin-top:12px"><span class="field-lbl">'+t('adm_pay_reason_lbl')+'</span>'+
+        '<textarea id="admUserPayReason" placeholder="'+t('adm_pay_reason_ph')+'"></textarea></label>'+
+        '<div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap">'+
+        '<button type="button" class="btn btn-confirm" id="admUserPayValider" style="flex:1">'+t('adm_pay_valider')+'</button>'+
+        '<button type="button" class="btn btn-reject" id="admUserPayRefuser" style="flex:1">'+t('adm_pay_refuser')+'</button>'+
+        '</div><div id="admUserPayActionErr" class="field-err" style="display:none;margin-top:8px"></div>'
         :'')+
       '<div class="admdash-section-h">'+t('adm_user_profile_h')+'</div>'+
       '<dl class="wiz-done-sum">'+
@@ -7862,6 +7886,33 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
       '<div class="admdash-hist">'+subsHtml+'</div>'+
       '<div class="admdash-section-h">'+t('adm_section_pays')+'</div>'+
       '<div class="admdash-hist">'+paysHtml+'</div>';
+
+    if(paiementEnAttente){
+      document.getElementById('admUserPayValider').addEventListener('click',function(){
+        demanderConfirmation(this,t('adm_confirm_q_valider'),()=>
+          traiterPaiement(paiementEnAttente,'confirmed',null,{
+            btnV:document.getElementById('admUserPayValider'),
+            btnR:document.getElementById('admUserPayRefuser'),
+            errBox:document.getElementById('admUserPayActionErr'),
+            onSuccess:()=>renderUserDetail()   // reste sur la fiche, ne navigue jamais vers Paiements
+          })
+        );
+      });
+      document.getElementById('admUserPayRefuser').addEventListener('click',function(){
+        const raison=(document.getElementById('admUserPayReason').value||'').trim();
+        const err=document.getElementById('admUserPayActionErr');
+        if(!raison){err.textContent=t('adm_pay_reason_required');err.style.display='block';return;}
+        err.style.display='none';
+        demanderConfirmation(this,t('adm_confirm_q_refuser'),()=>
+          traiterPaiement(paiementEnAttente,'rejected',raison,{
+            btnV:document.getElementById('admUserPayValider'),
+            btnR:document.getElementById('admUserPayRefuser'),
+            errBox:document.getElementById('admUserPayActionErr'),
+            onSuccess:()=>renderUserDetail()
+          })
+        );
+      });
+    }
 
     document.getElementById('admUserPlanApply').addEventListener('click',function(){
       const nouveauPlan=document.getElementById('admUserPlanSelect').value;
@@ -8102,12 +8153,20 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
      cote serveur (jamais reproductible depuis le navigateur d'un
      utilisateur normal) — c'est cette fonction, et elle seule, qui fait
      passer un paiement a 'confirmed'/'rejected' et l'abonnement associe
-     a 'active'/'cancelled'. */
-  async function traiterPaiement(p,newStatus,raison){
+     a 'active'/'cancelled'.
+     'opts' permet de reutiliser EXACTEMENT cette meme fonction depuis un
+     autre contexte (la fiche utilisateur) sans dupliquer la logique :
+     btnV/btnR/errBox pointent vers les boutons/zone d'erreur reellement
+     affiches a l'ecran a cet endroit-la, et onSuccess remplace la
+     navigation par defaut (utile pour rester sur la fiche utilisateur au
+     lieu d'etre renvoye vers la page Paiements). Aucun parametre fourni =
+     comportement historique inchange. */
+  async function traiterPaiement(p,newStatus,raison,opts){
+    opts=opts||{};
     const sb=window.VB_getSupabase&&window.VB_getSupabase();
     if(!sb)return;
-    const btnV=document.getElementById('admPayValider');
-    const btnR=document.getElementById('admPayRefuser');
+    const btnV=opts.btnV||document.getElementById('admPayValider');
+    const btnR=opts.btnR||document.getElementById('admPayRefuser');
     if(btnV)btnV.disabled=true;
     if(btnR)btnR.disabled=true;
     try{
@@ -8140,14 +8199,16 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
           reason:newStatus==='rejected'?(raison||null):null
         });
       }catch(e){}
-      paysCache=null;   // le prochain affichage relira l'etat reel
+      paysCache=null;   // le prochain affichage relira l'etat reel — quel que soit l'endroit d'ou on relit
       if(window.VB_toast)window.VB_toast(
         newStatus==='confirmed'?'adm_pay_toast_confirmed_h':'adm_pay_toast_rejected_h',
         t(newStatus==='confirmed'?'adm_pay_toast_confirmed_p':'adm_pay_toast_rejected_p')
       );
-      if(viewStack.length)setView(viewStack.pop(),true);else setView('payments',true);
+      if(opts.onSuccess)opts.onSuccess();
+      else if(viewStack.length)setView(viewStack.pop(),true);
+      else setView('payments',true);
     }catch(e){
-      const err=document.getElementById('admPayActionErr');
+      const err=opts.errBox||document.getElementById('admPayActionErr');
       if(err){err.textContent=t('adm_pay_action_error');err.style.display='block';}
       if(btnV)btnV.disabled=false;
       if(btnR)btnR.disabled=false;
