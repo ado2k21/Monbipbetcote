@@ -4419,6 +4419,7 @@ pwr_lbl_new:"Nouveau mot de passe",
 pwr_btn_send:"Envoyer le code", pwr_btn_save:"Enregistrer le nouveau mot de passe",
 pwr_back_login:"Retour à la connexion",
 pwr_err_nouser:"Aucun compte n'est associé à cet e-mail",
+pwr_err_generic:"Une erreur est survenue. Réessayez dans un instant.",
 pwr_toast_h:"Mot de passe modifié", pwr_toast_p:"Vous pouvez maintenant vous connecter avec votre nouveau mot de passe.",
 auth_back:"Retour",
 toast_mail_h:"E-mail de vérification envoyé",
@@ -4729,6 +4730,7 @@ pwr_lbl_new:"New password",
 pwr_btn_send:"Send the code", pwr_btn_save:"Save new password",
 pwr_back_login:"Back to login",
 pwr_err_nouser:"No account is linked to this email",
+pwr_err_generic:"Something went wrong. Please try again shortly.",
 pwr_toast_h:"Password changed", pwr_toast_p:"You can now log in with your new password.",
 auth_back:"Back",
 toast_mail_h:"Verification email sent",
@@ -5039,6 +5041,7 @@ pwr_lbl_new:"Nouvo modpas",
 pwr_btn_send:"Voye kòd la", pwr_btn_save:"Anrejistre nouvo modpas la",
 pwr_back_login:"Retounen nan koneksyon",
 pwr_err_nouser:"Pa gen okenn kont ki gen imèl sa a",
+pwr_err_generic:"Yon erè fèt. Eseye ankò yon ti moman.",
 pwr_toast_h:"Modpas la chanje", pwr_toast_p:"Ou ka konekte kounye a ak nouvo modpas ou.",
 auth_back:"Retounen",
 toast_mail_h:"Imèl verifikasyon an voye",
@@ -6475,50 +6478,68 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
     });
   });
 
-  function pwrSendCode(btn){
-    pwr.code=String(Math.floor(100000+Math.random()*900000));
+  /* Reinitialisation REELLE (Supabase Auth), jamais seulement locale :
+     le code n'est plus genere ni verifie dans le navigateur — c'est la
+     fonction Netlify request-password-reset qui s'en charge entierement
+     cote serveur (generation, stockage, envoi). */
+  async function pwrRequestReset(btn){
     pwr.verified=false;
-    document.getElementById('pwrMailTo').textContent=pwr.email;
-    pwrOtpInputs.forEach(i=>i.value='');
-    pwrOtpErr.style.display='none';
-    pwrOtp.classList.remove('invalid');
-    window.VB_sendCode(pwr.email,pwr.code,btn,'pwrDemoBox').then(ok=>{
-      if(ok&&window.VB_toast)window.VB_toast('toast_mail_h',t('toast_mail_p').replace('{email}',pwr.email));
-    });
+    if(btn)btn.disabled=true;
+    try{
+      const resp=await fetch('/.netlify/functions/request-password-reset',{
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({email:pwr.email})
+      });
+      const data=await resp.json().catch(()=>({}));
+      if(btn)btn.disabled=false;
+      if(!resp.ok)return {ok:false, erreur:(data&&data.error)||'erreur'};
+      if(window.VB_toast)window.VB_toast('toast_mail_h',t('toast_mail_p').replace('{email}',pwr.email));
+      return {ok:true};
+    }catch(e){
+      if(btn)btn.disabled=false;
+      return {ok:false, erreur:e.message};
+    }
   }
-  document.getElementById('pwrResend').addEventListener('click',ev=>{pwrSendCode(ev.currentTarget);pwrShow('code');});
+  document.getElementById('pwrResend').addEventListener('click',async ev=>{
+    await pwrRequestReset(ev.currentTarget);
+    pwrShow('code');
+  });
 
-  fPwr.addEventListener('submit',ev=>{
+  fPwr.addEventListener('submit',async ev=>{
     ev.preventDefault();
 
     if(pwr.stage==='mail'){
       const em=fPwr.querySelector('[name=pwrEmail]');
       const val=em.value.trim().toLowerCase();   // normalisee : jamais de casse imprevisible
       if(!isEmail(val)){setErr(em.closest('.field'),'auth_err_email');return;}
-      const acc=accounts.find(val);
-      if(!isComplete(acc)){setErr(em.closest('.field'),'pwr_err_nouser');return;}
       setErr(em.closest('.field'),null);
       pwr.email=val;
-      pwrSendCode(pwrSubmit);
+      const res=await pwrRequestReset(pwrSubmit);
+      if(!res.ok){
+        setErr(em.closest('.field'),res.erreur==='compte introuvable'?'pwr_err_nouser':'pwr_err_generic');
+        return;
+      }
       pwrShow('code');
       return;
     }
 
     if(pwr.stage==='code'){
       const entered=pwrOtpInputs.map(i=>i.value).join('');
-      if(!pwr.code||entered!==pwr.code){
+      if(entered.length!==6){
         pwrOtp.classList.add('invalid');
         pwrOtpErr.textContent=t('wiz_v_err');
         pwrOtpErr.style.display='block';
         return;
       }
-      pwr.verified=true;
+      // Le VRAI code n'est verifie que cote serveur, a l'etape finale —
+      // on se contente ici de le recueillir.
+      pwr.code=entered;
+      pwrOtp.classList.remove('invalid');
+      pwrOtpErr.style.display='none';
       pwrShow('newpass');
       return;
     }
 
-    // Phase 3 : impossible sans code valide
-    if(!pwr.verified){pwrShow('code');return;}
     const np=fPwr.querySelector('[name=pwrNew]');
     const nc=fPwr.querySelector('[name=pwrConfirm]');
     let ok=true;
@@ -6529,7 +6550,35 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
     else setErr(nc.closest('.field'),null);
     if(!ok)return;
 
-    // mise a jour dans le registre existant
+    pwrSubmit.disabled=true;
+    let confirmRes;
+    try{
+      const resp=await fetch('/.netlify/functions/confirm-password-reset',{
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({email:pwr.email, code:pwr.code, newPassword:np.value})
+      });
+      const data=await resp.json().catch(()=>({}));
+      confirmRes=resp.ok?{ok:true}:{ok:false, erreur:(data&&data.error)||'erreur'};
+    }catch(e){
+      confirmRes={ok:false, erreur:e.message};
+    }
+    pwrSubmit.disabled=false;
+
+    if(!confirmRes.ok){
+      if(confirmRes.erreur==='code_invalide'||confirmRes.erreur==='code_expire'){
+        pwrOtp.classList.add('invalid');
+        pwrOtpErr.textContent=t('wiz_v_err');
+        pwrOtpErr.style.display='block';
+        pwrShow('code');   // renvoyer corriger le code, jamais bloquer sans explication
+      }else{
+        setErr(nc.closest('.field'),'pwr_err_generic');
+      }
+      return;
+    }
+
+    // Le vrai mot de passe Supabase est deja change (appel ci-dessus) —
+    // ce bloc met seulement a jour le repli local, pour rester coherent
+    // si jamais Supabase redevient injoignable plus tard.
     const acc=accounts.find(pwr.email.toLowerCase());
     if(acc){
       acc.pass=fingerprint(np.value);
@@ -9176,7 +9225,18 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
       const {data,error}=await sb.auth.mfa.enroll({factorType:'totp'});
       if(error||!data){onSuccessCourant();return;}
       factorIdCourant=data.id;
-      document.getElementById('mfaQr').innerHTML=(data.totp&&data.totp.qr_code)||'';
+      const qrBox=document.getElementById('mfaQr');
+      qrBox.innerHTML='';
+      const qrSrc=(data.totp&&data.totp.qr_code)||'';
+      if(qrSrc){
+        const img=document.createElement('img');
+        img.src=qrSrc;
+        img.alt='QR code 2FA';
+        img.style.width='100%';
+        img.style.height='100%';
+        img.style.objectFit='contain';
+        qrBox.appendChild(img);
+      }
       document.getElementById('mfaSecret').textContent=(data.totp&&data.totp.secret)||'';
       showOverlay('enroll');
     }catch(e){onSuccessCourant();}
