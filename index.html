@@ -300,14 +300,15 @@ nav{
 .btn-reject{background:transparent;color:#E2634F;font-weight:700;border:1.5px solid rgba(226,99,79,.5)}
 .btn-reject:hover{background:rgba(226,99,79,.1);border-color:#E2634F}
 .btn-reject:disabled{opacity:.4;cursor:not-allowed}
-/* Etat "arme" avant la confirmation finale : un premier clic sur toute
-   action admin sensible ne l'execute jamais — il l'arme seulement,
-   visuellement, en attente d'un second clic explicite. */
-.btn-armed{
-  animation:btnArmedPulse 1s ease-in-out infinite;
-  box-shadow:0 0 0 2px rgba(226,99,79,.5) !important;
+/* Boite de confirmation Oui/Non : remplace le bouton d'action tant que
+   la personne n'a pas explicitement choisi l'une des deux options. */
+.vb-confirm-box{
+  margin-top:10px;padding:14px 16px;border-radius:var(--r-md);
+  background:rgba(226,99,79,.07);border:1px solid rgba(226,99,79,.3);
 }
-@keyframes btnArmedPulse{0%,100%{opacity:1}50%{opacity:.72}}
+.vb-confirm-q{font-size:13.5px;color:#F4F3ED;line-height:1.5;margin-bottom:12px}
+.vb-confirm-btns{display:flex;gap:10px}
+.vb-confirm-btns .btn{flex:1;padding:10px 14px;font-size:13.5px}
 .btn-link{background:none;border:none;color:var(--gris);font-weight:600;padding:11px 14px}
 .btn-link:hover{color:#F4F3ED}
 
@@ -4326,7 +4327,12 @@ adm_k_users:"Utilisateurs", adm_k_subs_active:"Abonnements actifs", adm_k_pay_pe
 adm_users_h:"Utilisateurs", adm_users_p:"Recherche et détail de chaque compte, directement depuis la base de données.",
 adm_users_search_ph:"Chercher par e-mail...", adm_users_count:"{n} compte(s)", adm_users_empty:"Aucun compte trouvé.",
 adm_badge_none:"Aucun plan", adm_badge_expired:"expiré", adm_no_name:"Sans nom", adm_badge_suspended:"Suspendu",
-adm_confirm_again:"Cliquez à nouveau pour confirmer",
+adm_confirm_yes:"Oui", adm_confirm_no:"Non", adm_role_admin:"Admin",
+adm_confirm_q_valider:"Confirmer la validation de ce paiement ?",
+adm_confirm_q_refuser:"Confirmer le refus de ce paiement ?",
+adm_confirm_q_planchange:"Confirmer le changement de plan ?",
+adm_confirm_q_suspend:"Confirmer la suspension de ce compte ?",
+adm_confirm_q_reactivate:"Confirmer la réactivation de ce compte ?",
 adm_user_profile_h:"Profil", adm_user_role:"Rôle", adm_user_site:"Site préféré", adm_user_since:"Membre depuis",
 adm_user_current_plan:"Plan actuel", adm_user_no_plan:"Aucun",
 adm_user_change_plan_h:"Changer le plan", adm_user_change_plan_lbl:"Nouveau plan",
@@ -4594,7 +4600,12 @@ adm_k_users:"Users", adm_k_subs_active:"Active subscriptions", adm_k_pay_pending
 adm_users_h:"Users", adm_users_p:"Search and detail for each account, straight from the database.",
 adm_users_search_ph:"Search by email...", adm_users_count:"{n} account(s)", adm_users_empty:"No accounts found.",
 adm_badge_none:"No plan", adm_badge_expired:"expired", adm_no_name:"No name", adm_badge_suspended:"Suspended",
-adm_confirm_again:"Click again to confirm",
+adm_confirm_yes:"Yes", adm_confirm_no:"No", adm_role_admin:"Admin",
+adm_confirm_q_valider:"Confirm approval of this payment?",
+adm_confirm_q_refuser:"Confirm rejection of this payment?",
+adm_confirm_q_planchange:"Confirm the plan change?",
+adm_confirm_q_suspend:"Confirm suspension of this account?",
+adm_confirm_q_reactivate:"Confirm reactivation of this account?",
 adm_user_profile_h:"Profile", adm_user_role:"Role", adm_user_site:"Preferred site", adm_user_since:"Member since",
 adm_user_current_plan:"Current plan", adm_user_no_plan:"None",
 adm_user_change_plan_h:"Change plan", adm_user_change_plan_lbl:"New plan",
@@ -4862,7 +4873,12 @@ adm_k_users:"Itilizatè", adm_k_subs_active:"Abònman aktif", adm_k_pay_pending:
 adm_users_h:"Itilizatè", adm_users_p:"Rechèch ak detay chak kont, dirèkteman soti nan baz done a.",
 adm_users_search_ph:"Chèche pa imèl...", adm_users_count:"{n} kont", adm_users_empty:"Pa gen okenn kont.",
 adm_badge_none:"Pa gen plan", adm_badge_expired:"ekspire", adm_no_name:"San non", adm_badge_suspended:"Sispann",
-adm_confirm_again:"Klike ankò pou konfime",
+adm_confirm_yes:"Wi", adm_confirm_no:"Non", adm_role_admin:"Admin",
+adm_confirm_q_valider:"Konfime validasyon peman sa a ?",
+adm_confirm_q_refuser:"Konfime refi peman sa a ?",
+adm_confirm_q_planchange:"Konfime chanjman plan an ?",
+adm_confirm_q_suspend:"Konfime sispansyon kont sa a ?",
+adm_confirm_q_reactivate:"Konfime reyaktivasyon kont sa a ?",
 adm_user_profile_h:"Pwofil", adm_user_role:"Wòl", adm_user_site:"Sit prefere", adm_user_since:"Manm depi",
 adm_user_current_plan:"Plan aktyèl", adm_user_no_plan:"Okenn",
 adm_user_change_plan_h:"Chanje plan", adm_user_change_plan_lbl:"Nouvo plan",
@@ -7659,31 +7675,31 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
   }
   /* Double confirmation obligatoire pour TOUTE action admin sensible
      (valider/refuser un paiement, changer un plan, suspendre un compte).
-     Le premier clic n'execute JAMAIS l'action — il arme seulement le
-     bouton, visuellement (texte + pulsation). Seul un second clic dans
-     les 5 secondes declenche reellement l'action ; passe ce delai, le
-     bouton se desarme tout seul pour qu'un clic tardif et non intentionnel
-     ne puisse jamais rien declencher. */
-  function armerDoubleConfirmation(btn,texteArme,executer){
-    if(btn.dataset.armed==='1'){
-      clearTimeout(btn._armTimeout);
-      delete btn.dataset.armed;
-      btn.classList.remove('btn-armed');
-      btn.textContent=btn.dataset.texteOriginal||btn.textContent;
+     Le clic sur le bouton d'action n'execute JAMAIS l'action directement :
+     il fait place a une question explicite avec deux boutons "Oui"/"Non".
+     Seul "Oui" declenche reellement l'action ; "Non" annule et restaure
+     le bouton d'origine sans rien faire. */
+  function demanderConfirmation(btn,texteQuestion,executer){
+    if(btn.nextElementSibling&&btn.nextElementSibling.classList.contains('vb-confirm-box'))return;
+    btn.style.display='none';
+    const box=document.createElement('div');
+    box.className='vb-confirm-box';
+    box.innerHTML=
+      '<p class="vb-confirm-q">'+texteQuestion+'</p>'+
+      '<div class="vb-confirm-btns">'+
+        '<button type="button" class="btn btn-confirm vb-confirm-yes">'+t('adm_confirm_yes')+'</button>'+
+        '<button type="button" class="btn btn-ghost vb-confirm-no">'+t('adm_confirm_no')+'</button>'+
+      '</div>';
+    btn.parentNode.insertBefore(box,btn.nextSibling);
+    box.querySelector('.vb-confirm-no').addEventListener('click',()=>{
+      box.remove();
+      btn.style.display='';
+    });
+    box.querySelector('.vb-confirm-yes').addEventListener('click',()=>{
+      box.remove();
+      btn.style.display='';
       executer();
-      return;
-    }
-    btn.dataset.texteOriginal=btn.textContent;
-    btn.dataset.armed='1';
-    btn.textContent=texteArme;
-    btn.classList.add('btn-armed');
-    btn._armTimeout=setTimeout(()=>{
-      if(btn.dataset.armed==='1'){
-        delete btn.dataset.armed;
-        btn.textContent=btn.dataset.texteOriginal;
-        btn.classList.remove('btn-armed');
-      }
-    },5000);
+    });
   }
   let usersCache=null;
   async function chargerUsers(){
@@ -7731,6 +7747,9 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
       // La suspension prime sur tout le reste : un compte suspendu doit
       // rester visible immediatement dans la liste, peu importe son plan.
       if(u.suspended_at)badge='<span class="admdash-row-badge suspendu">'+t('adm_badge_suspended')+'</span>';
+      // Le badge Admin prime sur tout : un compte admin n'a ni plan ni
+      // statut de suspension pertinent a afficher ici.
+      if(u.role==='admin')badge='<span class="admdash-row-badge actif">'+t('adm_role_admin')+'</span>';
       return '<button type="button" class="admdash-row" data-uid="'+u.id+'">'+
         '<span class="admdash-row-av">'+initiales(u.username||u.email)+'</span>'+
         '<span class="admdash-row-tx"><b>'+(u.username||t('adm_no_name'))+'</b><span>'+u.email+'</span></span>'+
@@ -7751,6 +7770,20 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
     const users=await chargerUsers();
     const u=users.find(x=>x.id===selectedUserId);
     if(!u){box.innerHTML='<div class="admdash-empty">'+t('adm_users_empty')+'</div>';return;}
+
+    // Un compte admin n'est pas un "utilisateur" au sens metier : ni plan,
+    // ni abonnement, ni suspension n'ont de sens pour lui. Fiche minimale,
+    // volontairement sans aucune action, pour eviter toute confusion.
+    if(u.role==='admin'){
+      box.innerHTML=
+        '<div class="admdash-detail-h">'+
+          '<span class="admdash-detail-av">'+initiales(u.username||u.email)+'</span>'+
+          '<span><span class="admdash-detail-name">'+(u.username||t('adm_no_name'))+'</span>'+
+          '<br><span class="admdash-detail-email">'+u.email+'</span></span>'+
+        '</div>'+
+        '<span class="admdash-row-badge actif" style="margin-top:14px;display:inline-block">'+t('adm_role_admin')+'</span>';
+      return;
+    }
 
     let subs=[],pays=[];
     try{
@@ -7838,7 +7871,7 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
         err.textContent=t('adm_user_change_plan_same');err.style.display='block';return;
       }
       err.style.display='none';
-      armerDoubleConfirmation(this,t('adm_confirm_again'),()=>changerPlanAdmin(u,planActif,nouveauPlan,raison));
+      demanderConfirmation(this,t('adm_confirm_q_planchange'),()=>changerPlanAdmin(u,planActif,nouveauPlan,raison));
     });
 
     document.getElementById('admUserSuspendBtn').addEventListener('click',function(){
@@ -7847,10 +7880,10 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
         const raison=(document.getElementById('admUserSuspendReason').value||'').trim();
         if(!raison){err.textContent=t('adm_user_suspend_reason_required');err.style.display='block';return;}
         err.style.display='none';
-        armerDoubleConfirmation(this,t('adm_confirm_again'),()=>suspendreUtilisateur(u,true,raison));
+        demanderConfirmation(this,t('adm_confirm_q_suspend'),()=>suspendreUtilisateur(u,true,raison));
       }else{
         err.style.display='none';
-        armerDoubleConfirmation(this,t('adm_confirm_again'),()=>suspendreUtilisateur(u,false,null));
+        demanderConfirmation(this,t('adm_confirm_q_reactivate'),()=>suspendreUtilisateur(u,false,null));
       }
     });
   }
@@ -8053,14 +8086,14 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
 
     if(p.status==='pending'){
       document.getElementById('admPayValider').addEventListener('click',function(){
-        armerDoubleConfirmation(this,t('adm_confirm_again'),()=>traiterPaiement(p,'confirmed'));
+        demanderConfirmation(this,t('adm_confirm_q_valider'),()=>traiterPaiement(p,'confirmed'));
       });
       document.getElementById('admPayRefuser').addEventListener('click',function(){
         const raison=(document.getElementById('admPayReason').value||'').trim();
         const err=document.getElementById('admPayActionErr');
         if(!raison){err.textContent=t('adm_pay_reason_required');err.style.display='block';return;}
         err.style.display='none';
-        armerDoubleConfirmation(this,t('adm_confirm_again'),()=>traiterPaiement(p,'rejected',raison));
+        demanderConfirmation(this,t('adm_confirm_q_refuser'),()=>traiterPaiement(p,'rejected',raison));
       });
     }
   }
@@ -8132,7 +8165,13 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
      false sinon (le filet de secours prend alors le relais). */
   window.VB_sendCode=async function(email,code,btn,demoBoxId){
     let orig=null;
-    if(btn){orig=btn.textContent;btn.disabled=true;btn.textContent=(translations[currentLang]||translations.fr).wiz_sending||orig;}
+    let texteEnvoi=null;
+    if(btn){
+      orig=btn.textContent;
+      texteEnvoi=(translations[currentLang]||translations.fr).wiz_sending||orig;
+      btn.disabled=true;
+      btn.textContent=texteEnvoi;
+    }
     const demoBox=demoBoxId?document.getElementById(demoBoxId):null;
     if(demoBox)demoBox.hidden=true;
     let raison='';
@@ -8167,7 +8206,15 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
       if(window.VB_toast)window.VB_toast('toast_mail_err_h',msg);
       return false;
     }finally{
-      if(btn){btn.disabled=false;btn.textContent=orig;}
+      if(btn){
+        btn.disabled=false;
+        // Si le texte affiche est toujours celui d'attente ("Envoi..."),
+        // rien d'autre ne l'a modifie entre-temps : on peut restaurer
+        // l'original en toute securite. Si le texte a change (ex. le
+        // passage a l'etape "code" du mot de passe oublie a deja mis
+        // "Verifier"), on respecte ce nouveau texte et on n'ecrase rien.
+        if(btn.textContent===texteEnvoi)btn.textContent=orig;
+      }
     }
   };
 })();
