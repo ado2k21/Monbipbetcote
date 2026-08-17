@@ -4050,6 +4050,10 @@ details p{font-size:15.5px;line-height:1.72;color:#CBD8E4}
             <svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v10H8l-4 4V5Z"/></svg>
             <span data-i18n="adm_nav_testimonials">Temwayaj</span>
           </button>
+          <button class="dash-menu-item" type="button" role="menuitem" data-adm="settings">
+            <svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            <span data-i18n="adm_nav_settings">Paramèt</span>
+          </button>
           <div class="dash-menu-sep"></div>
           <button class="dash-menu-item danger" type="button" role="menuitem" id="admMenuExit">
             <svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M15 17l5-5-5-5M20 12H9M12 20H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h6"/></svg>
@@ -4206,6 +4210,19 @@ details p{font-size:15.5px;line-height:1.72;color:#CBD8E4}
         <span data-i18n="dash_back">Retounen</span>
       </button>
       <div id="admTestiDetail"></div>
+    </div>
+
+    <!-- VUE : PARAMETRES -->
+    <div class="dash-view" data-adview="settings">
+      <button class="dash-back" type="button" data-adback>
+        <svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
+        <span data-i18n="dash_back">Retounen</span>
+      </button>
+      <div class="dash-hi">
+        <h2 data-i18n="adm_settings_h">Paramèt</h2>
+        <p data-i18n="adm_settings_p">Modpas ou ak sekirite kont admin ou.</p>
+      </div>
+      <div id="admSettingsBody"></div>
     </div>
 
   </div>
@@ -4463,7 +4480,22 @@ session_stale_h:"Compte ouvert ailleurs",
 session_stale_p:"Ce compte est ouvert dans une autre fenêtre. Rafraîchissez la page pour continuer.",
 dash_menu_lang:"Langue",
 adm_role_badge:"ADMIN",
-adm_nav_home:"Vue d'ensemble", adm_nav_users:"Utilisateurs", adm_nav_payments:"Paiements", adm_nav_plans:"Plans", adm_nav_faq:"FAQ", adm_nav_testimonials:"Témoignages",
+adm_nav_home:"Vue d'ensemble", adm_nav_users:"Utilisateurs", adm_nav_payments:"Paiements", adm_nav_plans:"Plans", adm_nav_faq:"FAQ", adm_nav_testimonials:"Témoignages", adm_nav_settings:"Paramètres",
+adm_settings_h:"Paramètres", adm_settings_p:"Votre mot de passe et la sécurité de votre compte admin.",
+adm_settings_pw_h:"Changer le mot de passe",
+adm_settings_pw_new:"Nouveau mot de passe", adm_settings_pw_confirm:"Confirmer le nouveau mot de passe",
+adm_settings_pw_save:"Enregistrer le mot de passe",
+adm_settings_pw_err:"Le changement a échoué.",
+adm_settings_pw_toast_h:"Mot de passe modifié", adm_settings_pw_toast_p:"Votre mot de passe a été changé avec succès.",
+adm_settings_2fa_h:"Double authentification (2FA)",
+adm_settings_2fa_on_p:"Le 2FA est activé sur ce compte. Un code sera demandé à chaque connexion.",
+adm_settings_2fa_off_p:"Le 2FA n'est pas activé. Activez-le pour renforcer la sécurité de ce compte admin — totalement optionnel.",
+adm_settings_2fa_enable:"Activer le 2FA", adm_settings_2fa_disable:"Désactiver le 2FA",
+adm_settings_2fa_err:"L'action a échoué.",
+adm_settings_2fa_on_h:"2FA activé", adm_settings_2fa_on_toast:"La double authentification est maintenant active sur ce compte.",
+adm_settings_2fa_off_h:"2FA désactivé", adm_settings_2fa_off_toast:"La double authentification a été retirée de ce compte.",
+adm_confirm_q_pw_change:"Confirmer le changement de mot de passe ?",
+adm_confirm_q_2fa_disable:"Confirmer la désactivation du 2FA ? Votre compte sera moins protégé.",
 adm_menu_exit:"Quitter le Dashboard Admin",
 adm_home_h:"Vue d'ensemble", adm_home_p:"Chiffres réels, directement issus de la base de données.",
 adm_refresh:"Rafraîchir", adm_updated_at:"Mis à jour à {t}",
@@ -4778,7 +4810,22 @@ session_stale_h:"Account open elsewhere",
 session_stale_p:"This account is open in another window. Refresh the page to continue.",
 dash_menu_lang:"Language",
 adm_role_badge:"ADMIN",
-adm_nav_home:"Overview", adm_nav_users:"Users", adm_nav_payments:"Payments", adm_nav_plans:"Plans", adm_nav_faq:"FAQ", adm_nav_testimonials:"Testimonials",
+adm_nav_home:"Overview", adm_nav_users:"Users", adm_nav_payments:"Payments", adm_nav_plans:"Plans", adm_nav_faq:"FAQ", adm_nav_testimonials:"Testimonials", adm_nav_settings:"Settings",
+adm_settings_h:"Settings", adm_settings_p:"Your password and admin account security.",
+adm_settings_pw_h:"Change password",
+adm_settings_pw_new:"New password", adm_settings_pw_confirm:"Confirm new password",
+adm_settings_pw_save:"Save password",
+adm_settings_pw_err:"The change failed.",
+adm_settings_pw_toast_h:"Password changed", adm_settings_pw_toast_p:"Your password was updated successfully.",
+adm_settings_2fa_h:"Two-factor authentication (2FA)",
+adm_settings_2fa_on_p:"2FA is enabled on this account. A code will be required at every login.",
+adm_settings_2fa_off_p:"2FA is not enabled. Turn it on to strengthen this admin account's security — fully optional.",
+adm_settings_2fa_enable:"Enable 2FA", adm_settings_2fa_disable:"Disable 2FA",
+adm_settings_2fa_err:"The action failed.",
+adm_settings_2fa_on_h:"2FA enabled", adm_settings_2fa_on_toast:"Two-factor authentication is now active on this account.",
+adm_settings_2fa_off_h:"2FA disabled", adm_settings_2fa_off_toast:"Two-factor authentication was removed from this account.",
+adm_confirm_q_pw_change:"Confirm the password change?",
+adm_confirm_q_2fa_disable:"Confirm disabling 2FA? Your account will be less protected.",
 adm_menu_exit:"Leave Admin Dashboard",
 adm_home_h:"Overview", adm_home_p:"Real figures, taken directly from the database.",
 adm_refresh:"Refresh", adm_updated_at:"Updated at {t}",
@@ -5093,7 +5140,22 @@ session_stale_h:"Kont ouvri yon lòt kote",
 session_stale_p:"Kont sa a ouvri nan yon lòt fenèt. Rafrechi paj la pou kontinye.",
 dash_menu_lang:"Lang",
 adm_role_badge:"ADMIN",
-adm_nav_home:"Vi jeneral", adm_nav_users:"Itilizatè", adm_nav_payments:"Peman", adm_nav_plans:"Plan", adm_nav_faq:"FAQ", adm_nav_testimonials:"Temwayaj",
+adm_nav_home:"Vi jeneral", adm_nav_users:"Itilizatè", adm_nav_payments:"Peman", adm_nav_plans:"Plan", adm_nav_faq:"FAQ", adm_nav_testimonials:"Temwayaj", adm_nav_settings:"Paramèt",
+adm_settings_h:"Paramèt", adm_settings_p:"Modpas ou ak sekirite kont admin ou.",
+adm_settings_pw_h:"Chanje modpas",
+adm_settings_pw_new:"Nouvo modpas", adm_settings_pw_confirm:"Konfime nouvo modpas la",
+adm_settings_pw_save:"Anrejistre modpas la",
+adm_settings_pw_err:"Chanjman an echwe.",
+adm_settings_pw_toast_h:"Modpas chanje", adm_settings_pw_toast_p:"Modpas ou chanje avèk siksè.",
+adm_settings_2fa_h:"Doub otantifikasyon (2FA)",
+adm_settings_2fa_on_p:"2FA aktif sou kont sa a. Y ap mande yon kòd chak fwa ou konekte.",
+adm_settings_2fa_off_p:"2FA pa aktif. Aktive li pou ranfòse sekirite kont admin sa a — se opsyonèl nèt.",
+adm_settings_2fa_enable:"Aktive 2FA", adm_settings_2fa_disable:"Dezaktive 2FA",
+adm_settings_2fa_err:"Aksyon an echwe.",
+adm_settings_2fa_on_h:"2FA aktif", adm_settings_2fa_on_toast:"Doub otantifikasyon aktif kounye a sou kont sa a.",
+adm_settings_2fa_off_h:"2FA dezaktive", adm_settings_2fa_off_toast:"Doub otantifikasyon retire nan kont sa a.",
+adm_confirm_q_pw_change:"Konfime chanjman modpas la ?",
+adm_confirm_q_2fa_disable:"Konfime dezaktivasyon 2FA a ? Kont ou ap mwen pwoteje.",
 adm_menu_exit:"Kite Dashboard Admin",
 adm_home_h:"Vi jeneral", adm_home_p:"Chif reyèl, dirèkteman soti nan baz done a.",
 adm_refresh:"Rafrechi", adm_updated_at:"Mizajou a {t}",
@@ -7993,6 +8055,7 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
     if(view==='plans')renderPlans();
     if(view==='faq')renderFaqList();
     if(view==='testimonials')renderTestiList();
+    if(view==='settings')renderSettings();
   }
   document.querySelectorAll('#admDash [data-adback]').forEach(b=>{
     b.addEventListener('click',()=>{
@@ -9020,6 +9083,88 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
     }
   }
 
+  /* ---- Parametres admin : mot de passe + 2FA (toujours optionnel) ---- */
+  async function renderSettings(){
+    const box=document.getElementById('admSettingsBody');
+    const sb=window.VB_getSupabase&&window.VB_getSupabase();
+    if(!sb){box.innerHTML='<div class="admdash-empty">'+t('adm_k_offline')+'</div>';return;}
+    const mfaStatus=window.VB_mfaStatus?await window.VB_mfaStatus():{actif:false};
+
+    box.innerHTML=
+      '<div class="admdash-section-h">'+t('adm_settings_pw_h')+'</div>'+
+      '<label class="field"><span class="field-lbl">'+t('adm_settings_pw_new')+'</span>'+
+      '<input type="password" id="admSetPwNew" autocomplete="new-password"></label>'+
+      '<label class="field" style="margin-top:10px"><span class="field-lbl">'+t('adm_settings_pw_confirm')+'</span>'+
+      '<input type="password" id="admSetPwConfirm" autocomplete="new-password"></label>'+
+      '<button type="button" class="btn btn-confirm" id="admSetPwSave" style="width:100%;margin-top:14px">'+t('adm_settings_pw_save')+'</button>'+
+      '<div id="admSetPwErr" class="field-err" style="display:none;margin-top:8px"></div>'+
+
+      '<div class="admdash-section-h">'+t('adm_settings_2fa_h')+'</div>'+
+      '<p style="font-size:13px;color:var(--gris);margin-bottom:14px;line-height:1.5">'+
+        (mfaStatus.actif?t('adm_settings_2fa_on_p'):t('adm_settings_2fa_off_p'))+
+      '</p>'+
+      (mfaStatus.actif?
+        '<button type="button" class="btn btn-reject" id="admSet2faToggle" style="width:100%">'+t('adm_settings_2fa_disable')+'</button>'
+        :
+        '<button type="button" class="btn btn-confirm" id="admSet2faToggle" style="width:100%">'+t('adm_settings_2fa_enable')+'</button>')+
+      '<div id="admSet2faErr" class="field-err" style="display:none;margin-top:8px"></div>';
+
+    document.getElementById('admSetPwSave').addEventListener('click',function(){
+      const np=document.getElementById('admSetPwNew').value;
+      const nc=document.getElementById('admSetPwConfirm').value;
+      const err=document.getElementById('admSetPwErr');
+      if(np.length<8){err.textContent=t('auth_err_password_len');err.style.display='block';return;}
+      if(!/\d/.test(np)){err.textContent=t('auth_err_password_digit');err.style.display='block';return;}
+      if(np!==nc){err.textContent=t('auth_err_password_match');err.style.display='block';return;}
+      err.style.display='none';
+      demanderConfirmation(this,t('adm_confirm_q_pw_change'),()=>sauvegarderMotDePasseAdmin(np));
+    });
+
+    document.getElementById('admSet2faToggle').addEventListener('click',function(){
+      if(mfaStatus.actif){
+        // Desactiver une protection existante est la seule des deux
+        // actions assez sensible pour meriter une confirmation Oui/Non —
+        // l'activation, elle, a deja sa propre etape de verification
+        // (le QR code + le code a 6 chiffres).
+        demanderConfirmation(this,t('adm_confirm_q_2fa_disable'),async()=>{
+          const res=await window.VB_disableMfa();
+          if(!res||!res.ok){
+            const err=document.getElementById('admSet2faErr');
+            if(err){err.textContent=t('adm_settings_2fa_err')+' — '+((res&&res.erreur)||'');err.style.display='block';}
+            return;
+          }
+          if(window.VB_toast)window.VB_toast('adm_settings_2fa_off_h',t('adm_settings_2fa_off_toast'));
+          renderSettings();
+        });
+      }else{
+        window.VB_startMfaEnrollment(()=>{
+          if(window.VB_toast)window.VB_toast('adm_settings_2fa_on_h',t('adm_settings_2fa_on_toast'));
+          renderSettings();
+        });
+      }
+    });
+  }
+
+  async function sauvegarderMotDePasseAdmin(nouveauMdp){
+    const sb=window.VB_getSupabase&&window.VB_getSupabase();
+    if(!sb)return;
+    const btn=document.getElementById('admSetPwSave');
+    if(btn)btn.disabled=true;
+    try{
+      // Session admin deja active : Supabase change le vrai mot de passe
+      // directement, sans reprocesser un email/code.
+      const {error}=await sb.auth.updateUser({password:nouveauMdp});
+      if(error)throw error;
+      document.getElementById('admSetPwNew').value='';
+      document.getElementById('admSetPwConfirm').value='';
+      if(window.VB_toast)window.VB_toast('adm_settings_pw_toast_h',t('adm_settings_pw_toast_p'));
+    }catch(e){
+      const err=document.getElementById('admSetPwErr');
+      if(err){err.textContent=t('adm_settings_pw_err')+' — '+((e&&e.message)?e.message:String(e)).slice(0,140);err.style.display='block';}
+    }
+    if(btn)btn.disabled=false;
+  }
+
   window.VB_openAdminDash=openAdminDash;
 })();
 
@@ -9243,33 +9388,41 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
     try{
       const {data:aal}=await sb.auth.mfa.getAuthenticatorAssuranceLevel();
       if(aal&&aal.nextLevel==='aal2'&&aal.currentLevel!=='aal2'){
+        // Un facteur verifie existe : la personne a deja active le 2FA
+        // elle-meme depuis Parametres — on lui demande son code.
         await ouvrirChallenge(sb);
         return;
       }
-      const {data:factors}=await sb.auth.mfa.listFactors();
-      const verifies=((factors&&factors.totp)||[]).filter(f=>f.status==='verified');
-      if(verifies.length===0){
-        await ouvrirInscription(sb);
-        return;
-      }
-      onSuccess();   // deja au niveau requis
+      // Aucun facteur verifie : le 2FA n'est PAS force a la premiere
+      // connexion. Il ne se propose que depuis Parametres, en option,
+      // jamais impose ici.
+      onSuccess();
     }catch(e){
-      showOverlay('error',e&&e.message);
+      // Une erreur de lecture du niveau MFA ne doit jamais bloquer un
+      // acces qui, par defaut, n'exige rien de plus que le mot de passe.
+      onSuccess();
     }
   };
 
   async function ouvrirInscription(sb){
     try{
       // Nettoyer tout facteur laisse "unverified" par une tentative
-      // precedente abandonnee (Supabase limite les facteurs en double du
-      // meme type) — chaque echec de nettoyage est collecte, pas ignore.
+      // precedente abandonnee — au mieux (chaque echec est tolere, pas
+      // bloquant, puisque le nom unique ci-dessous protege de toute
+      // maniere contre la collision).
       const {data:factors}=await sb.auth.mfa.listFactors();
       const abandonnes=((factors&&factors.totp)||[]).filter(f=>f.status==='unverified');
       for(const f of abandonnes){
-        try{await sb.auth.mfa.unenroll({factorId:f.id});}
-        catch(e){ showOverlay('error',t('mfa_error_cleanup')); return; }
+        try{await sb.auth.mfa.unenroll({factorId:f.id});}catch(e){}
       }
-      const {data,error}=await sb.auth.mfa.enroll({factorType:'totp'});
+      // Nom unique a chaque tentative : ca evite pour de bon l'erreur
+      // "factor with this friendly name already exists", meme si un
+      // ancien facteur n'a pas pu etre nettoye pour une raison ou une
+      // autre — plus jamais bloquant a cause d'un nom en double.
+      const {data,error}=await sb.auth.mfa.enroll({
+        factorType:'totp',
+        friendlyName:'admin-'+Date.now()
+      });
       if(error||!data){showOverlay('error',error&&error.message);return;}
       factorIdCourant=data.id;
       const qrBox=document.getElementById('mfaQr');
@@ -9288,6 +9441,39 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
       showOverlay('enroll');
     }catch(e){showOverlay('error',e&&e.message);}
   }
+  /* Point d'entree utilise par Parametres (Admin) : le 2FA est desormais
+     TOUJOURS une decision volontaire, jamais imposee a la connexion.
+     onDone est appelee une fois l'inscription reussie (pas liee a
+     l'ouverture du tableau de bord, contrairement a onSuccessCourant
+     utilisee par le flux de connexion). */
+  window.VB_startMfaEnrollment=function(onDone){
+    const sb=window.VB_getSupabase&&window.VB_getSupabase();
+    if(!sb)return;
+    onSuccessCourant=onDone;
+    ouvrirInscription(sb);
+  };
+  window.VB_disableMfa=async function(){
+    const sb=window.VB_getSupabase&&window.VB_getSupabase();
+    if(!sb)return {ok:false};
+    try{
+      const {data:factors}=await sb.auth.mfa.listFactors();
+      const verifie=((factors&&factors.totp)||[]).find(f=>f.status==='verified');
+      if(!verifie)return {ok:true};   // deja desactive
+      const {error}=await sb.auth.mfa.unenroll({factorId:verifie.id});
+      if(error)return {ok:false, erreur:error.message};
+      return {ok:true};
+    }catch(e){
+      return {ok:false, erreur:e.message};
+    }
+  };
+  window.VB_mfaStatus=async function(){
+    const sb=window.VB_getSupabase&&window.VB_getSupabase();
+    if(!sb)return {actif:false};
+    try{
+      const {data:factors}=await sb.auth.mfa.listFactors();
+      return {actif:((factors&&factors.totp)||[]).some(f=>f.status==='verified')};
+    }catch(e){return {actif:false};}
+  };
 
   async function ouvrirChallenge(sb){
     try{
