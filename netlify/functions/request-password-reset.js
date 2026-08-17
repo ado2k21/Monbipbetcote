@@ -35,8 +35,12 @@ exports.handler = async (event) => {
 
     // Le compte doit reellement exister cote Supabase Auth (Admin API) —
     // sinon on ne cree jamais de code pour un email qui n'a pas de compte.
+    // Le filtre "?email=..." de l'API Admin Supabase n'est pas garanti
+    // dans toutes les versions — on lit la liste complete (large page, le
+    // volume de comptes reste modeste pour ce projet) et on cherche
+    // nous-memes, plutot que de dependre d'un comportement incertain.
     const usersResp = await fetch(
-      `${SUPABASE_URL}/auth/v1/admin/users?email=${encodeURIComponent(emailNorm)}`,
+      `${SUPABASE_URL}/auth/v1/admin/users?per_page=1000`,
       { headers: { apikey: SUPABASE_SERVICE_ROLE_KEY, Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}` } }
     );
     if (!usersResp.ok) {
