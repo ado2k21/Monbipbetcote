@@ -4310,7 +4310,7 @@ adm_users_search_ph:"Chercher par e-mail...", adm_users_count:"{n} compte(s)", a
 adm_badge_none:"Aucun plan", adm_badge_expired:"expiré", adm_no_name:"Sans nom",
 adm_section_subs:"Abonnements", adm_section_pays:"Paiements", adm_none_yet:"Aucun pour l'instant.",
 adm_pay_h:"Paiements", adm_pay_p:"Validez ou refusez les paiements soumis, directement depuis la base de données.",
-adm_pay_f_pending:"En attente", adm_pay_f_confirmed:"Confirmés", adm_pay_f_rejected:"Refusés",
+adm_pay_f_pending:"En attente", adm_pay_f_confirmed:"Confirmés", adm_pay_f_rejected:"Refusés", adm_pay_f_refunded:"Remboursés",
 adm_pay_count:"{n} paiement(s)", adm_pay_empty:"Aucun paiement dans cette catégorie.",
 adm_pay_plan:"Plan", adm_pay_amount:"Montant", adm_pay_method:"Moyen de paiement", adm_pay_ref:"Référence",
 adm_pay_date:"Date", adm_pay_status:"Statut",
@@ -4560,7 +4560,7 @@ adm_users_search_ph:"Search by email...", adm_users_count:"{n} account(s)", adm_
 adm_badge_none:"No plan", adm_badge_expired:"expired", adm_no_name:"No name",
 adm_section_subs:"Subscriptions", adm_section_pays:"Payments", adm_none_yet:"None yet.",
 adm_pay_h:"Payments", adm_pay_p:"Approve or reject submitted payments, directly from the database.",
-adm_pay_f_pending:"Pending", adm_pay_f_confirmed:"Confirmed", adm_pay_f_rejected:"Rejected",
+adm_pay_f_pending:"Pending", adm_pay_f_confirmed:"Confirmed", adm_pay_f_rejected:"Rejected", adm_pay_f_refunded:"Refunded",
 adm_pay_count:"{n} payment(s)", adm_pay_empty:"No payments in this category.",
 adm_pay_plan:"Plan", adm_pay_amount:"Amount", adm_pay_method:"Payment method", adm_pay_ref:"Reference",
 adm_pay_date:"Date", adm_pay_status:"Status",
@@ -4810,7 +4810,7 @@ adm_users_search_ph:"Chèche pa imèl...", adm_users_count:"{n} kont", adm_users
 adm_badge_none:"Pa gen plan", adm_badge_expired:"ekspire", adm_no_name:"San non",
 adm_section_subs:"Abònman", adm_section_pays:"Peman", adm_none_yet:"Pa gen ankò.",
 adm_pay_h:"Peman", adm_pay_p:"Valide oswa refize peman ki soumèt yo, dirèkteman soti nan baz done a.",
-adm_pay_f_pending:"An atant", adm_pay_f_confirmed:"Konfime", adm_pay_f_rejected:"Refize",
+adm_pay_f_pending:"An atant", adm_pay_f_confirmed:"Konfime", adm_pay_f_rejected:"Refize", adm_pay_f_refunded:"Ranbouse",
 adm_pay_count:"{n} peman", adm_pay_empty:"Pa gen peman nan kategori sa a.",
 adm_pay_plan:"Plan", adm_pay_amount:"Montan", adm_pay_method:"Mwayen peman", adm_pay_ref:"Referans",
 adm_pay_date:"Dat", adm_pay_status:"Estati",
@@ -6633,7 +6633,10 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
         .eq('reference',state.ref).limit(1);
       if(!pays||!pays.length)return false;   // ce paiement precis n'existe pas encore cote serveur
       const pay=pays[0];
-      const nouveau=pay.status==='confirmed'?'confirmed':(pay.status==='rejected'?'rejected':'pending');
+      // pay.status (colonne reelle) : pending/confirmed/failed/refunded.
+      // 'failed' et 'refunded' sont tous deux traites comme "refuse" cote
+      // client (verrouille le contenu) — seul 'confirmed' debloque.
+      const nouveau=pay.status==='confirmed'?'confirmed':(pay.status==='failed'||pay.status==='refunded'?'rejected':'pending');
       if(nouveau===state.payStatus)return false;   // rien de nouveau
       state.payStatus=nouveau;
       if(nouveau==='confirmed'&&pay.subscription_id){
@@ -7691,12 +7694,15 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
     list.innerHTML='<div class="admdash-empty">'+t('adm_k_loading')+'</div>';
     const [pays,users]=await Promise.all([chargerPaiements(),chargerUsers()]);
     const usersById={};users.forEach(u=>{usersById[u.id]=u;});
-    const filtres=payFilter==='all'?pays:pays.filter(p=>p.status===payFilter);
+    // Le filtre "Refuses" (concept interne) correspond au statut reel
+    // 'failed' en base — la contrainte SQL n'accepte pas 'rejected'.
+    const DB_STATUT_FILTRE={pending:'pending',confirmed:'confirmed',rejected:'failed'};
+    const filtres=payFilter==='all'?pays:pays.filter(p=>p.status===(DB_STATUT_FILTRE[payFilter]||payFilter));
     document.getElementById('admPayCount').textContent=t('adm_pay_count').replace('{n}',filtres.length);
     if(!filtres.length){list.innerHTML='<div class="admdash-empty">'+t('adm_pay_empty')+'</div>';return;}
     const fmt=iso=>iso?new Date(iso).toLocaleDateString(currentLang==='en'?'en-US':'fr-FR',{day:'2-digit',month:'short',year:'numeric'}):'—';
-    const badgeCls={pending:'pending',confirmed:'actif',rejected:'expire'};
-    const badgeLbl={pending:'adm_pay_f_pending',confirmed:'adm_pay_f_confirmed',rejected:'adm_pay_f_rejected'};
+    const badgeCls={pending:'pending',confirmed:'actif',failed:'expire',refunded:'aucun'};
+    const badgeLbl={pending:'adm_pay_f_pending',confirmed:'adm_pay_f_confirmed',failed:'adm_pay_f_rejected',refunded:'adm_pay_f_refunded'};
     list.innerHTML=filtres.map(p=>{
       const u=usersById[p.user_id];
       const nom=u?(u.username||u.email):p.user_id;
@@ -7730,7 +7736,7 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
     const u=users.find(x=>x.id===p.user_id);
     const fmt=iso=>iso?new Date(iso).toLocaleDateString(currentLang==='en'?'en-US':'fr-FR',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}):'—';
     const methodLbl={moncash:'MonCash',natcash:'NatCash',stripe:'Stripe (Carte/PayPal)'};
-    const statusLbl={pending:t('adm_pay_f_pending'),confirmed:t('adm_pay_f_confirmed'),rejected:t('adm_pay_f_rejected')};
+    const statusLbl={pending:t('adm_pay_f_pending'),confirmed:t('adm_pay_f_confirmed'),failed:t('adm_pay_f_rejected'),refunded:t('adm_pay_f_refunded')};
 
     box.innerHTML=
       '<div class="admdash-detail-h">'+
@@ -7746,7 +7752,7 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
         '<div><dt>'+t('adm_pay_date')+'</dt><dd>'+fmt(p.created_at)+'</dd></div>'+
         '<div><dt>'+t('adm_pay_status')+'</dt><dd>'+statusLbl[p.status]+'</dd></div>'+
       '</dl>'+
-      (p.status==='rejected'&&p.reject_reason?
+      (p.status==='failed'&&p.reject_reason?
         '<div class="admdash-section-h">'+t('adm_pay_reason_h')+'</div>'+
         '<div class="admdash-hist"><div class="admdash-hist-row"><dd>'+p.reject_reason+'</dd></div></div>'
         :'')+
@@ -7785,7 +7791,12 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
     if(btnV)btnV.disabled=true;
     if(btnR)btnR.disabled=true;
     try{
-      const payUpdate={status:newStatus};
+      // 'newStatus' est le concept interne (confirmed/rejected) utilise dans
+      // toute l'UI admin. La colonne reelle 'payments.status' n'accepte que
+      // pending/confirmed/failed/refunded (contrainte SQL du projet) — on
+      // traduit donc ici, au seul endroit qui ecrit vraiment en base.
+      const statutReel=newStatus==='confirmed'?'confirmed':'failed';
+      const payUpdate={status:statutReel};
       if(newStatus==='rejected')payUpdate.reject_reason=raison||null;
       const {error:payErr}=await sb.from('payments').update(payUpdate).eq('id',p.id);
       if(payErr)throw payErr;
