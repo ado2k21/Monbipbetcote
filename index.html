@@ -3726,6 +3726,11 @@ details p{font-size:15.5px;line-height:1.72;color:#CBD8E4}
       <span class="field-err" id="mfaChallengeErr" style="display:none;text-align:center;margin-bottom:14px" data-i18n="mfa_err_code">Kòd la pa kòrèk</span>
       <button type="button" class="btn btn-or" id="mfaChallengeSubmit" style="width:100%" data-i18n="mfa_btn_verify">Verifye</button>
     </div>
+    <div class="mfa-stage" data-mfa="error" hidden>
+      <h3 data-i18n="mfa_error_h">Problème avec le 2FA</h3>
+      <p id="mfaErrorDetail" style="color:#E2634F;font-size:12.5px;margin-bottom:18px"></p>
+      <button type="button" class="btn btn-or" id="mfaRetry" style="width:100%" data-i18n="mfa_btn_retry">Réessayer</button>
+    </div>
   </div>
 </div>
 
@@ -4554,6 +4559,10 @@ mfa_enroll_p:"Scannez ce code QR avec Google Authenticator (ou une application s
 mfa_challenge_h:"Vérification en 2 étapes",
 mfa_challenge_p:"Entrez le code à 6 chiffres de votre application d'authentification.",
 mfa_err_code:"Code incorrect", mfa_btn_activate:"Activer le 2FA", mfa_btn_verify:"Vérifier",
+mfa_error_h:"Problème avec le 2FA", mfa_error_p:"Impossible de continuer pour le moment. Réessayez — l'accès au tableau de bord reste bloqué tant que le 2FA n'est pas vérifié.",
+mfa_error_cleanup:"Impossible de nettoyer une inscription précédente.",
+mfa_error_nofactor:"Aucun code d'authentification actif trouvé.",
+mfa_btn_retry:"Réessayer",
 auth_taken_cta:"Aller à la connexion",
 wiz_r_h:"Renouveler ou changer de plan", wiz_r_sub:"Choisissez votre plan et réglez — votre compte est déjà créé.",
 wiz_r_active:"Votre abonnement en cours reste actif. Le nouveau plan démarre après le paiement.",
@@ -4865,6 +4874,10 @@ mfa_enroll_p:"Scan this QR code with Google Authenticator (or a similar app), th
 mfa_challenge_h:"Two-step verification",
 mfa_challenge_p:"Enter the 6-digit code from your authenticator app.",
 mfa_err_code:"Incorrect code", mfa_btn_activate:"Activate 2FA", mfa_btn_verify:"Verify",
+mfa_error_h:"2FA problem", mfa_error_p:"Can't continue right now. Try again — dashboard access stays blocked until 2FA is verified.",
+mfa_error_cleanup:"Couldn't clean up a previous enrollment attempt.",
+mfa_error_nofactor:"No active authenticator found.",
+mfa_btn_retry:"Try again",
 auth_taken_cta:"Go to login",
 wiz_r_h:"Renew or change plan", wiz_r_sub:"Pick your plan and pay — your account already exists.",
 wiz_r_active:"Your current plan stays active. The new plan starts after payment.",
@@ -5176,6 +5189,10 @@ mfa_enroll_p:"Eskane kòd QR sa a ak Google Authenticator (oswa yon app similè)
 mfa_challenge_h:"Verifikasyon an 2 etap",
 mfa_challenge_p:"Antre kòd 6 chif ki nan app otantifikasyon ou a.",
 mfa_err_code:"Kòd la pa kòrèk", mfa_btn_activate:"Aktive 2FA", mfa_btn_verify:"Verifye",
+mfa_error_h:"Pwoblèm ak 2FA", mfa_error_p:"Nou pa ka kontinye kounye a. Eseye ankò — aksè nan dashboard la rete bloke jiskaske 2FA verifye.",
+mfa_error_cleanup:"Nou pa t kapab netwaye yon ansyen tantativ enskripsyon.",
+mfa_error_nofactor:"Pa gen okenn kòd otantifikasyon aktif.",
+mfa_btn_retry:"Eseye ankò",
 auth_taken_cta:"Ale nan koneksyon",
 wiz_r_h:"Renouvle oswa chanje plan", wiz_r_sub:"Chwazi plan ou epi peye — kont ou deja kreye.",
 wiz_r_active:"Abònman ou genyen an rete aktif. Nouvo plan an kòmanse apre peman an.",
@@ -5936,6 +5953,16 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
         return {ok:true,hors_ligne:true,erreur:error.message};  // ne bloque pas l'inscription locale
       }
       state.supabaseUserId=data&&data.user?data.user.id:null;
+      // Ecriture explicite du nom dans profiles.username : la routine
+      // automatique qui cree la fiche profil ne recopie pas forcement le
+      // nom depuis les metadonnees du compte — on ne depend pas d'elle
+      // pour ce champ precis, on l'ecrit nous-memes, sans jamais bloquer
+      // l'inscription si cette seule ecriture echoue.
+      if(state.supabaseUserId){
+        try{
+          await sb.from('profiles').update({username:state.fullname}).eq('id',state.supabaseUserId);
+        }catch(e){}
+      }
       return {ok:true};
     }catch(e){
       return {ok:true,hors_ligne:true,erreur:e.message};  // reseau indisponible : on degrade, jamais on ne bloque
@@ -8353,9 +8380,13 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
       const pl=window.VB_planById?window.VB_planById(nouveauPlanId):null;
       const maintenant=new Date();
       const fin=pl&&pl.days?new Date(maintenant.getTime()+pl.days*86400000).toISOString():null;
-      if(ancienSub){
-        await sb.from('subscriptions').update({status:'cancelled'}).eq('id',ancienSub.id);
-      }
+      // Ferme TOUS les abonnements encore 'active' de cette personne —
+      // pas seulement celui identifie comme le plan actuel — au cas ou
+      // plusieurs seraient restes actifs par erreur.
+      try{
+        await sb.from('subscriptions').update({status:'cancelled'})
+          .eq('user_id',u.id).eq('status','active');
+      }catch(e){}
       const {error:insErr}=await sb.from('subscriptions').insert({
         user_id:u.id, plan_id:nouveauPlanId, status:'active',
         starts_at:maintenant.toISOString(), expires_at:fin
@@ -8583,6 +8614,16 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
       if(payErr)throw payErr;
       if(p.subscription_id){
         const subStatus=newStatus==='confirmed'?'active':'cancelled';
+        // Garde-fou absolu : avant d'activer ce nouvel abonnement, on
+        // ferme TOUT autre abonnement encore marque 'active' pour cette
+        // meme personne — quelle que soit la raison pour laquelle il
+        // serait reste actif. Jamais deux lignes 'active' a la fois.
+        if(subStatus==='active'&&p.user_id){
+          try{
+            await sb.from('subscriptions').update({status:'cancelled'})
+              .eq('user_id',p.user_id).eq('status','active').neq('id',p.subscription_id);
+          }catch(e){}
+        }
         await sb.from('subscriptions').update({status:subStatus}).eq('id',p.subscription_id);
       }
       // Journal d'audit — schema reel : id, admin_id, action, target_user_id,
@@ -9138,10 +9179,12 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
   if(!overlay)return;
   const stageEnroll=overlay.querySelector('[data-mfa="enroll"]');
   const stageChallenge=overlay.querySelector('[data-mfa="challenge"]');
+  const stageError=overlay.querySelector('[data-mfa="error"]');
   const enrollOtp=[...document.getElementById('mfaEnrollOtp').querySelectorAll('input')];
   const challengeOtp=[...document.getElementById('mfaChallengeOtp').querySelectorAll('input')];
   const enrollErr=document.getElementById('mfaEnrollErr');
   const challengeErr=document.getElementById('mfaChallengeErr');
+  const errorDetail=document.getElementById('mfaErrorDetail');
   const T=()=>translations[currentLang]||translations.fr;
   const t=k=>(T()[k]!=null?T()[k]:(translations.fr[k]||''));
 
@@ -9171,10 +9214,15 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
   brancherOtp(enrollOtp,enrollErr);
   brancherOtp(challengeOtp,challengeErr);
 
-  function showOverlay(stage){
+  function showOverlay(stage,detail){
     overlay.hidden=false;
     stageEnroll.hidden=(stage!=='enroll');
     stageChallenge.hidden=(stage!=='challenge');
+    stageError.hidden=(stage!=='error');
+    if(stage==='error'){
+      errorDetail.textContent=detail?(t('mfa_error_p')+' — '+String(detail).slice(0,160)):t('mfa_error_p');
+      return;
+    }
     const inputs=stage==='enroll'?enrollOtp:challengeOtp;
     inputs.forEach(i=>i.value='');
     (stage==='enroll'?enrollErr:challengeErr).style.display='none';
@@ -9184,8 +9232,10 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
 
   /* Point d'entree unique : appelee juste apres qu'un mot de passe admin
      a ete valide, AVANT d'ouvrir le tableau de bord. onSuccess n'est
-     appelee que si le 2FA est en regle (deja verifie ce jour-la n'existe
-     pas : chaque nouvelle session est re-challengee, par design). */
+     appelee QUE si le 2FA est reellement en regle — en cas d'echec
+     technique, on affiche une erreur bloquante avec "Reessayer" plutot
+     que de laisser passer en silence. Le 2FA admin est obligatoire, pas
+     "obligatoire sauf en cas d'erreur reseau". */
   window.VB_handleAdminMFA=async function(onSuccess){
     const sb=window.VB_getSupabase&&window.VB_getSupabase();
     if(!sb){onSuccess();return;}   // ne devrait pas arriver : la connexion elle-meme aurait deja echoue
@@ -9193,12 +9243,9 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
     try{
       const {data:aal}=await sb.auth.mfa.getAuthenticatorAssuranceLevel();
       if(aal&&aal.nextLevel==='aal2'&&aal.currentLevel!=='aal2'){
-        // Un facteur verifie existe deja : il faut le challenger.
         await ouvrirChallenge(sb);
         return;
       }
-      // Pas de facteur exigeant une verification : s'il n'y en a aucun du
-      // tout, l'inscription est OBLIGATOIRE pour un compte admin.
       const {data:factors}=await sb.auth.mfa.listFactors();
       const verifies=((factors&&factors.totp)||[]).filter(f=>f.status==='verified');
       if(verifies.length===0){
@@ -9207,23 +9254,23 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
       }
       onSuccess();   // deja au niveau requis
     }catch(e){
-      // Ne jamais bloquer silencieusement sur une erreur reseau : on
-      // degrade en laissant passer plutot que d'enfermer l'admin dehors,
-      // mais uniquement si le 2FA n'a jamais pu etre verifie du tout.
-      onSuccess();
+      showOverlay('error',e&&e.message);
     }
   };
 
   async function ouvrirInscription(sb){
     try{
-      // Nettoyer un eventuel facteur laisse "unverified" par une
-      // tentative precedente abandonnee (Supabase limite les facteurs
-      // en double du meme type).
+      // Nettoyer tout facteur laisse "unverified" par une tentative
+      // precedente abandonnee (Supabase limite les facteurs en double du
+      // meme type) — chaque echec de nettoyage est collecte, pas ignore.
       const {data:factors}=await sb.auth.mfa.listFactors();
       const abandonnes=((factors&&factors.totp)||[]).filter(f=>f.status==='unverified');
-      for(const f of abandonnes){try{await sb.auth.mfa.unenroll({factorId:f.id});}catch(e){}}
+      for(const f of abandonnes){
+        try{await sb.auth.mfa.unenroll({factorId:f.id});}
+        catch(e){ showOverlay('error',t('mfa_error_cleanup')); return; }
+      }
       const {data,error}=await sb.auth.mfa.enroll({factorType:'totp'});
-      if(error||!data){onSuccessCourant();return;}
+      if(error||!data){showOverlay('error',error&&error.message);return;}
       factorIdCourant=data.id;
       const qrBox=document.getElementById('mfaQr');
       qrBox.innerHTML='';
@@ -9239,21 +9286,27 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
       }
       document.getElementById('mfaSecret').textContent=(data.totp&&data.totp.secret)||'';
       showOverlay('enroll');
-    }catch(e){onSuccessCourant();}
+    }catch(e){showOverlay('error',e&&e.message);}
   }
 
   async function ouvrirChallenge(sb){
     try{
       const {data:factors}=await sb.auth.mfa.listFactors();
       const verifie=((factors&&factors.totp)||[]).find(f=>f.status==='verified');
-      if(!verifie){onSuccessCourant();return;}
+      if(!verifie){showOverlay('error',t('mfa_error_nofactor'));return;}
       factorIdCourant=verifie.id;
       const {data:ch,error}=await sb.auth.mfa.challenge({factorId:factorIdCourant});
-      if(error||!ch){onSuccessCourant();return;}
+      if(error||!ch){showOverlay('error',error&&error.message);return;}
       challengeIdCourant=ch.id;
       showOverlay('challenge');
-    }catch(e){onSuccessCourant();}
+    }catch(e){showOverlay('error',e&&e.message);}
   }
+
+  document.getElementById('mfaRetry').addEventListener('click',async()=>{
+    const sb=window.VB_getSupabase&&window.VB_getSupabase();
+    if(!sb||!onSuccessCourant)return;
+    if(window.VB_handleAdminMFA)await window.VB_handleAdminMFA(onSuccessCourant);
+  });
 
   document.getElementById('mfaEnrollSubmit').addEventListener('click',async()=>{
     const code=enrollOtp.map(i=>i.value).join('');
