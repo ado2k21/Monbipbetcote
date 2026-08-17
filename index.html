@@ -300,6 +300,14 @@ nav{
 .btn-reject{background:transparent;color:#E2634F;font-weight:700;border:1.5px solid rgba(226,99,79,.5)}
 .btn-reject:hover{background:rgba(226,99,79,.1);border-color:#E2634F}
 .btn-reject:disabled{opacity:.4;cursor:not-allowed}
+/* Etat "arme" avant la confirmation finale : un premier clic sur toute
+   action admin sensible ne l'execute jamais — il l'arme seulement,
+   visuellement, en attente d'un second clic explicite. */
+.btn-armed{
+  animation:btnArmedPulse 1s ease-in-out infinite;
+  box-shadow:0 0 0 2px rgba(226,99,79,.5) !important;
+}
+@keyframes btnArmedPulse{0%,100%{opacity:1}50%{opacity:.72}}
 .btn-link{background:none;border:none;color:var(--gris);font-weight:600;padding:11px 14px}
 .btn-link:hover{color:#F4F3ED}
 
@@ -1049,6 +1057,7 @@ footer{border-top:1px solid var(--ligne);padding:56px 0 36px;background:#030617}
 .admdash-row-badge.expire{background:rgba(226,99,79,.13);color:#E2634F}
 .admdash-row-badge.aucun{background:rgba(244,243,237,.06);color:var(--gris)}
 .admdash-row-badge.pending{background:rgba(201,164,76,.14);color:var(--or-clair)}
+.admdash-row-badge.suspendu{background:rgba(226,99,79,.16);color:#E2634F}
 .admdash-empty{text-align:center;padding:40px 20px;color:var(--gris);font-size:13.5px}
 
 .admdash-detail-h{display:flex;align-items:center;gap:14px;margin-bottom:20px}
@@ -1362,6 +1371,15 @@ footer{border-top:1px solid var(--ligne);padding:56px 0 36px;background:#030617}
   transition:border-color .2s,background .2s,box-shadow .2s;
 }
 .field textarea{resize:vertical;min-height:76px;line-height:1.5}
+.field select{
+  width:100%;background:#0A1322;border:1.5px solid rgba(244,243,237,.1);border-radius:11px;
+  padding:12.5px 14px;color:#F4F3ED;font-family:var(--body);font-size:14.5px;
+  box-shadow:0 1px 3px rgba(0,0,0,.24) inset;appearance:none;-webkit-appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2393A8B8' stroke-width='2.3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 14px center;background-size:16px;
+  transition:border-color .2s,background-color .2s,box-shadow .2s;
+}
+.field select:focus{outline:none;border-color:var(--vert-vif);background-color:#0C1729;box-shadow:0 0 0 3px rgba(46,212,127,.13)}
 .field input::placeholder,.field textarea::placeholder{color:#5C6B7A}
 .field input:focus,.field textarea:focus{outline:none;border-color:var(--vert-vif);background:#0C1729;box-shadow:0 0 0 3px rgba(46,212,127,.13)}
 .field.invalid input{border-color:#E2634F}
@@ -4307,13 +4325,29 @@ adm_k_loading:"Chargement...", adm_k_offline:"Connexion indisponible", adm_k_err
 adm_k_users:"Utilisateurs", adm_k_subs_active:"Abonnements actifs", adm_k_pay_pending:"Paiements en attente", adm_k_tickets:"Fiches",
 adm_users_h:"Utilisateurs", adm_users_p:"Recherche et détail de chaque compte, directement depuis la base de données.",
 adm_users_search_ph:"Chercher par e-mail...", adm_users_count:"{n} compte(s)", adm_users_empty:"Aucun compte trouvé.",
-adm_badge_none:"Aucun plan", adm_badge_expired:"expiré", adm_no_name:"Sans nom",
+adm_badge_none:"Aucun plan", adm_badge_expired:"expiré", adm_no_name:"Sans nom", adm_badge_suspended:"Suspendu",
+adm_confirm_again:"Cliquez à nouveau pour confirmer",
+adm_user_profile_h:"Profil", adm_user_role:"Rôle", adm_user_site:"Site préféré", adm_user_since:"Membre depuis",
+adm_user_current_plan:"Plan actuel", adm_user_no_plan:"Aucun",
+adm_user_change_plan_h:"Changer le plan", adm_user_change_plan_lbl:"Nouveau plan",
+adm_user_change_plan_reason_lbl:"Note (optionnelle)", adm_user_change_plan_reason_ph:"Ex. : geste commercial, correction d'erreur...",
+adm_user_change_plan_apply:"Appliquer le changement", adm_user_change_plan_same:"C'est déjà le plan actuel de cet utilisateur.",
+adm_user_change_plan_err:"Le changement a échoué.",
+adm_user_suspend_h:"Suspension du compte",
+adm_user_suspend_reason_lbl:"Raison (obligatoire — visible par le service client)",
+adm_user_suspend_reason_ph:"Ex. : paiement frauduleux signalé, abus des conditions d'utilisation...",
+adm_user_suspend_btn:"Suspendre ce compte", adm_user_reactivate_btn:"Réactiver ce compte",
+adm_user_suspend_reason_required:"Une raison est obligatoire pour suspendre un compte.",
+adm_user_suspend_err:"L'action a échoué.", adm_user_suspended_since:"Suspendu le",
+adm_user_plan_changed_h:"Plan modifié", adm_user_plan_changed_p:"Le nouveau plan est actif immédiatement.",
+adm_user_suspended_h:"Compte suspendu", adm_user_suspended_p:"L'utilisateur ne pourra plus se connecter.",
+adm_user_reactivated_h:"Compte réactivé", adm_user_reactivated_p:"L'utilisateur peut de nouveau se connecter.",
 adm_section_subs:"Abonnements", adm_section_pays:"Paiements", adm_none_yet:"Aucun pour l'instant.",
 adm_pay_h:"Paiements", adm_pay_p:"Validez ou refusez les paiements soumis, directement depuis la base de données.",
 adm_pay_f_pending:"En attente", adm_pay_f_confirmed:"Confirmés", adm_pay_f_rejected:"Refusés", adm_pay_f_refunded:"Remboursés",
 adm_pay_count:"{n} paiement(s)", adm_pay_empty:"Aucun paiement dans cette catégorie.",
 adm_pay_plan:"Plan", adm_pay_amount:"Montant", adm_pay_method:"Moyen de paiement", adm_pay_ref:"Référence",
-adm_pay_date:"Date", adm_pay_status:"Statut",
+adm_pay_date:"Date", adm_pay_status:"Statut", adm_pay_confirmed_at:"Validé le",
 adm_pay_reason_h:"Raison du refus", adm_pay_action_h:"Décision",
 adm_pay_reason_lbl:"Raison (obligatoire si refus)", adm_pay_reason_ph:"Ex. : référence introuvable, montant incorrect...",
 adm_pay_valider:"Valider", adm_pay_refuser:"Refuser",
@@ -4336,6 +4370,8 @@ auth_err_badpass:"Mot de passe incorrect",
 auth_err_nouser:"Aucun compte trouvé avec cet identifiant",
 auth_taken_h:"Cette adresse e-mail est déjà enregistrée",
 auth_taken_sub:"Un compte existe déjà avec cet e-mail. Rendez-vous sur la page de connexion pour y accéder.",
+auth_suspended_h:"Compte suspendu",
+auth_suspended_p:"Ce compte est actuellement suspendu. Contactez le service client pour plus d'informations.",
 auth_taken_cta:"Aller à la connexion",
 wiz_r_h:"Renouveler ou changer de plan", wiz_r_sub:"Choisissez votre plan et réglez — votre compte est déjà créé.",
 wiz_r_active:"Votre abonnement en cours reste actif. Le nouveau plan démarre après le paiement.",
@@ -4557,13 +4593,29 @@ adm_k_loading:"Loading...", adm_k_offline:"Connection unavailable", adm_k_error:
 adm_k_users:"Users", adm_k_subs_active:"Active subscriptions", adm_k_pay_pending:"Pending payments", adm_k_tickets:"Slips",
 adm_users_h:"Users", adm_users_p:"Search and detail for each account, straight from the database.",
 adm_users_search_ph:"Search by email...", adm_users_count:"{n} account(s)", adm_users_empty:"No accounts found.",
-adm_badge_none:"No plan", adm_badge_expired:"expired", adm_no_name:"No name",
+adm_badge_none:"No plan", adm_badge_expired:"expired", adm_no_name:"No name", adm_badge_suspended:"Suspended",
+adm_confirm_again:"Click again to confirm",
+adm_user_profile_h:"Profile", adm_user_role:"Role", adm_user_site:"Preferred site", adm_user_since:"Member since",
+adm_user_current_plan:"Current plan", adm_user_no_plan:"None",
+adm_user_change_plan_h:"Change plan", adm_user_change_plan_lbl:"New plan",
+adm_user_change_plan_reason_lbl:"Note (optional)", adm_user_change_plan_reason_ph:"E.g.: goodwill gesture, error correction...",
+adm_user_change_plan_apply:"Apply change", adm_user_change_plan_same:"This is already the user's current plan.",
+adm_user_change_plan_err:"The change failed.",
+adm_user_suspend_h:"Account suspension",
+adm_user_suspend_reason_lbl:"Reason (required — visible to customer support)",
+adm_user_suspend_reason_ph:"E.g.: reported fraudulent payment, terms of service violation...",
+adm_user_suspend_btn:"Suspend this account", adm_user_reactivate_btn:"Reactivate this account",
+adm_user_suspend_reason_required:"A reason is required to suspend an account.",
+adm_user_suspend_err:"The action failed.", adm_user_suspended_since:"Suspended on",
+adm_user_plan_changed_h:"Plan changed", adm_user_plan_changed_p:"The new plan is active immediately.",
+adm_user_suspended_h:"Account suspended", adm_user_suspended_p:"The user will no longer be able to sign in.",
+adm_user_reactivated_h:"Account reactivated", adm_user_reactivated_p:"The user can sign in again.",
 adm_section_subs:"Subscriptions", adm_section_pays:"Payments", adm_none_yet:"None yet.",
 adm_pay_h:"Payments", adm_pay_p:"Approve or reject submitted payments, directly from the database.",
 adm_pay_f_pending:"Pending", adm_pay_f_confirmed:"Confirmed", adm_pay_f_rejected:"Rejected", adm_pay_f_refunded:"Refunded",
 adm_pay_count:"{n} payment(s)", adm_pay_empty:"No payments in this category.",
 adm_pay_plan:"Plan", adm_pay_amount:"Amount", adm_pay_method:"Payment method", adm_pay_ref:"Reference",
-adm_pay_date:"Date", adm_pay_status:"Status",
+adm_pay_date:"Date", adm_pay_status:"Status", adm_pay_confirmed_at:"Confirmed on",
 adm_pay_reason_h:"Reason for rejection", adm_pay_action_h:"Decision",
 adm_pay_reason_lbl:"Reason (required if rejecting)", adm_pay_reason_ph:"E.g.: reference not found, wrong amount...",
 adm_pay_valider:"Approve", adm_pay_refuser:"Reject",
@@ -4586,6 +4638,8 @@ auth_err_badpass:"Incorrect password",
 auth_err_nouser:"No account found with these details",
 auth_taken_h:"This email address is already registered",
 auth_taken_sub:"An account already exists with this email. Head to the login page to sign in.",
+auth_suspended_h:"Account suspended",
+auth_suspended_p:"This account is currently suspended. Contact customer support for more information.",
 auth_taken_cta:"Go to login",
 wiz_r_h:"Renew or change plan", wiz_r_sub:"Pick your plan and pay — your account already exists.",
 wiz_r_active:"Your current plan stays active. The new plan starts after payment.",
@@ -4807,13 +4861,29 @@ adm_k_loading:"Chajman...", adm_k_offline:"Koneksyon pa disponib", adm_k_error:"
 adm_k_users:"Itilizatè", adm_k_subs_active:"Abònman aktif", adm_k_pay_pending:"Peman ki ap tann", adm_k_tickets:"Fich",
 adm_users_h:"Itilizatè", adm_users_p:"Rechèch ak detay chak kont, dirèkteman soti nan baz done a.",
 adm_users_search_ph:"Chèche pa imèl...", adm_users_count:"{n} kont", adm_users_empty:"Pa gen okenn kont.",
-adm_badge_none:"Pa gen plan", adm_badge_expired:"ekspire", adm_no_name:"San non",
+adm_badge_none:"Pa gen plan", adm_badge_expired:"ekspire", adm_no_name:"San non", adm_badge_suspended:"Sispann",
+adm_confirm_again:"Klike ankò pou konfime",
+adm_user_profile_h:"Pwofil", adm_user_role:"Wòl", adm_user_site:"Sit prefere", adm_user_since:"Manm depi",
+adm_user_current_plan:"Plan aktyèl", adm_user_no_plan:"Okenn",
+adm_user_change_plan_h:"Chanje plan", adm_user_change_plan_lbl:"Nouvo plan",
+adm_user_change_plan_reason_lbl:"Nòt (opsyonèl)", adm_user_change_plan_reason_ph:"Egz. : jès komèsyal, korije yon erè...",
+adm_user_change_plan_apply:"Aplike chanjman an", adm_user_change_plan_same:"Se deja plan aktyèl itilizatè a.",
+adm_user_change_plan_err:"Chanjman an echwe.",
+adm_user_suspend_h:"Sispansyon kont lan",
+adm_user_suspend_reason_lbl:"Rezon (obligatwa — sèvis kliyan ap wè li)",
+adm_user_suspend_reason_ph:"Egz. : peman fwod rapòte, vyolasyon kondisyon itilizasyon...",
+adm_user_suspend_btn:"Sispann kont sa a", adm_user_reactivate_btn:"Reaktive kont sa a",
+adm_user_suspend_reason_required:"Yon rezon obligatwa pou sispann yon kont.",
+adm_user_suspend_err:"Aksyon an echwe.", adm_user_suspended_since:"Sispann nan",
+adm_user_plan_changed_h:"Plan chanje", adm_user_plan_changed_p:"Nouvo plan an aktif imedyatman.",
+adm_user_suspended_h:"Kont sispann", adm_user_suspended_p:"Itilizatè a pap ka konekte ankò.",
+adm_user_reactivated_h:"Kont reaktive", adm_user_reactivated_p:"Itilizatè a ka konekte ankò.",
 adm_section_subs:"Abònman", adm_section_pays:"Peman", adm_none_yet:"Pa gen ankò.",
 adm_pay_h:"Peman", adm_pay_p:"Valide oswa refize peman ki soumèt yo, dirèkteman soti nan baz done a.",
 adm_pay_f_pending:"An atant", adm_pay_f_confirmed:"Konfime", adm_pay_f_rejected:"Refize", adm_pay_f_refunded:"Ranbouse",
 adm_pay_count:"{n} peman", adm_pay_empty:"Pa gen peman nan kategori sa a.",
 adm_pay_plan:"Plan", adm_pay_amount:"Montan", adm_pay_method:"Mwayen peman", adm_pay_ref:"Referans",
-adm_pay_date:"Dat", adm_pay_status:"Estati",
+adm_pay_date:"Dat", adm_pay_status:"Estati", adm_pay_confirmed_at:"Valide nan",
 adm_pay_reason_h:"Rezon refi a", adm_pay_action_h:"Desizyon",
 adm_pay_reason_lbl:"Rezon (obligatwa si refi)", adm_pay_reason_ph:"Egz. : referans pa jwenn, move montan...",
 adm_pay_valider:"Valide", adm_pay_refuser:"Refize",
@@ -4836,6 +4906,8 @@ auth_err_badpass:"Modpas la pa kòrèk",
 auth_err_nouser:"Nou pa jwenn okenn kont ak idantifyan sa a",
 auth_taken_h:"Imèl sa a deja anrejistre",
 auth_taken_sub:"Gen yon kont ki deja gen imèl sa a. Ale nan paj koneksyon an pou w antre.",
+auth_suspended_h:"Kont sispann",
+auth_suspended_p:"Kont sa a sispann pou kounye a. Kontakte sèvis kliyan pou plis enfòmasyon.",
 auth_taken_cta:"Ale nan koneksyon",
 wiz_r_h:"Renouvle oswa chanje plan", wiz_r_sub:"Chwazi plan ou epi peye — kont ou deja kreye.",
 wiz_r_active:"Abònman ou genyen an rete aktif. Nouvo plan an kòmanse apre peman an.",
@@ -6311,10 +6383,22 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
              navigateur. Un compte normal ne peut jamais s'attribuer le
              role admin en trafiquant l'appareil. */
           let role='user';
+          let profil=null;
           try{
-            const {data:prof}=await sb.from('profiles').select('role,username').eq('id',data.user.id).single();
+            const {data:prof}=await sb.from('profiles')
+              .select('role,username,suspended_at').eq('id',data.user.id).single();
+            profil=prof;
             if(prof&&prof.role)role=prof.role;
           }catch(e){}
+          /* Compte suspendu : la connexion s'arrete ici, quel que soit le
+             role. On ferme immediatement la session Supabase qui vient de
+             s'ouvrir — un compte suspendu ne doit garder AUCUNE session
+             active, meme brievement. */
+          if(profil&&profil.suspended_at){
+            try{await sb.auth.signOut();}catch(e){}
+            if(window.VB_toast)window.VB_toast('auth_suspended_h',t('auth_suspended_p'));
+            return;
+          }
           if(role==='admin'){
             closeAuth();
             requestAnimationFrame(()=>{if(window.VB_openAdminDash)window.VB_openAdminDash(data.user);});
@@ -6611,6 +6695,7 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
 
   window.VB_getState=()=>state;
   window.VB_planById=planById;
+  window.VB_allPlans=()=>PLANS;
   window.VB_isExpired=()=>subscriptionExpired(state);
   window.VB_isPending=()=>!!(state&&state.paid&&state.payStatus==='pending');
   /* Rafraichissement silencieux : verifie si un admin a valide/refuse le
@@ -7444,6 +7529,8 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
   if(!dash)return;
   const T=()=>translations[currentLang]||translations.fr;
   const t=k=>(T()[k]!=null?T()[k]:(translations.fr[k]||''));
+  const stripTags=h=>{const d=document.createElement('div');d.innerHTML=h;return d.textContent||'';};
+  const money=n=>n.toLocaleString('fr-FR').replace(/\u202f|\u00a0/g,' ');
 
   let view='home';
   let viewStack=[];
@@ -7570,6 +7657,34 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
   function initiales(txt){
     return (txt||'?').trim().split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase()||'?';
   }
+  /* Double confirmation obligatoire pour TOUTE action admin sensible
+     (valider/refuser un paiement, changer un plan, suspendre un compte).
+     Le premier clic n'execute JAMAIS l'action — il arme seulement le
+     bouton, visuellement (texte + pulsation). Seul un second clic dans
+     les 5 secondes declenche reellement l'action ; passe ce delai, le
+     bouton se desarme tout seul pour qu'un clic tardif et non intentionnel
+     ne puisse jamais rien declencher. */
+  function armerDoubleConfirmation(btn,texteArme,executer){
+    if(btn.dataset.armed==='1'){
+      clearTimeout(btn._armTimeout);
+      delete btn.dataset.armed;
+      btn.classList.remove('btn-armed');
+      btn.textContent=btn.dataset.texteOriginal||btn.textContent;
+      executer();
+      return;
+    }
+    btn.dataset.texteOriginal=btn.textContent;
+    btn.dataset.armed='1';
+    btn.textContent=texteArme;
+    btn.classList.add('btn-armed');
+    btn._armTimeout=setTimeout(()=>{
+      if(btn.dataset.armed==='1'){
+        delete btn.dataset.armed;
+        btn.textContent=btn.dataset.texteOriginal;
+        btn.classList.remove('btn-armed');
+      }
+    },5000);
+  }
   let usersCache=null;
   async function chargerUsers(){
     const sb=window.VB_getSupabase&&window.VB_getSupabase();
@@ -7577,7 +7692,7 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
     if(usersCache)return usersCache;
     try{
       const {data,error}=await sb.from('profiles')
-        .select('id,email,username,role,created_at')
+        .select('id,email,username,role,preferred_site,created_at,suspended_at,suspended_by,suspended_reason')
         .order('created_at',{ascending:false})
         .limit(200);
       usersCache=(!error&&data)?data:[];
@@ -7613,6 +7728,9 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
         badge='<span class="admdash-row-badge '+(expire?'expire':'actif')+'">'+
           (sub.plan_id||'').toUpperCase()+(expire?' · '+t('adm_badge_expired'):'')+'</span>';
       }
+      // La suspension prime sur tout le reste : un compte suspendu doit
+      // rester visible immediatement dans la liste, peu importe son plan.
+      if(u.suspended_at)badge='<span class="admdash-row-badge suspendu">'+t('adm_badge_suspended')+'</span>';
       return '<button type="button" class="admdash-row" data-uid="'+u.id+'">'+
         '<span class="admdash-row-av">'+initiales(u.username||u.email)+'</span>'+
         '<span class="admdash-row-tx"><b>'+(u.username||t('adm_no_name'))+'</b><span>'+u.email+'</span></span>'+
@@ -7637,13 +7755,14 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
     let subs=[],pays=[];
     try{
       const [{data:s},{data:p}]=await Promise.all([
-        sb.from('subscriptions').select('plan_id,status,starts_at,expires_at').eq('user_id',u.id).order('starts_at',{ascending:false}),
+        sb.from('subscriptions').select('id,plan_id,status,starts_at,expires_at').eq('user_id',u.id).order('starts_at',{ascending:false}),
         sb.from('payments').select('plan_id,amount_htg,method,status,reference,created_at').eq('user_id',u.id).order('created_at',{ascending:false})
       ]);
       subs=s||[];pays=p||[];
     }catch(e){}
 
     const fmt=iso=>iso?new Date(iso).toLocaleDateString(currentLang==='en'?'en-US':'fr-FR',{day:'2-digit',month:'short',year:'numeric'}):'—';
+    const fmtH=iso=>iso?new Date(iso).toLocaleDateString(currentLang==='en'?'en-US':'fr-FR',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}):'—';
     const subsHtml=subs.length?subs.map(s=>
       '<div class="admdash-hist-row"><dt>'+s.plan_id.toUpperCase()+' · '+s.status+'</dt>'+
       '<dd>'+fmt(s.starts_at)+' → '+(s.expires_at?fmt(s.expires_at):t('wiz_d_never'))+'</dd></div>'
@@ -7654,16 +7773,164 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
       '<dd>'+p.amount_htg+' HTG · '+fmt(p.created_at)+'</dd></div>'
     ).join('') : '<div class="admdash-hist-empty">'+t('adm_none_yet')+'</div>';
 
+    // Plan reellement actif aujourd'hui, jamais devine : la premiere
+    // ligne 'active' de l'historique (deja trie du plus recent au plus
+    // ancien), ou aucun si l'utilisateur n'en a jamais eu.
+    const planActif=subs.find(s=>s.status==='active')||null;
+    const planActifObj=planActif?(window.VB_planById?window.VB_planById(planActif.plan_id):null):null;
+    const estSuspendu=!!u.suspended_at;
+
+    const optionsPlans=(window.VB_allPlans?window.VB_allPlans():[]).map(pl=>
+      '<option value="'+pl.id+'"'+(planActif&&planActif.plan_id===pl.id?' selected':'')+'>'+
+      stripTags(t(pl.nameKey))+' — '+money(pl.prix)+' HTG</option>'
+    ).join('');
+
     box.innerHTML=
       '<div class="admdash-detail-h">'+
         '<span class="admdash-detail-av">'+initiales(u.username||u.email)+'</span>'+
         '<span><span class="admdash-detail-name">'+(u.username||t('adm_no_name'))+'</span>'+
         '<br><span class="admdash-detail-email">'+u.email+'</span></span>'+
       '</div>'+
+      (estSuspendu?
+        '<div class="dash-pending" style="border-color:rgba(226,99,79,.4);background:linear-gradient(140deg,rgba(226,99,79,.13),rgba(11,20,37,0) 62%),#100E18">'+
+          '<span class="dash-pending-ic" style="background:rgba(226,99,79,.14);color:#E2634F;border-color:rgba(226,99,79,.32)">'+
+            '<svg class="ic" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 9l6 6M15 9l-6 6"/></svg>'+
+          '</span>'+
+          '<span class="dash-pending-tx"><b>'+t('adm_badge_suspended')+'</b>'+
+          '<span>'+t('adm_user_suspended_since')+' '+fmtH(u.suspended_at)+(u.suspended_reason?' — '+u.suspended_reason:'')+'</span></span>'+
+        '</div>'
+        :'')+
+      '<div class="admdash-section-h">'+t('adm_user_profile_h')+'</div>'+
+      '<dl class="wiz-done-sum">'+
+        '<div><dt>'+t('adm_user_role')+'</dt><dd>'+(u.role||'user')+'</dd></div>'+
+        '<div><dt>'+t('adm_user_site')+'</dt><dd>'+(u.preferred_site||'—')+'</dd></div>'+
+        '<div><dt>'+t('adm_user_since')+'</dt><dd>'+fmt(u.created_at)+'</dd></div>'+
+        '<div><dt>'+t('adm_user_current_plan')+'</dt><dd>'+(planActifObj?stripTags(t(planActifObj.nameKey)):t('adm_user_no_plan'))+'</dd></div>'+
+      '</dl>'+
+
+      '<div class="admdash-section-h">'+t('adm_user_change_plan_h')+'</div>'+
+      '<label class="field"><span class="field-lbl">'+t('adm_user_change_plan_lbl')+'</span>'+
+      '<select id="admUserPlanSelect">'+optionsPlans+'</select></label>'+
+      '<label class="field" style="margin-top:10px"><span class="field-lbl">'+t('adm_user_change_plan_reason_lbl')+'</span>'+
+      '<textarea id="admUserPlanReason" placeholder="'+t('adm_user_change_plan_reason_ph')+'"></textarea></label>'+
+      '<button type="button" class="btn btn-confirm" id="admUserPlanApply" style="width:100%;margin-top:12px">'+t('adm_user_change_plan_apply')+'</button>'+
+      '<div id="admUserPlanErr" class="field-err" style="display:none;margin-top:8px"></div>'+
+
+      '<div class="admdash-section-h">'+t('adm_user_suspend_h')+'</div>'+
+      (estSuspendu?
+        '<button type="button" class="btn btn-confirm" id="admUserSuspendBtn" style="width:100%">'+t('adm_user_reactivate_btn')+'</button>'
+        :
+        '<label class="field"><span class="field-lbl">'+t('adm_user_suspend_reason_lbl')+'</span>'+
+        '<textarea id="admUserSuspendReason" placeholder="'+t('adm_user_suspend_reason_ph')+'"></textarea></label>'+
+        '<button type="button" class="btn btn-reject" id="admUserSuspendBtn" style="width:100%;margin-top:12px">'+t('adm_user_suspend_btn')+'</button>')+
+      '<div id="admUserSuspendErr" class="field-err" style="display:none;margin-top:8px"></div>'+
+
       '<div class="admdash-section-h">'+t('adm_section_subs')+'</div>'+
       '<div class="admdash-hist">'+subsHtml+'</div>'+
       '<div class="admdash-section-h">'+t('adm_section_pays')+'</div>'+
       '<div class="admdash-hist">'+paysHtml+'</div>';
+
+    document.getElementById('admUserPlanApply').addEventListener('click',function(){
+      const nouveauPlan=document.getElementById('admUserPlanSelect').value;
+      const raison=(document.getElementById('admUserPlanReason').value||'').trim();
+      const err=document.getElementById('admUserPlanErr');
+      if(planActif&&planActif.plan_id===nouveauPlan){
+        err.textContent=t('adm_user_change_plan_same');err.style.display='block';return;
+      }
+      err.style.display='none';
+      armerDoubleConfirmation(this,t('adm_confirm_again'),()=>changerPlanAdmin(u,planActif,nouveauPlan,raison));
+    });
+
+    document.getElementById('admUserSuspendBtn').addEventListener('click',function(){
+      const err=document.getElementById('admUserSuspendErr');
+      if(!estSuspendu){
+        const raison=(document.getElementById('admUserSuspendReason').value||'').trim();
+        if(!raison){err.textContent=t('adm_user_suspend_reason_required');err.style.display='block';return;}
+        err.style.display='none';
+        armerDoubleConfirmation(this,t('adm_confirm_again'),()=>suspendreUtilisateur(u,true,raison));
+      }else{
+        err.style.display='none';
+        armerDoubleConfirmation(this,t('adm_confirm_again'),()=>suspendreUtilisateur(u,false,null));
+      }
+    });
+  }
+
+  /* Changement de plan force par un admin : effet IMMEDIAT, jamais une
+     nouvelle ligne 'pending' — c'est une decision manuelle admin, pas un
+     paiement client. On cloture l'abonnement actif existant (s'il y en a
+     un) puis on cree le nouveau, deja 'active'. Aucune ligne payments
+     n'est creee : aucun argent n'a transite par le site pour ce geste. */
+  async function changerPlanAdmin(u,ancienSub,nouveauPlanId,raison){
+    const sb=window.VB_getSupabase&&window.VB_getSupabase();
+    if(!sb)return;
+    const btn=document.getElementById('admUserPlanApply');
+    if(btn)btn.disabled=true;
+    try{
+      const pl=window.VB_planById?window.VB_planById(nouveauPlanId):null;
+      const maintenant=new Date();
+      const fin=pl&&pl.days?new Date(maintenant.getTime()+pl.days*86400000).toISOString():null;
+      if(ancienSub){
+        await sb.from('subscriptions').update({status:'cancelled'}).eq('id',ancienSub.id);
+      }
+      const {error:insErr}=await sb.from('subscriptions').insert({
+        user_id:u.id, plan_id:nouveauPlanId, status:'active',
+        starts_at:maintenant.toISOString(), expires_at:fin
+      });
+      if(insErr)throw insErr;
+      try{
+        await sb.from('audit_log').insert({
+          admin_id:(currentUser&&currentUser.id)||null,
+          action:'admin_plan_change',
+          target_user_id:u.id,
+          old_value:{plan_id:ancienSub?ancienSub.plan_id:null},
+          new_value:{plan_id:nouveauPlanId},
+          reason:raison||null
+        });
+      }catch(e){}
+      if(window.VB_toast)window.VB_toast('adm_user_plan_changed_h',t('adm_user_plan_changed_p'));
+      renderUserDetail();
+    }catch(e){
+      const err=document.getElementById('admUserPlanErr');
+      if(err){err.textContent=t('adm_user_change_plan_err')+' — '+((e&&e.message)?e.message:String(e)).slice(0,140);err.style.display='block';}
+      if(btn)btn.disabled=false;
+    }
+  }
+
+  /* Suspension / reactivation : bloque uniquement la CONNEXION (verifie
+     cote client des la reponse Supabase — voir le formulaire de
+     connexion). N'efface jamais l'historique ni l'abonnement. */
+  async function suspendreUtilisateur(u,suspendre,raison){
+    const sb=window.VB_getSupabase&&window.VB_getSupabase();
+    if(!sb)return;
+    const btn=document.getElementById('admUserSuspendBtn');
+    if(btn)btn.disabled=true;
+    try{
+      const maj=suspendre
+        ?{suspended_at:new Date().toISOString(), suspended_by:(currentUser&&currentUser.id)||null, suspended_reason:raison||null}
+        :{suspended_at:null, suspended_by:null, suspended_reason:null};
+      const {error:majErr}=await sb.from('profiles').update(maj).eq('id',u.id);
+      if(majErr)throw majErr;
+      try{
+        await sb.from('audit_log').insert({
+          admin_id:(currentUser&&currentUser.id)||null,
+          action:suspendre?'account_suspended':'account_reactivated',
+          target_user_id:u.id,
+          old_value:{suspended:!suspendre},
+          new_value:{suspended:suspendre},
+          reason:suspendre?(raison||null):null
+        });
+      }catch(e){}
+      usersCache=null;   // le badge de la liste doit refleter le changement
+      if(window.VB_toast)window.VB_toast(
+        suspendre?'adm_user_suspended_h':'adm_user_reactivated_h',
+        t(suspendre?'adm_user_suspended_p':'adm_user_reactivated_p')
+      );
+      renderUserDetail();
+    }catch(e){
+      const err=document.getElementById('admUserSuspendErr');
+      if(err){err.textContent=t('adm_user_suspend_err')+' — '+((e&&e.message)?e.message:String(e)).slice(0,140);err.style.display='block';}
+      if(btn)btn.disabled=false;
+    }
   }
 
   /* ---- Donnees reelles : paiements ----
@@ -7679,7 +7946,7 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
     if(paysCache)return paysCache;
     try{
       const {data,error}=await sb.from('payments')
-        .select('id,user_id,subscription_id,plan_id,amount_htg,method,status,reference,reject_reason,created_at')
+        .select('id,user_id,subscription_id,plan_id,amount_htg,method,status,reference,confirmed_at,confirmed_by,created_at')
         .order('created_at',{ascending:false}).limit(300);
       paysCache=(!error&&data)?data:[];
     }catch(e){
@@ -7738,6 +8005,22 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
     const methodLbl={moncash:'MonCash',natcash:'NatCash',stripe:'Stripe (Carte/PayPal)'};
     const statusLbl={pending:t('adm_pay_f_pending'),confirmed:t('adm_pay_f_confirmed'),failed:t('adm_pay_f_rejected'),refunded:t('adm_pay_f_refunded')};
 
+    // Il n'existe pas de colonne "raison du refus" sur payments : elle vit
+    // uniquement dans audit_log.reason. On la retrouve en cherchant, parmi
+    // les decisions recentes, celle dont new_value.payment_id correspond
+    // exactement a ce paiement (jamais une simple coincidence de date).
+    let raisonRefus=null;
+    if(p.status==='failed'){
+      try{
+        const {data:logs}=await sb.from('audit_log')
+          .select('reason,new_value,created_at')
+          .eq('action','payment_rejected')
+          .order('created_at',{ascending:false}).limit(100);
+        const match=(logs||[]).find(l=>l.new_value&&l.new_value.payment_id===p.id);
+        if(match)raisonRefus=match.reason;
+      }catch(e){ /* si l'audit est illisible, on affiche le reste sans bloquer */ }
+    }
+
     box.innerHTML=
       '<div class="admdash-detail-h">'+
         '<span class="admdash-detail-av">'+(p.plan_id||'?').toUpperCase().slice(0,2)+'</span>'+
@@ -7751,10 +8034,12 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
         '<div><dt>'+t('adm_pay_ref')+'</dt><dd>'+(p.reference||'—')+'</dd></div>'+
         '<div><dt>'+t('adm_pay_date')+'</dt><dd>'+fmt(p.created_at)+'</dd></div>'+
         '<div><dt>'+t('adm_pay_status')+'</dt><dd>'+statusLbl[p.status]+'</dd></div>'+
+        (p.status==='confirmed'&&p.confirmed_at?
+          '<div><dt>'+t('adm_pay_confirmed_at')+'</dt><dd>'+fmt(p.confirmed_at)+'</dd></div>':'')+
       '</dl>'+
-      (p.status==='failed'&&p.reject_reason?
+      (p.status==='failed'&&raisonRefus?
         '<div class="admdash-section-h">'+t('adm_pay_reason_h')+'</div>'+
-        '<div class="admdash-hist"><div class="admdash-hist-row"><dd>'+p.reject_reason+'</dd></div></div>'
+        '<div class="admdash-hist"><div class="admdash-hist-row"><dd>'+raisonRefus+'</dd></div></div>'
         :'')+
       (p.status==='pending'?
         '<div class="admdash-section-h">'+t('adm_pay_action_h')+'</div>'+
@@ -7767,13 +8052,15 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
         :'');
 
     if(p.status==='pending'){
-      document.getElementById('admPayValider').addEventListener('click',()=>traiterPaiement(p,'confirmed'));
-      document.getElementById('admPayRefuser').addEventListener('click',()=>{
+      document.getElementById('admPayValider').addEventListener('click',function(){
+        armerDoubleConfirmation(this,t('adm_confirm_again'),()=>traiterPaiement(p,'confirmed'));
+      });
+      document.getElementById('admPayRefuser').addEventListener('click',function(){
         const raison=(document.getElementById('admPayReason').value||'').trim();
         const err=document.getElementById('admPayActionErr');
         if(!raison){err.textContent=t('adm_pay_reason_required');err.style.display='block';return;}
         err.style.display='none';
-        traiterPaiement(p,'rejected',raison);
+        armerDoubleConfirmation(this,t('adm_confirm_again'),()=>traiterPaiement(p,'rejected',raison));
       });
     }
   }
@@ -7795,9 +8082,11 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
       // toute l'UI admin. La colonne reelle 'payments.status' n'accepte que
       // pending/confirmed/failed/refunded (contrainte SQL du projet) — on
       // traduit donc ici, au seul endroit qui ecrit vraiment en base.
+      // Il n'existe PAS de colonne reject_reason sur payments : la raison
+      // du refus vit uniquement dans audit_log.reason (ecrit plus bas).
       const statutReel=newStatus==='confirmed'?'confirmed':'failed';
-      const payUpdate={status:statutReel};
-      if(newStatus==='rejected')payUpdate.reject_reason=raison||null;
+      const payUpdate={status:statutReel, confirmed_by:(currentUser&&currentUser.id)||null};
+      if(newStatus==='confirmed')payUpdate.confirmed_at=new Date().toISOString();
       const {error:payErr}=await sb.from('payments').update(payUpdate).eq('id',p.id);
       if(payErr)throw payErr;
       if(p.subscription_id){
