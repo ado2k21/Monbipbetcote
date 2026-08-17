@@ -1613,6 +1613,28 @@ footer{border-top:1px solid var(--ligne);padding:56px 0 36px;background:#030617}
 }
 .wiz-otp input:focus{outline:none;border-color:var(--vert-vif);background:#0D182C}
 .wiz-otp.invalid input{border-color:#E2634F}
+/* Overlay 2FA admin : independant du systeme wizard/authpage, declenche
+   uniquement apres un mot de passe admin valide. */
+.mfa-overlay{
+  position:fixed;inset:0;z-index:9500;display:flex;align-items:center;justify-content:center;
+  padding:20px;background:rgba(3,6,14,.82);backdrop-filter:blur(6px);
+}
+.mfa-overlay[hidden]{display:none}
+.mfa-box{
+  width:100%;max-width:380px;background:#0B1220;border:1px solid rgba(244,243,237,.1);
+  border-radius:var(--r-lg);padding:28px 24px;text-align:center;
+  box-shadow:0 24px 60px rgba(0,0,0,.5);
+}
+.mfa-box h3{font-family:var(--display);font-size:19px;color:#F4F3ED;margin-bottom:8px}
+.mfa-box p{font-size:13.5px;color:var(--gris);line-height:1.55;margin-bottom:16px}
+.mfa-qr{width:172px;height:172px;margin:0 auto 14px;border-radius:12px;overflow:hidden;background:#fff;padding:8px}
+.mfa-qr svg{width:100%;height:100%}
+.mfa-secret{
+  font-family:var(--mono);font-size:12.5px;color:var(--or-clair);word-break:break-all;
+  background:rgba(201,164,76,.08);border:1px solid rgba(201,164,76,.25);border-radius:9px;
+  padding:9px 12px;margin-bottom:18px;
+}
+.mfa-stage[hidden]{display:none}
 .wiz-demo[hidden]{display:none}
 .wiz-demo{
   display:flex;align-items:flex-start;gap:9px;padding:11px 13px;border-radius:var(--r-sm);
@@ -3199,7 +3221,7 @@ details p{font-size:15.5px;line-height:1.72;color:#CBD8E4}
       </button>
     </div>
     <div class="sec-divider" aria-hidden="true"><i></i></div>
-<div class="faq-list">
+<div class="faq-list" id="faqpageList">
       <details open>
         <summary><span data-i18n="faq1_q">Comment sont sélectionnés les pronostics ?</span>
           <span class="pl"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
@@ -3671,6 +3693,42 @@ details p{font-size:15.5px;line-height:1.72;color:#CBD8E4}
   </div>
 </div>
 
+<!-- 2FA admin (Supabase MFA/TOTP natif) -->
+<div class="mfa-overlay" id="mfaOverlay" hidden>
+  <div class="mfa-box">
+    <div class="mfa-stage" data-mfa="enroll">
+      <h3 data-i18n="mfa_enroll_h">Sekirize kont admin ou</h3>
+      <p data-i18n="mfa_enroll_p">Eskane kòd QR sa a ak Google Authenticator (oswa yon app similè), epi antre kòd 6 chif la pou aktive li.</p>
+      <div class="mfa-qr" id="mfaQr"></div>
+      <div class="mfa-secret" id="mfaSecret"></div>
+      <div class="wiz-otp" id="mfaEnrollOtp">
+        <input type="text" inputmode="numeric" maxlength="1" aria-label="1">
+        <input type="text" inputmode="numeric" maxlength="1" aria-label="2">
+        <input type="text" inputmode="numeric" maxlength="1" aria-label="3">
+        <input type="text" inputmode="numeric" maxlength="1" aria-label="4">
+        <input type="text" inputmode="numeric" maxlength="1" aria-label="5">
+        <input type="text" inputmode="numeric" maxlength="1" aria-label="6">
+      </div>
+      <span class="field-err" id="mfaEnrollErr" style="display:none;text-align:center;margin-bottom:14px" data-i18n="mfa_err_code">Kòd la pa kòrèk</span>
+      <button type="button" class="btn btn-or" id="mfaEnrollSubmit" style="width:100%" data-i18n="mfa_btn_activate">Aktive 2FA</button>
+    </div>
+    <div class="mfa-stage" data-mfa="challenge" hidden>
+      <h3 data-i18n="mfa_challenge_h">Verifikasyon an 2 etap</h3>
+      <p data-i18n="mfa_challenge_p">Antre kòd 6 chif ki nan app otantifikasyon ou a.</p>
+      <div class="wiz-otp" id="mfaChallengeOtp">
+        <input type="text" inputmode="numeric" maxlength="1" aria-label="1">
+        <input type="text" inputmode="numeric" maxlength="1" aria-label="2">
+        <input type="text" inputmode="numeric" maxlength="1" aria-label="3">
+        <input type="text" inputmode="numeric" maxlength="1" aria-label="4">
+        <input type="text" inputmode="numeric" maxlength="1" aria-label="5">
+        <input type="text" inputmode="numeric" maxlength="1" aria-label="6">
+      </div>
+      <span class="field-err" id="mfaChallengeErr" style="display:none;text-align:center;margin-bottom:14px" data-i18n="mfa_err_code">Kòd la pa kòrèk</span>
+      <button type="button" class="btn btn-or" id="mfaChallengeSubmit" style="width:100%" data-i18n="mfa_btn_verify">Verifye</button>
+    </div>
+  </div>
+</div>
+
 <!-- Notification (toast) -->
 <div class="vbtoast" id="vbToast" role="status" aria-live="polite" hidden>
   <span class="vbtoast-ic">
@@ -3975,6 +4033,18 @@ details p{font-size:15.5px;line-height:1.72;color:#CBD8E4}
             <svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="2.2"/><path d="M2.5 10h19M6 15h4"/></svg>
             <span data-i18n="adm_nav_payments">Peman</span>
           </button>
+          <button class="dash-menu-item" type="button" role="menuitem" data-adm="plans">
+            <svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+            <span data-i18n="adm_nav_plans">Plan</span>
+          </button>
+          <button class="dash-menu-item" type="button" role="menuitem" data-adm="faq">
+            <svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.5"/><path d="M9.2 9.3a2.8 2.8 0 1 1 3.9 2.6c-.9.4-1.6 1-1.6 2v.3"/><circle cx="12" cy="17" r=".3" fill="currentColor"/></svg>
+            <span data-i18n="adm_nav_faq">FAQ</span>
+          </button>
+          <button class="dash-menu-item" type="button" role="menuitem" data-adm="testimonials">
+            <svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v10H8l-4 4V5Z"/></svg>
+            <span data-i18n="adm_nav_testimonials">Temwayaj</span>
+          </button>
           <div class="dash-menu-sep"></div>
           <button class="dash-menu-item danger" type="button" role="menuitem" id="admMenuExit">
             <svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M15 17l5-5-5-5M20 12H9M12 20H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h6"/></svg>
@@ -4063,6 +4133,74 @@ details p{font-size:15.5px;line-height:1.72;color:#CBD8E4}
         <span data-i18n="dash_back">Retounen</span>
       </button>
       <div id="admPayDetail"></div>
+    </div>
+
+    <!-- VUE : PLANS -->
+    <div class="dash-view" data-adview="plans">
+      <button class="dash-back" type="button" data-adback>
+        <svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
+        <span data-i18n="dash_back">Retounen</span>
+      </button>
+      <div class="dash-hi">
+        <h2 data-i18n="adm_plans_h">Plan</h2>
+        <p data-i18n="adm_plans_p">Modifye pri ak dire chak plan — chanjman yo aplike PATOUT sou sit la imedyatman.</p>
+      </div>
+      <div id="admPlansList" class="admdash-list"></div>
+    </div>
+
+    <!-- VUE : DETAIL PLAN -->
+    <div class="dash-view" data-adview="plandetail">
+      <button class="dash-back" type="button" data-adback>
+        <svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
+        <span data-i18n="dash_back">Retounen</span>
+      </button>
+      <div id="admPlanDetail"></div>
+    </div>
+
+    <!-- VUE : FAQ -->
+    <div class="dash-view" data-adview="faq">
+      <button class="dash-back" type="button" data-adback>
+        <svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
+        <span data-i18n="dash_back">Retounen</span>
+      </button>
+      <div class="dash-hi">
+        <h2 data-i18n="adm_faq_h">FAQ</h2>
+        <p data-i18n="adm_faq_p">Questions affichees dans le panneau FAQ dedie du site — publiees uniquement quand vous l'indiquez.</p>
+      </div>
+      <button type="button" class="btn btn-or" id="admFaqNew" style="width:100%;margin-bottom:14px" data-i18n="adm_faq_new">+ Nouvelle question</button>
+      <div id="admFaqList" class="admdash-list"></div>
+    </div>
+
+    <!-- VUE : DETAIL FAQ -->
+    <div class="dash-view" data-adview="faqdetail">
+      <button class="dash-back" type="button" data-adback>
+        <svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
+        <span data-i18n="dash_back">Retounen</span>
+      </button>
+      <div id="admFaqDetail"></div>
+    </div>
+
+    <!-- VUE : TEMOIGNAGES -->
+    <div class="dash-view" data-adview="testimonials">
+      <button class="dash-back" type="button" data-adback>
+        <svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
+        <span data-i18n="dash_back">Retounen</span>
+      </button>
+      <div class="dash-hi">
+        <h2 data-i18n="adm_testi_h">Temwayaj</h2>
+        <p data-i18n="adm_testi_p">Temwayaj kliyan yo, ajoute manyèlman epi pibliye lè ou deside.</p>
+      </div>
+      <button type="button" class="btn btn-or" id="admTestiNew" style="width:100%;margin-bottom:14px" data-i18n="adm_testi_new">+ Nouveau témoignage</button>
+      <div id="admTestiList" class="admdash-list"></div>
+    </div>
+
+    <!-- VUE : DETAIL TEMOIGNAGE -->
+    <div class="dash-view" data-adview="testidetail">
+      <button class="dash-back" type="button" data-adback>
+        <svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
+        <span data-i18n="dash_back">Retounen</span>
+      </button>
+      <div id="admTestiDetail"></div>
     </div>
 
   </div>
@@ -4171,6 +4309,7 @@ foot_h_plateforme:"Plateforme",
 foot_plans:"Plan yo", foot_rezilta:"Rezilta", foot_accueil:"Retounen nan Akèy",
 foot_h_legal:"Légal", foot_cgu:"Conditions d'utilisation", foot_confid:"Confidentialité", foot_jeu_resp:"Jeu responsable",
 pl1_name:"VIP 7 JOURS", pl1_per:"7 jours d’accès",
+plan_per_days:"{n} jours d'accès",
 pl2_name:"VIP 21 JOURS", pl2_per:"21 jours d’accès",
 pl3_name:"VIP 30 JOURS", pl3_per:"30 jours d’accès",
 pl4_name:"LIFETIME VIP A VIE", pl4_sub:"FULL ACCESS", pl4_per:"Tout cotes yo disponib pou tout tan",
@@ -4318,7 +4457,7 @@ session_stale_h:"Compte ouvert ailleurs",
 session_stale_p:"Ce compte est ouvert dans une autre fenêtre. Rafraîchissez la page pour continuer.",
 dash_menu_lang:"Langue",
 adm_role_badge:"ADMIN",
-adm_nav_home:"Vue d'ensemble", adm_nav_users:"Utilisateurs", adm_nav_payments:"Paiements",
+adm_nav_home:"Vue d'ensemble", adm_nav_users:"Utilisateurs", adm_nav_payments:"Paiements", adm_nav_plans:"Plans", adm_nav_faq:"FAQ", adm_nav_testimonials:"Témoignages",
 adm_menu_exit:"Quitter le Dashboard Admin",
 adm_home_h:"Vue d'ensemble", adm_home_p:"Chiffres réels, directement issus de la base de données.",
 adm_refresh:"Rafraîchir", adm_updated_at:"Mis à jour à {t}",
@@ -4333,6 +4472,36 @@ adm_confirm_q_refuser:"Confirmer le refus de ce paiement ?",
 adm_confirm_q_planchange:"Confirmer le changement de plan ?",
 adm_confirm_q_suspend:"Confirmer la suspension de ce compte ?",
 adm_confirm_q_reactivate:"Confirmer la réactivation de ce compte ?",
+adm_confirm_q_plan_save:"Confirmer la modification de ce plan ? Le changement s'applique immédiatement sur tout le site.",
+adm_plans_h:"Plans", adm_plans_p:"Modifiez le prix et la durée de chaque plan — les changements s'appliquent PARTOUT sur le site, immédiatement.",
+adm_plans_empty:"Aucun plan trouvé.",
+adm_plans_price_lbl:"Prix (HTG)", adm_plans_days_lbl:"Durée (jours) — laisser vide pour Lifetime",
+adm_plans_days_ph:"Ex. : 21 (vide = sans expiration)",
+adm_plans_save:"Enregistrer", adm_plans_err_price:"Entrez un prix valide.", adm_plans_err_days:"Entrez un nombre de jours valide ou laissez vide.",
+adm_plans_err_save:"L'enregistrement a échoué.",
+adm_plans_toast_h:"Plan modifié", adm_plans_toast_p:"Le nouveau prix est actif immédiatement sur tout le site.",
+adm_order_lbl:"Ordre d'affichage", adm_published_toggle:"Publié (visible sur le site)",
+adm_published:"Publié", adm_draft:"Brouillon",
+adm_confirm_q_save:"Confirmer l'enregistrement ?", adm_confirm_q_delete:"Confirmer la suppression ? Cette action est définitive.",
+adm_faq_h:"FAQ", adm_faq_p:"Questions affichées dans le panneau FAQ dédié du site — publiées uniquement quand vous l'indiquez.",
+adm_faq_new:"+ Nouvelle question", adm_faq_empty:"Aucune question pour l'instant.",
+adm_faq_q_ht:"Question (Créole)", adm_faq_q_fr:"Question (Français)", adm_faq_q_en:"Question (Anglais)", adm_faq_q_ph:"Écrivez la question…",
+adm_faq_a_ht:"Réponse (Créole)", adm_faq_a_fr:"Réponse (Français)", adm_faq_a_en:"Réponse (Anglais)", adm_faq_a_ph:"Écrivez la réponse…",
+adm_faq_save:"Enregistrer", adm_faq_delete:"Supprimer cette question",
+adm_faq_err_incomplete:"Remplissez la question et la réponse dans les 3 langues.",
+adm_faq_err_save:"L'enregistrement a échoué.",
+adm_faq_toast_h:"Question enregistrée", adm_faq_toast_p:"Visible immédiatement sur le site si publiée.",
+adm_faq_toast_del_h:"Question supprimée", adm_faq_toast_del_p:"Elle n'apparaît plus sur le site.",
+adm_testi_h:"Témoignages", adm_testi_p:"Témoignages clients, ajoutés manuellement et publiés quand vous le décidez.",
+adm_testi_new:"+ Nouveau témoignage", adm_testi_empty:"Aucun témoignage pour l'instant.",
+adm_testi_author:"Nom de l'auteur",
+adm_testi_content_ht:"Témoignage (Créole)", adm_testi_content_fr:"Témoignage (Français)", adm_testi_content_en:"Témoignage (Anglais)",
+adm_testi_rating:"Note",
+adm_testi_save:"Enregistrer", adm_testi_delete:"Supprimer ce témoignage",
+adm_testi_err_incomplete:"Remplissez le nom et le témoignage dans les 3 langues.",
+adm_testi_err_save:"L'enregistrement a échoué.",
+adm_testi_toast_h:"Témoignage enregistré", adm_testi_toast_p:"Visible immédiatement sur le site si publié.",
+adm_testi_toast_del_h:"Témoignage supprimé", adm_testi_toast_del_p:"Il n'apparaît plus sur le site.",
 adm_user_pending_pay_h:"Paiement en attente",
 adm_user_profile_h:"Profil", adm_user_role:"Rôle", adm_user_site:"Site préféré", adm_user_since:"Membre depuis",
 adm_user_current_plan:"Plan actuel", adm_user_no_plan:"Aucun",
@@ -4379,6 +4548,11 @@ auth_taken_h:"Cette adresse e-mail est déjà enregistrée",
 auth_taken_sub:"Un compte existe déjà avec cet e-mail. Rendez-vous sur la page de connexion pour y accéder.",
 auth_suspended_h:"Compte suspendu",
 auth_suspended_p:"Ce compte est actuellement suspendu. Contactez le service client pour plus d'informations.",
+mfa_enroll_h:"Sécurisez votre compte admin",
+mfa_enroll_p:"Scannez ce code QR avec Google Authenticator (ou une application similaire), puis entrez le code à 6 chiffres pour l'activer.",
+mfa_challenge_h:"Vérification en 2 étapes",
+mfa_challenge_p:"Entrez le code à 6 chiffres de votre application d'authentification.",
+mfa_err_code:"Code incorrect", mfa_btn_activate:"Activer le 2FA", mfa_btn_verify:"Vérifier",
 auth_taken_cta:"Aller à la connexion",
 wiz_r_h:"Renouveler ou changer de plan", wiz_r_sub:"Choisissez votre plan et réglez — votre compte est déjà créé.",
 wiz_r_active:"Votre abonnement en cours reste actif. Le nouveau plan démarre après le paiement.",
@@ -4445,6 +4619,7 @@ foot_h_plateforme:"Platform",
 foot_plans:"Plans", foot_rezilta:"Results", foot_accueil:"Back to home",
 foot_h_legal:"Legal", foot_cgu:"Terms of use", foot_confid:"Privacy", foot_jeu_resp:"Responsible gambling",
 pl1_name:"VIP 7 DAYS", pl1_per:"7 days of access",
+plan_per_days:"{n} days of access",
 pl2_name:"VIP 21 DAYS", pl2_per:"21 days of access",
 pl3_name:"VIP 30 DAYS", pl3_per:"30 days of access",
 pl4_name:"LIFETIME VIP A VIE", pl4_sub:"FULL ACCESS", pl4_per:"Tout cotes yo disponib pou tout tan",
@@ -4592,7 +4767,7 @@ session_stale_h:"Account open elsewhere",
 session_stale_p:"This account is open in another window. Refresh the page to continue.",
 dash_menu_lang:"Language",
 adm_role_badge:"ADMIN",
-adm_nav_home:"Overview", adm_nav_users:"Users", adm_nav_payments:"Payments",
+adm_nav_home:"Overview", adm_nav_users:"Users", adm_nav_payments:"Payments", adm_nav_plans:"Plans", adm_nav_faq:"FAQ", adm_nav_testimonials:"Testimonials",
 adm_menu_exit:"Leave Admin Dashboard",
 adm_home_h:"Overview", adm_home_p:"Real figures, taken directly from the database.",
 adm_refresh:"Refresh", adm_updated_at:"Updated at {t}",
@@ -4607,6 +4782,36 @@ adm_confirm_q_refuser:"Confirm rejection of this payment?",
 adm_confirm_q_planchange:"Confirm the plan change?",
 adm_confirm_q_suspend:"Confirm suspension of this account?",
 adm_confirm_q_reactivate:"Confirm reactivation of this account?",
+adm_confirm_q_plan_save:"Confirm this plan change? It applies immediately across the whole site.",
+adm_plans_h:"Plans", adm_plans_p:"Edit the price and duration of each plan — changes apply EVERYWHERE on the site, immediately.",
+adm_plans_empty:"No plans found.",
+adm_plans_price_lbl:"Price (HTG)", adm_plans_days_lbl:"Duration (days) — leave blank for Lifetime",
+adm_plans_days_ph:"E.g.: 21 (blank = no expiry)",
+adm_plans_save:"Save", adm_plans_err_price:"Enter a valid price.", adm_plans_err_days:"Enter a valid number of days or leave blank.",
+adm_plans_err_save:"Save failed.",
+adm_plans_toast_h:"Plan updated", adm_plans_toast_p:"The new price is active immediately across the site.",
+adm_order_lbl:"Display order", adm_published_toggle:"Published (visible on the site)",
+adm_published:"Published", adm_draft:"Draft",
+adm_confirm_q_save:"Confirm saving?", adm_confirm_q_delete:"Confirm deletion? This action is permanent.",
+adm_faq_h:"FAQ", adm_faq_p:"Questions shown in the site's dedicated FAQ panel — published only when you choose to.",
+adm_faq_new:"+ New question", adm_faq_empty:"No questions yet.",
+adm_faq_q_ht:"Question (Creole)", adm_faq_q_fr:"Question (French)", adm_faq_q_en:"Question (English)", adm_faq_q_ph:"Write the question…",
+adm_faq_a_ht:"Answer (Creole)", adm_faq_a_fr:"Answer (French)", adm_faq_a_en:"Answer (English)", adm_faq_a_ph:"Write the answer…",
+adm_faq_save:"Save", adm_faq_delete:"Delete this question",
+adm_faq_err_incomplete:"Fill in the question and answer in all 3 languages.",
+adm_faq_err_save:"Save failed.",
+adm_faq_toast_h:"Question saved", adm_faq_toast_p:"Visible immediately on the site if published.",
+adm_faq_toast_del_h:"Question deleted", adm_faq_toast_del_p:"It no longer appears on the site.",
+adm_testi_h:"Testimonials", adm_testi_p:"Customer testimonials, added manually and published when you decide.",
+adm_testi_new:"+ New testimonial", adm_testi_empty:"No testimonials yet.",
+adm_testi_author:"Author name",
+adm_testi_content_ht:"Testimonial (Creole)", adm_testi_content_fr:"Testimonial (French)", adm_testi_content_en:"Testimonial (English)",
+adm_testi_rating:"Rating",
+adm_testi_save:"Save", adm_testi_delete:"Delete this testimonial",
+adm_testi_err_incomplete:"Fill in the author name and testimonial in all 3 languages.",
+adm_testi_err_save:"Save failed.",
+adm_testi_toast_h:"Testimonial saved", adm_testi_toast_p:"Visible immediately on the site if published.",
+adm_testi_toast_del_h:"Testimonial deleted", adm_testi_toast_del_p:"It no longer appears on the site.",
 adm_user_pending_pay_h:"Pending payment",
 adm_user_profile_h:"Profile", adm_user_role:"Role", adm_user_site:"Preferred site", adm_user_since:"Member since",
 adm_user_current_plan:"Current plan", adm_user_no_plan:"None",
@@ -4653,6 +4858,11 @@ auth_taken_h:"This email address is already registered",
 auth_taken_sub:"An account already exists with this email. Head to the login page to sign in.",
 auth_suspended_h:"Account suspended",
 auth_suspended_p:"This account is currently suspended. Contact customer support for more information.",
+mfa_enroll_h:"Secure your admin account",
+mfa_enroll_p:"Scan this QR code with Google Authenticator (or a similar app), then enter the 6-digit code to activate it.",
+mfa_challenge_h:"Two-step verification",
+mfa_challenge_p:"Enter the 6-digit code from your authenticator app.",
+mfa_err_code:"Incorrect code", mfa_btn_activate:"Activate 2FA", mfa_btn_verify:"Verify",
 auth_taken_cta:"Go to login",
 wiz_r_h:"Renew or change plan", wiz_r_sub:"Pick your plan and pay — your account already exists.",
 wiz_r_active:"Your current plan stays active. The new plan starts after payment.",
@@ -4719,6 +4929,7 @@ foot_h_plateforme:"Platfòm",
 foot_plans:"Plan yo", foot_rezilta:"Rezilta", foot_accueil:"Retounen nan Akèy",
 foot_h_legal:"Legal", foot_cgu:"Kondisyon itilizasyon", foot_confid:"Konfidansyalite", foot_jeu_resp:"Jwe responsab",
 pl1_name:"VIP 7 JOU", pl1_per:"7 jou aksè",
+plan_per_days:"{n} jou aksè",
 pl2_name:"VIP 21 JOU", pl2_per:"21 jou aksè",
 pl3_name:"VIP 30 JOU", pl3_per:"30 jou aksè",
 pl4_name:"LIFETIME VIP A VIE", pl4_sub:"FULL ACCESS", pl4_per:"Tout cotes yo disponib pou tout tan",
@@ -4866,7 +5077,7 @@ session_stale_h:"Kont ouvri yon lòt kote",
 session_stale_p:"Kont sa a ouvri nan yon lòt fenèt. Rafrechi paj la pou kontinye.",
 dash_menu_lang:"Lang",
 adm_role_badge:"ADMIN",
-adm_nav_home:"Vi jeneral", adm_nav_users:"Itilizatè", adm_nav_payments:"Peman",
+adm_nav_home:"Vi jeneral", adm_nav_users:"Itilizatè", adm_nav_payments:"Peman", adm_nav_plans:"Plan", adm_nav_faq:"FAQ", adm_nav_testimonials:"Temwayaj",
 adm_menu_exit:"Kite Dashboard Admin",
 adm_home_h:"Vi jeneral", adm_home_p:"Chif reyèl, dirèkteman soti nan baz done a.",
 adm_refresh:"Rafrechi", adm_updated_at:"Mizajou a {t}",
@@ -4881,6 +5092,36 @@ adm_confirm_q_refuser:"Konfime refi peman sa a ?",
 adm_confirm_q_planchange:"Konfime chanjman plan an ?",
 adm_confirm_q_suspend:"Konfime sispansyon kont sa a ?",
 adm_confirm_q_reactivate:"Konfime reyaktivasyon kont sa a ?",
+adm_confirm_q_plan_save:"Konfime chanjman plan sa a ? Chanjman an aplike imedyatman sou tout sit la.",
+adm_plans_h:"Plan", adm_plans_p:"Modifye pri ak dire chak plan — chanjman yo aplike PATOUT sou sit la imedyatman.",
+adm_plans_empty:"Pa gen plan.",
+adm_plans_price_lbl:"Pri (HTG)", adm_plans_days_lbl:"Dire (jou) — kite vid pou Lifetime",
+adm_plans_days_ph:"Egz. : 21 (vid = san ekspirasyon)",
+adm_plans_save:"Anrejistre", adm_plans_err_price:"Antre yon pri ki valid.", adm_plans_err_days:"Antre yon kantite jou ki valid oswa kite vid.",
+adm_plans_err_save:"Anrejistreman echwe.",
+adm_plans_toast_h:"Plan modifye", adm_plans_toast_p:"Nouvo pri a aktif imedyatman sou tout sit la.",
+adm_order_lbl:"Lòd afichaj", adm_published_toggle:"Pibliye (vizib sou sit la)",
+adm_published:"Pibliye", adm_draft:"Bouyon",
+adm_confirm_q_save:"Konfime anrejistreman an ?", adm_confirm_q_delete:"Konfime sipresyon an ? Aksyon sa a definitif.",
+adm_faq_h:"FAQ", adm_faq_p:"Kesyon ki parèt nan panèl FAQ dedye sit la — pibliye sèlman lè ou deside.",
+adm_faq_new:"+ Nouvo kesyon", adm_faq_empty:"Pa gen kesyon pou kounye a.",
+adm_faq_q_ht:"Kesyon (Kreyòl)", adm_faq_q_fr:"Kesyon (Fransè)", adm_faq_q_en:"Kesyon (Anglè)", adm_faq_q_ph:"Ekri kesyon an…",
+adm_faq_a_ht:"Repons (Kreyòl)", adm_faq_a_fr:"Repons (Fransè)", adm_faq_a_en:"Repons (Anglè)", adm_faq_a_ph:"Ekri repons lan…",
+adm_faq_save:"Anrejistre", adm_faq_delete:"Efase kesyon sa a",
+adm_faq_err_incomplete:"Ranpli kesyon an ak repons lan nan 3 lang yo.",
+adm_faq_err_save:"Anrejistreman echwe.",
+adm_faq_toast_h:"Kesyon anrejistre", adm_faq_toast_p:"Vizib imedyatman sou sit la si li pibliye.",
+adm_faq_toast_del_h:"Kesyon efase", adm_faq_toast_del_p:"Li pa parèt sou sit la ankò.",
+adm_testi_h:"Temwayaj", adm_testi_p:"Temwayaj kliyan yo, ajoute manyèlman epi pibliye lè ou deside.",
+adm_testi_new:"+ Nouvo temwayaj", adm_testi_empty:"Pa gen temwayaj pou kounye a.",
+adm_testi_author:"Non oto a",
+adm_testi_content_ht:"Temwayaj (Kreyòl)", adm_testi_content_fr:"Temwayaj (Fransè)", adm_testi_content_en:"Temwayaj (Anglè)",
+adm_testi_rating:"Nòt",
+adm_testi_save:"Anrejistre", adm_testi_delete:"Efase temwayaj sa a",
+adm_testi_err_incomplete:"Ranpli non an ak temwayaj la nan 3 lang yo.",
+adm_testi_err_save:"Anrejistreman echwe.",
+adm_testi_toast_h:"Temwayaj anrejistre", adm_testi_toast_p:"Vizib imedyatman sou sit la si li pibliye.",
+adm_testi_toast_del_h:"Temwayaj efase", adm_testi_toast_del_p:"Li pa parèt sou sit la ankò.",
 adm_user_pending_pay_h:"Peman ap tann",
 adm_user_profile_h:"Pwofil", adm_user_role:"Wòl", adm_user_site:"Sit prefere", adm_user_since:"Manm depi",
 adm_user_current_plan:"Plan aktyèl", adm_user_no_plan:"Okenn",
@@ -4927,6 +5168,11 @@ auth_taken_h:"Imèl sa a deja anrejistre",
 auth_taken_sub:"Gen yon kont ki deja gen imèl sa a. Ale nan paj koneksyon an pou w antre.",
 auth_suspended_h:"Kont sispann",
 auth_suspended_p:"Kont sa a sispann pou kounye a. Kontakte sèvis kliyan pou plis enfòmasyon.",
+mfa_enroll_h:"Sekirize kont admin ou",
+mfa_enroll_p:"Eskane kòd QR sa a ak Google Authenticator (oswa yon app similè), epi antre kòd 6 chif la pou aktive li.",
+mfa_challenge_h:"Verifikasyon an 2 etap",
+mfa_challenge_p:"Antre kòd 6 chif ki nan app otantifikasyon ou a.",
+mfa_err_code:"Kòd la pa kòrèk", mfa_btn_activate:"Aktive 2FA", mfa_btn_verify:"Verifye",
 auth_taken_cta:"Ale nan koneksyon",
 wiz_r_h:"Renouvle oswa chanje plan", wiz_r_sub:"Chwazi plan ou epi peye — kont ou deja kreye.",
 wiz_r_active:"Abònman ou genyen an rete aktif. Nouvo plan an kòmanse apre peman an.",
@@ -6419,8 +6665,18 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
             return;
           }
           if(role==='admin'){
-            closeAuth();
-            requestAnimationFrame(()=>{if(window.VB_openAdminDash)window.VB_openAdminDash(data.user);});
+            // Le 2FA est OBLIGATOIRE pour un compte admin : jamais
+            // contourne, jamais facultatif. L'ouverture du tableau de
+            // bord n'a lieu qu'apres verification reussie.
+            if(window.VB_handleAdminMFA){
+              window.VB_handleAdminMFA(()=>{
+                closeAuth();
+                requestAnimationFrame(()=>{if(window.VB_openAdminDash)window.VB_openAdminDash(data.user);});
+              });
+            }else{
+              closeAuth();
+              requestAnimationFrame(()=>{if(window.VB_openAdminDash)window.VB_openAdminDash(data.user);});
+            }
             return;
           }
           const localAcc=accounts.find(data.user.email);
@@ -6715,6 +6971,98 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
   window.VB_getState=()=>state;
   window.VB_planById=planById;
   window.VB_allPlans=()=>PLANS;
+  /* Synchronise prix/duree REELS depuis Supabase au demarrage. Ne touche
+     jamais nameKey/perKey/feats/popular (purement presentation, pas en
+     base) — seulement prix et days, qui pilotent l'argent reel partout
+     (recap paiement, montant ecrit dans payments, tableau de bord,
+     editeur admin). Si Supabase est injoignable, les valeurs locales
+     integrees au fichier servent de repli automatique, sans jamais
+     bloquer l'affichage. */
+  window.VB_syncPlansFromSupabase=async function(){
+    const sb=window.VB_getSupabase&&window.VB_getSupabase();
+    if(!sb)return false;
+    try{
+      const {data,error}=await sb.from('plans').select('id,name,price_htg,duration_days,rank');
+      if(error||!data)return false;
+      let changed=false;
+      data.forEach(row=>{
+        const local=PLANS.find(p=>p.id===row.id);
+        if(local&&(local.prix!==row.price_htg||local.days!==row.duration_days)){
+          local.prix=row.price_htg;
+          local.days=row.duration_days;
+          changed=true;
+        }
+      });
+      if(changed)syncerCartesTarifsLanding();
+      return changed;
+    }catch(e){return false;}
+  };
+  /* Met a jour le prix REEL et la duree affiches sur les cartes de la
+     page d'accueil, sans jamais toucher au prix barre (.prix-old) —
+     purement un argument marketing, independant du vrai prix en base —
+     ni au reste de la mise en forme (badges, logos de paiement, etc.). */
+  function syncerCartesTarifsLanding(){
+    (window.VB_allPlans?window.VB_allPlans():[]).forEach(pl=>{
+      const btn=document.querySelector('[data-plan="'+pl.id+'"]');
+      const carte=btn&&btn.closest('.plan');
+      if(!carte)return;
+      const prixEl=carte.querySelector('.prix');
+      if(prixEl){
+        const old=prixEl.querySelector('.prix-old');
+        prixEl.innerHTML='';
+        if(old)prixEl.appendChild(old);
+        prixEl.appendChild(document.createTextNode(money(pl.prix)+' '));
+        const small=document.createElement('small');
+        small.textContent='HTG';
+        prixEl.appendChild(small);
+      }
+      // La duree n'est reecrite QUE pour les plans avec un nombre de
+      // jours reel — le texte du Lifetime ("acces a vie") est qualitatif,
+      // jamais un decompte de jours, donc jamais touche ici.
+      if(pl.days){
+        const perEl=carte.querySelector('.per');
+        if(perEl){
+          perEl.removeAttribute('data-i18n');
+          perEl.textContent=t('plan_per_days').replace('{n}',pl.days);
+        }
+      }
+    });
+  }
+  // Lancement au chargement : discret, jamais bloquant.
+  window.VB_syncPlansFromSupabase();
+  // Reappliquer au changement de langue (le texte de duree, genere
+  // dynamiquement, ne beneficie plus de la traduction automatique du DOM
+  // une fois son attribut data-i18n retire).
+  document.addEventListener('vb:langchange',()=>{syncerCartesTarifsLanding();});
+
+  /* Panneau FAQ dedie : remplace le contenu par les entrees reelles de
+     Supabase, UNIQUEMENT si la lecture reussit et renvoie au moins une
+     ligne. En cas d'echec ou d'absence de donnees, le contenu statique
+     deja present dans le HTML reste affiche tel quel — jamais de panneau
+     vide. */
+  window.VB_renderFAQ=async function(){
+    const sb=window.VB_getSupabase&&window.VB_getSupabase();
+    const list=document.getElementById('faqpageList');
+    if(!sb||!list)return;
+    try{
+      const {data,error}=await sb.from('faq')
+        .select('question_ht,question_fr,question_en,answer_ht,answer_fr,answer_en,display_order,is_published')
+        .eq('is_published',true).order('display_order',{ascending:true});
+      if(error||!data||!data.length)return;
+      const lang=(currentLang==='en'||currentLang==='ht')?currentLang:'fr';
+      list.innerHTML=data.map((f,i)=>{
+        const q=stripTags(f['question_'+lang]||f.question_fr||'');
+        const a=stripTags(f['answer_'+lang]||f.answer_fr||'');
+        return '<details'+(i===0?' open':'')+'>'+
+          '<summary><span>'+q+'</span>'+
+          '<span class="pl"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>'+
+          '</summary><p>'+a+'</p></details>';
+      }).join('');
+    }catch(e){ /* le contenu statique deja present reste affiche */ }
+  };
+  window.VB_renderFAQ();
+  document.addEventListener('vb:langchange',()=>{window.VB_renderFAQ();});
+
   window.VB_isExpired=()=>subscriptionExpired(state);
   window.VB_isPending=()=>!!(state&&state.paid&&state.payStatus==='pending');
   /* Rafraichissement silencieux : verifie si un admin a valide/refuse le
@@ -7566,6 +7914,9 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
     if(view==='home')renderHome();
     if(view==='users')renderUsers();
     if(view==='payments')renderPayments();
+    if(view==='plans')renderPlans();
+    if(view==='faq')renderFaqList();
+    if(view==='testimonials')renderTestiList();
   }
   document.querySelectorAll('#admDash [data-adback]').forEach(b=>{
     b.addEventListener('click',()=>{
@@ -8215,6 +8566,370 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
     }
   }
 
+  /* ---- Donnees reelles : plans ----
+     Editer ici change le prix/duree REEL, partout sur le site,
+     immediatement (recap paiement, montant ecrit dans payments,
+     tableau de bord, cette meme page) — jamais un aperçu isole. */
+  let selectedPlanId=null;
+  let plansCache=null;
+  async function chargerPlansAdmin(){
+    const sb=window.VB_getSupabase&&window.VB_getSupabase();
+    if(!sb)return [];
+    if(plansCache)return plansCache;
+    try{
+      const {data,error}=await sb.from('plans').select('id,name,price_htg,duration_days,rank').order('rank',{ascending:true});
+      plansCache=(!error&&data)?data:[];
+    }catch(e){plansCache=[];}
+    return plansCache;
+  }
+  async function renderPlans(){
+    const list=document.getElementById('admPlansList');
+    const sb=window.VB_getSupabase&&window.VB_getSupabase();
+    if(!sb){list.innerHTML='<div class="admdash-empty">'+t('adm_k_offline')+'</div>';return;}
+    list.innerHTML='<div class="admdash-empty">'+t('adm_k_loading')+'</div>';
+    const plans=await chargerPlansAdmin();
+    if(!plans.length){list.innerHTML='<div class="admdash-empty">'+t('adm_plans_empty')+'</div>';return;}
+    list.innerHTML=plans.map(p=>{
+      const local=window.VB_planById?window.VB_planById(p.id):null;
+      const nom=local?stripTags(t(local.nameKey)):(p.name||p.id);
+      return '<button type="button" class="admdash-row" data-plid="'+p.id+'">'+
+        '<span class="admdash-row-av">'+p.id.toUpperCase().slice(0,2)+'</span>'+
+        '<span class="admdash-row-tx"><b>'+nom+'</b><span>'+money(p.price_htg)+' HTG · '+
+        (p.duration_days?p.duration_days+' j':t('wiz_d_never'))+'</span></span>'+
+        '</button>';
+    }).join('');
+    list.querySelectorAll('[data-plid]').forEach(b=>{
+      b.addEventListener('click',()=>{selectedPlanId=b.dataset.plid;setView('plandetail');renderPlanDetail();});
+    });
+  }
+  async function renderPlanDetail(){
+    const box=document.getElementById('admPlanDetail');
+    const sb=window.VB_getSupabase&&window.VB_getSupabase();
+    box.innerHTML='<div class="admdash-empty">'+t('adm_k_loading')+'</div>';
+    if(!sb||!selectedPlanId)return;
+    const plans=await chargerPlansAdmin();
+    const p=plans.find(x=>x.id===selectedPlanId);
+    if(!p){box.innerHTML='<div class="admdash-empty">'+t('adm_plans_empty')+'</div>';return;}
+    const local=window.VB_planById?window.VB_planById(p.id):null;
+    const nom=local?stripTags(t(local.nameKey)):(p.name||p.id);
+    box.innerHTML=
+      '<div class="admdash-detail-h">'+
+        '<span class="admdash-detail-av">'+p.id.toUpperCase().slice(0,2)+'</span>'+
+        '<span><span class="admdash-detail-name">'+nom+'</span>'+
+        '<br><span class="admdash-detail-email">'+p.id+'</span></span>'+
+      '</div>'+
+      '<label class="field" style="margin-top:16px"><span class="field-lbl">'+t('adm_plans_price_lbl')+'</span>'+
+      '<input type="number" min="0" step="1" id="admPlanPrice" value="'+p.price_htg+'"></label>'+
+      '<label class="field" style="margin-top:10px"><span class="field-lbl">'+t('adm_plans_days_lbl')+'</span>'+
+      '<input type="number" min="0" step="1" id="admPlanDays" value="'+(p.duration_days||'')+'" placeholder="'+t('adm_plans_days_ph')+'"></label>'+
+      '<button type="button" class="btn btn-confirm" id="admPlanSave" style="width:100%;margin-top:14px">'+t('adm_plans_save')+'</button>'+
+      '<div id="admPlanErr" class="field-err" style="display:none;margin-top:8px"></div>';
+
+    document.getElementById('admPlanSave').addEventListener('click',function(){
+      const prixSaisi=parseInt(document.getElementById('admPlanPrice').value,10);
+      const joursSaisis=document.getElementById('admPlanDays').value.trim();
+      const err=document.getElementById('admPlanErr');
+      if(isNaN(prixSaisi)||prixSaisi<0){err.textContent=t('adm_plans_err_price');err.style.display='block';return;}
+      const jours=joursSaisis===''?null:parseInt(joursSaisis,10);
+      if(joursSaisis!==''&&(isNaN(jours)||jours<0)){err.textContent=t('adm_plans_err_days');err.style.display='block';return;}
+      err.style.display='none';
+      demanderConfirmation(this,t('adm_confirm_q_plan_save'),()=>sauvegarderPlan(p,prixSaisi,jours));
+    });
+  }
+
+  async function sauvegarderPlan(p,prix,jours){
+    const sb=window.VB_getSupabase&&window.VB_getSupabase();
+    if(!sb)return;
+    const btn=document.getElementById('admPlanSave');
+    if(btn)btn.disabled=true;
+    try{
+      const {error}=await sb.from('plans').update({price_htg:prix, duration_days:jours}).eq('id',p.id);
+      if(error)throw error;
+      try{
+        await sb.from('audit_log').insert({
+          admin_id:(currentUser&&currentUser.id)||null,
+          action:'plan_updated',
+          target_user_id:null,
+          old_value:{plan_id:p.id, price_htg:p.price_htg, duration_days:p.duration_days},
+          new_value:{plan_id:p.id, price_htg:prix, duration_days:jours},
+          reason:null
+        });
+      }catch(e){}
+      plansCache=null;
+      // Repercuter IMMEDIATEMENT sur le reste du site (assistant de
+      // paiement, tableau de bord, etc.) — pas seulement dans cette page.
+      if(window.VB_syncPlansFromSupabase)await window.VB_syncPlansFromSupabase();
+      if(window.VB_toast)window.VB_toast('adm_plans_toast_h',t('adm_plans_toast_p'));
+      if(viewStack.length)setView(viewStack.pop(),true);else setView('plans',true);
+    }catch(e){
+      const err=document.getElementById('admPlanErr');
+      if(err){err.textContent=t('adm_plans_err_save')+' — '+((e&&e.message)?e.message:String(e)).slice(0,140);err.style.display='block';}
+      if(btn)btn.disabled=false;
+    }
+  }
+
+  /* ---- Donnees reelles : FAQ ----
+     Le panneau FAQ dedie du site lit ces memes lignes (voir
+     window.VB_renderFAQ, module wizard) — une seule source de verite. */
+  let selectedFaqId=null;
+  let faqCache=null;
+  async function chargerFaqAdmin(){
+    const sb=window.VB_getSupabase&&window.VB_getSupabase();
+    if(!sb)return [];
+    if(faqCache)return faqCache;
+    try{
+      const {data,error}=await sb.from('faq').select('*').order('display_order',{ascending:true});
+      faqCache=(!error&&data)?data:[];
+    }catch(e){faqCache=[];}
+    return faqCache;
+  }
+  async function renderFaqList(){
+    const list=document.getElementById('admFaqList');
+    const sb=window.VB_getSupabase&&window.VB_getSupabase();
+    if(!sb){list.innerHTML='<div class="admdash-empty">'+t('adm_k_offline')+'</div>';return;}
+    list.innerHTML='<div class="admdash-empty">'+t('adm_k_loading')+'</div>';
+    const items=await chargerFaqAdmin();
+    if(!items.length){list.innerHTML='<div class="admdash-empty">'+t('adm_faq_empty')+'</div>';return;}
+    list.innerHTML=items.map(f=>{
+      const badge=f.is_published
+        ?'<span class="admdash-row-badge actif">'+t('adm_published')+'</span>'
+        :'<span class="admdash-row-badge aucun">'+t('adm_draft')+'</span>';
+      return '<button type="button" class="admdash-row" data-faqid="'+f.id+'">'+
+        '<span class="admdash-row-av">'+(f.display_order!=null?f.display_order:'—')+'</span>'+
+        '<span class="admdash-row-tx"><b>'+(f.question_fr||f.question_ht||'—')+'</b></span>'+
+        badge+
+        '</button>';
+    }).join('');
+    list.querySelectorAll('[data-faqid]').forEach(b=>{
+      b.addEventListener('click',()=>{selectedFaqId=b.dataset.faqid;setView('faqdetail');renderFaqDetail();});
+    });
+  }
+  document.getElementById('admFaqNew').addEventListener('click',()=>{
+    selectedFaqId=null;setView('faqdetail');renderFaqDetail();
+  });
+
+  async function renderFaqDetail(){
+    const box=document.getElementById('admFaqDetail');
+    const sb=window.VB_getSupabase&&window.VB_getSupabase();
+    box.innerHTML='<div class="admdash-empty">'+t('adm_k_loading')+'</div>';
+    if(!sb)return;
+    let f={question_ht:'',question_fr:'',question_en:'',answer_ht:'',answer_fr:'',answer_en:'',display_order:0,is_published:true};
+    if(selectedFaqId){
+      const items=await chargerFaqAdmin();
+      const found=items.find(x=>x.id===selectedFaqId);
+      if(found)f=found;
+    }
+    box.innerHTML=
+      '<div class="admdash-section-h">'+t('adm_faq_q_ht')+'</div>'+
+      '<label class="field"><textarea id="admFaqQHt" placeholder="'+t('adm_faq_q_ph')+'">'+(f.question_ht||'')+'</textarea></label>'+
+      '<div class="admdash-section-h">'+t('adm_faq_q_fr')+'</div>'+
+      '<label class="field"><textarea id="admFaqQFr" placeholder="'+t('adm_faq_q_ph')+'">'+(f.question_fr||'')+'</textarea></label>'+
+      '<div class="admdash-section-h">'+t('adm_faq_q_en')+'</div>'+
+      '<label class="field"><textarea id="admFaqQEn" placeholder="'+t('adm_faq_q_ph')+'">'+(f.question_en||'')+'</textarea></label>'+
+      '<div class="admdash-section-h">'+t('adm_faq_a_ht')+'</div>'+
+      '<label class="field"><textarea id="admFaqAHt" placeholder="'+t('adm_faq_a_ph')+'" style="min-height:110px">'+(f.answer_ht||'')+'</textarea></label>'+
+      '<div class="admdash-section-h">'+t('adm_faq_a_fr')+'</div>'+
+      '<label class="field"><textarea id="admFaqAFr" placeholder="'+t('adm_faq_a_ph')+'" style="min-height:110px">'+(f.answer_fr||'')+'</textarea></label>'+
+      '<div class="admdash-section-h">'+t('adm_faq_a_en')+'</div>'+
+      '<label class="field"><textarea id="admFaqAEn" placeholder="'+t('adm_faq_a_ph')+'" style="min-height:110px">'+(f.answer_en||'')+'</textarea></label>'+
+      '<label class="field" style="margin-top:10px"><span class="field-lbl">'+t('adm_order_lbl')+'</span>'+
+      '<input type="number" step="1" id="admFaqOrder" value="'+(f.display_order!=null?f.display_order:0)+'"></label>'+
+      '<label style="display:flex;align-items:center;gap:9px;margin-top:12px;font-size:13.5px;color:#F4F3ED">'+
+      '<input type="checkbox" id="admFaqPub" style="width:17px;height:17px"'+(f.is_published?' checked':'')+'> '+t('adm_published_toggle')+
+      '</label>'+
+      '<button type="button" class="btn btn-confirm" id="admFaqSave" style="width:100%;margin-top:16px">'+t('adm_faq_save')+'</button>'+
+      (selectedFaqId?'<button type="button" class="btn btn-reject" id="admFaqDelete" style="width:100%;margin-top:10px">'+t('adm_faq_delete')+'</button>':'')+
+      '<div id="admFaqErr" class="field-err" style="display:none;margin-top:8px"></div>';
+
+    document.getElementById('admFaqSave').addEventListener('click',function(){
+      const payload={
+        question_ht:document.getElementById('admFaqQHt').value.trim(),
+        question_fr:document.getElementById('admFaqQFr').value.trim(),
+        question_en:document.getElementById('admFaqQEn').value.trim(),
+        answer_ht:document.getElementById('admFaqAHt').value.trim(),
+        answer_fr:document.getElementById('admFaqAFr').value.trim(),
+        answer_en:document.getElementById('admFaqAEn').value.trim(),
+        display_order:parseInt(document.getElementById('admFaqOrder').value,10)||0,
+        is_published:document.getElementById('admFaqPub').checked
+      };
+      const err=document.getElementById('admFaqErr');
+      if(!payload.question_ht||!payload.question_fr||!payload.question_en||!payload.answer_ht||!payload.answer_fr||!payload.answer_en){
+        err.textContent=t('adm_faq_err_incomplete');err.style.display='block';return;
+      }
+      err.style.display='none';
+      demanderConfirmation(this,t('adm_confirm_q_save'),()=>sauvegarderFaq(payload));
+    });
+    if(selectedFaqId){
+      document.getElementById('admFaqDelete').addEventListener('click',function(){
+        demanderConfirmation(this,t('adm_confirm_q_delete'),()=>supprimerFaq(selectedFaqId));
+      });
+    }
+  }
+
+  async function sauvegarderFaq(payload){
+    const sb=window.VB_getSupabase&&window.VB_getSupabase();
+    if(!sb)return;
+    const btn=document.getElementById('admFaqSave');
+    if(btn)btn.disabled=true;
+    try{
+      const {error}=selectedFaqId
+        ?await sb.from('faq').update(payload).eq('id',selectedFaqId)
+        :await sb.from('faq').insert(payload);
+      if(error)throw error;
+      faqCache=null;
+      if(window.VB_renderFAQ)window.VB_renderFAQ();   // reflete sur le vrai site immediatement
+      if(window.VB_toast)window.VB_toast('adm_faq_toast_h',t('adm_faq_toast_p'));
+      if(viewStack.length)setView(viewStack.pop(),true);else setView('faq',true);
+    }catch(e){
+      const err=document.getElementById('admFaqErr');
+      if(err){err.textContent=t('adm_faq_err_save')+' — '+((e&&e.message)?e.message:String(e)).slice(0,140);err.style.display='block';}
+      if(btn)btn.disabled=false;
+    }
+  }
+  async function supprimerFaq(id){
+    const sb=window.VB_getSupabase&&window.VB_getSupabase();
+    if(!sb)return;
+    try{
+      const {error}=await sb.from('faq').delete().eq('id',id);
+      if(error)throw error;
+      faqCache=null;
+      if(window.VB_renderFAQ)window.VB_renderFAQ();
+      if(window.VB_toast)window.VB_toast('adm_faq_toast_del_h',t('adm_faq_toast_del_p'));
+      setView('faq',true);
+    }catch(e){
+      const err=document.getElementById('admFaqErr');
+      if(err){err.textContent=t('adm_faq_err_save')+' — '+((e&&e.message)?e.message:String(e)).slice(0,140);err.style.display='block';}
+    }
+  }
+
+  /* ---- Donnees reelles : Temoignages ---- */
+  let selectedTestiId=null;
+  let testiCache=null;
+  async function chargerTestiAdmin(){
+    const sb=window.VB_getSupabase&&window.VB_getSupabase();
+    if(!sb)return [];
+    if(testiCache)return testiCache;
+    try{
+      const {data,error}=await sb.from('testimonials').select('*').order('display_order',{ascending:true});
+      testiCache=(!error&&data)?data:[];
+    }catch(e){testiCache=[];}
+    return testiCache;
+  }
+  async function renderTestiList(){
+    const list=document.getElementById('admTestiList');
+    const sb=window.VB_getSupabase&&window.VB_getSupabase();
+    if(!sb){list.innerHTML='<div class="admdash-empty">'+t('adm_k_offline')+'</div>';return;}
+    list.innerHTML='<div class="admdash-empty">'+t('adm_k_loading')+'</div>';
+    const items=await chargerTestiAdmin();
+    if(!items.length){list.innerHTML='<div class="admdash-empty">'+t('adm_testi_empty')+'</div>';return;}
+    list.innerHTML=items.map(x=>{
+      const badge=x.is_published
+        ?'<span class="admdash-row-badge actif">'+t('adm_published')+'</span>'
+        :'<span class="admdash-row-badge aucun">'+t('adm_draft')+'</span>';
+      return '<button type="button" class="admdash-row" data-testiid="'+x.id+'">'+
+        '<span class="admdash-row-av">'+initiales(x.author_name||'?')+'</span>'+
+        '<span class="admdash-row-tx"><b>'+(x.author_name||'—')+'</b><span>'+('★'.repeat(x.rating||0))+'</span></span>'+
+        badge+
+        '</button>';
+    }).join('');
+    list.querySelectorAll('[data-testiid]').forEach(b=>{
+      b.addEventListener('click',()=>{selectedTestiId=b.dataset.testiid;setView('testidetail');renderTestiDetail();});
+    });
+  }
+  document.getElementById('admTestiNew').addEventListener('click',()=>{
+    selectedTestiId=null;setView('testidetail');renderTestiDetail();
+  });
+
+  async function renderTestiDetail(){
+    const box=document.getElementById('admTestiDetail');
+    const sb=window.VB_getSupabase&&window.VB_getSupabase();
+    box.innerHTML='<div class="admdash-empty">'+t('adm_k_loading')+'</div>';
+    if(!sb)return;
+    let x={author_name:'',content_ht:'',content_fr:'',content_en:'',rating:5,display_order:0,is_published:true};
+    if(selectedTestiId){
+      const items=await chargerTestiAdmin();
+      const found=items.find(i=>i.id===selectedTestiId);
+      if(found)x=found;
+    }
+    const optionsNote=[1,2,3,4,5].map(n=>'<option value="'+n+'"'+(x.rating===n?' selected':'')+'>'+'★'.repeat(n)+'</option>').join('');
+    box.innerHTML=
+      '<label class="field"><span class="field-lbl">'+t('adm_testi_author')+'</span>'+
+      '<input type="text" id="admTestiAuthor" value="'+(x.author_name||'').replace(/"/g,'&quot;')+'"></label>'+
+      '<div class="admdash-section-h">'+t('adm_testi_content_ht')+'</div>'+
+      '<label class="field"><textarea id="admTestiCHt" style="min-height:90px">'+(x.content_ht||'')+'</textarea></label>'+
+      '<div class="admdash-section-h">'+t('adm_testi_content_fr')+'</div>'+
+      '<label class="field"><textarea id="admTestiCFr" style="min-height:90px">'+(x.content_fr||'')+'</textarea></label>'+
+      '<div class="admdash-section-h">'+t('adm_testi_content_en')+'</div>'+
+      '<label class="field"><textarea id="admTestiCEn" style="min-height:90px">'+(x.content_en||'')+'</textarea></label>'+
+      '<label class="field" style="margin-top:10px"><span class="field-lbl">'+t('adm_testi_rating')+'</span>'+
+      '<select id="admTestiRating">'+optionsNote+'</select></label>'+
+      '<label class="field" style="margin-top:10px"><span class="field-lbl">'+t('adm_order_lbl')+'</span>'+
+      '<input type="number" step="1" id="admTestiOrder" value="'+(x.display_order!=null?x.display_order:0)+'"></label>'+
+      '<label style="display:flex;align-items:center;gap:9px;margin-top:12px;font-size:13.5px;color:#F4F3ED">'+
+      '<input type="checkbox" id="admTestiPub" style="width:17px;height:17px"'+(x.is_published?' checked':'')+'> '+t('adm_published_toggle')+
+      '</label>'+
+      '<button type="button" class="btn btn-confirm" id="admTestiSave" style="width:100%;margin-top:16px">'+t('adm_testi_save')+'</button>'+
+      (selectedTestiId?'<button type="button" class="btn btn-reject" id="admTestiDelete" style="width:100%;margin-top:10px">'+t('adm_testi_delete')+'</button>':'')+
+      '<div id="admTestiErr" class="field-err" style="display:none;margin-top:8px"></div>';
+
+    document.getElementById('admTestiSave').addEventListener('click',function(){
+      const payload={
+        author_name:document.getElementById('admTestiAuthor').value.trim(),
+        content_ht:document.getElementById('admTestiCHt').value.trim(),
+        content_fr:document.getElementById('admTestiCFr').value.trim(),
+        content_en:document.getElementById('admTestiCEn').value.trim(),
+        rating:parseInt(document.getElementById('admTestiRating').value,10),
+        display_order:parseInt(document.getElementById('admTestiOrder').value,10)||0,
+        is_published:document.getElementById('admTestiPub').checked
+      };
+      const err=document.getElementById('admTestiErr');
+      if(!payload.author_name||!payload.content_ht||!payload.content_fr||!payload.content_en){
+        err.textContent=t('adm_testi_err_incomplete');err.style.display='block';return;
+      }
+      err.style.display='none';
+      demanderConfirmation(this,t('adm_confirm_q_save'),()=>sauvegarderTesti(payload));
+    });
+    if(selectedTestiId){
+      document.getElementById('admTestiDelete').addEventListener('click',function(){
+        demanderConfirmation(this,t('adm_confirm_q_delete'),()=>supprimerTesti(selectedTestiId));
+      });
+    }
+  }
+
+  async function sauvegarderTesti(payload){
+    const sb=window.VB_getSupabase&&window.VB_getSupabase();
+    if(!sb)return;
+    const btn=document.getElementById('admTestiSave');
+    if(btn)btn.disabled=true;
+    try{
+      const {error}=selectedTestiId
+        ?await sb.from('testimonials').update(payload).eq('id',selectedTestiId)
+        :await sb.from('testimonials').insert(payload);
+      if(error)throw error;
+      testiCache=null;
+      if(window.VB_toast)window.VB_toast('adm_testi_toast_h',t('adm_testi_toast_p'));
+      if(viewStack.length)setView(viewStack.pop(),true);else setView('testimonials',true);
+    }catch(e){
+      const err=document.getElementById('admTestiErr');
+      if(err){err.textContent=t('adm_testi_err_save')+' — '+((e&&e.message)?e.message:String(e)).slice(0,140);err.style.display='block';}
+      if(btn)btn.disabled=false;
+    }
+  }
+  async function supprimerTesti(id){
+    const sb=window.VB_getSupabase&&window.VB_getSupabase();
+    if(!sb)return;
+    try{
+      const {error}=await sb.from('testimonials').delete().eq('id',id);
+      if(error)throw error;
+      testiCache=null;
+      if(window.VB_toast)window.VB_toast('adm_testi_toast_del_h',t('adm_testi_toast_del_p'));
+      setView('testimonials',true);
+    }catch(e){
+      const err=document.getElementById('admTestiErr');
+      if(err){err.textContent=t('adm_testi_err_save')+' — '+((e&&e.message)?e.message:String(e)).slice(0,140);err.style.display='block';}
+    }
+  }
+
   window.VB_openAdminDash=openAdminDash;
 })();
 
@@ -8362,6 +9077,155 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
      artificielle ralentirait l'experience sans raison. */
   window.VB_splashShow=show;
   window.VB_splashHide=hide;
+})();
+
+/* ---------- 2FA admin (Supabase MFA/TOTP natif) ----------
+   Ne concerne QUE les comptes admin. Un admin sans facteur TOTP verifie
+   est FORCE de s'inscrire avant d'acceder au tableau de bord — ce n'est
+   jamais facultatif. Un admin qui a deja un facteur verifie doit
+   entrer un code a chaque connexion (challenge), avant tout acces. */
+(function(){
+  const overlay=document.getElementById('mfaOverlay');
+  if(!overlay)return;
+  const stageEnroll=overlay.querySelector('[data-mfa="enroll"]');
+  const stageChallenge=overlay.querySelector('[data-mfa="challenge"]');
+  const enrollOtp=[...document.getElementById('mfaEnrollOtp').querySelectorAll('input')];
+  const challengeOtp=[...document.getElementById('mfaChallengeOtp').querySelectorAll('input')];
+  const enrollErr=document.getElementById('mfaEnrollErr');
+  const challengeErr=document.getElementById('mfaChallengeErr');
+  const T=()=>translations[currentLang]||translations.fr;
+  const t=k=>(T()[k]!=null?T()[k]:(translations.fr[k]||''));
+
+  let factorIdCourant=null;
+  let challengeIdCourant=null;
+  let onSuccessCourant=null;
+
+  function brancherOtp(inputs,errBox){
+    inputs.forEach((inp,i)=>{
+      inp.addEventListener('input',()=>{
+        inp.value=inp.value.replace(/\D/g,'').slice(0,1);
+        errBox.style.display='none';
+        if(inp.value&&i<inputs.length-1)inputs[i+1].focus();
+      });
+      inp.addEventListener('keydown',ev=>{
+        if(ev.key==='Backspace'&&!inp.value&&i>0)inputs[i-1].focus();
+      });
+      inp.addEventListener('paste',ev=>{
+        const dd=(ev.clipboardData||window.clipboardData).getData('text').replace(/\D/g,'');
+        if(!dd)return;
+        ev.preventDefault();
+        dd.split('').slice(0,6).forEach((c,k)=>{if(inputs[k])inputs[k].value=c});
+        inputs[Math.min(dd.length,5)].focus();
+      });
+    });
+  }
+  brancherOtp(enrollOtp,enrollErr);
+  brancherOtp(challengeOtp,challengeErr);
+
+  function showOverlay(stage){
+    overlay.hidden=false;
+    stageEnroll.hidden=(stage!=='enroll');
+    stageChallenge.hidden=(stage!=='challenge');
+    const inputs=stage==='enroll'?enrollOtp:challengeOtp;
+    inputs.forEach(i=>i.value='');
+    (stage==='enroll'?enrollErr:challengeErr).style.display='none';
+    if(window.innerWidth>860)inputs[0].focus({preventScroll:true});
+  }
+  function hideOverlay(){overlay.hidden=true;}
+
+  /* Point d'entree unique : appelee juste apres qu'un mot de passe admin
+     a ete valide, AVANT d'ouvrir le tableau de bord. onSuccess n'est
+     appelee que si le 2FA est en regle (deja verifie ce jour-la n'existe
+     pas : chaque nouvelle session est re-challengee, par design). */
+  window.VB_handleAdminMFA=async function(onSuccess){
+    const sb=window.VB_getSupabase&&window.VB_getSupabase();
+    if(!sb){onSuccess();return;}   // ne devrait pas arriver : la connexion elle-meme aurait deja echoue
+    onSuccessCourant=onSuccess;
+    try{
+      const {data:aal}=await sb.auth.mfa.getAuthenticatorAssuranceLevel();
+      if(aal&&aal.nextLevel==='aal2'&&aal.currentLevel!=='aal2'){
+        // Un facteur verifie existe deja : il faut le challenger.
+        await ouvrirChallenge(sb);
+        return;
+      }
+      // Pas de facteur exigeant une verification : s'il n'y en a aucun du
+      // tout, l'inscription est OBLIGATOIRE pour un compte admin.
+      const {data:factors}=await sb.auth.mfa.listFactors();
+      const verifies=((factors&&factors.totp)||[]).filter(f=>f.status==='verified');
+      if(verifies.length===0){
+        await ouvrirInscription(sb);
+        return;
+      }
+      onSuccess();   // deja au niveau requis
+    }catch(e){
+      // Ne jamais bloquer silencieusement sur une erreur reseau : on
+      // degrade en laissant passer plutot que d'enfermer l'admin dehors,
+      // mais uniquement si le 2FA n'a jamais pu etre verifie du tout.
+      onSuccess();
+    }
+  };
+
+  async function ouvrirInscription(sb){
+    try{
+      // Nettoyer un eventuel facteur laisse "unverified" par une
+      // tentative precedente abandonnee (Supabase limite les facteurs
+      // en double du meme type).
+      const {data:factors}=await sb.auth.mfa.listFactors();
+      const abandonnes=((factors&&factors.totp)||[]).filter(f=>f.status==='unverified');
+      for(const f of abandonnes){try{await sb.auth.mfa.unenroll({factorId:f.id});}catch(e){}}
+      const {data,error}=await sb.auth.mfa.enroll({factorType:'totp'});
+      if(error||!data){onSuccessCourant();return;}
+      factorIdCourant=data.id;
+      document.getElementById('mfaQr').innerHTML=(data.totp&&data.totp.qr_code)||'';
+      document.getElementById('mfaSecret').textContent=(data.totp&&data.totp.secret)||'';
+      showOverlay('enroll');
+    }catch(e){onSuccessCourant();}
+  }
+
+  async function ouvrirChallenge(sb){
+    try{
+      const {data:factors}=await sb.auth.mfa.listFactors();
+      const verifie=((factors&&factors.totp)||[]).find(f=>f.status==='verified');
+      if(!verifie){onSuccessCourant();return;}
+      factorIdCourant=verifie.id;
+      const {data:ch,error}=await sb.auth.mfa.challenge({factorId:factorIdCourant});
+      if(error||!ch){onSuccessCourant();return;}
+      challengeIdCourant=ch.id;
+      showOverlay('challenge');
+    }catch(e){onSuccessCourant();}
+  }
+
+  document.getElementById('mfaEnrollSubmit').addEventListener('click',async()=>{
+    const code=enrollOtp.map(i=>i.value).join('');
+    if(code.length!==6){enrollErr.textContent=t('mfa_err_code');enrollErr.style.display='block';return;}
+    const sb=window.VB_getSupabase&&window.VB_getSupabase();
+    if(!sb||!factorIdCourant)return;
+    try{
+      const {data:ch,error:chErr}=await sb.auth.mfa.challenge({factorId:factorIdCourant});
+      if(chErr){enrollErr.textContent=t('mfa_err_code');enrollErr.style.display='block';return;}
+      const {error:vErr}=await sb.auth.mfa.verify({factorId:factorIdCourant,challengeId:ch.id,code});
+      if(vErr){enrollErr.textContent=t('mfa_err_code');enrollErr.style.display='block';return;}
+      hideOverlay();
+      if(onSuccessCourant)onSuccessCourant();
+    }catch(e){
+      enrollErr.textContent=t('mfa_err_code');enrollErr.style.display='block';
+    }
+  });
+
+  document.getElementById('mfaChallengeSubmit').addEventListener('click',async()=>{
+    const code=challengeOtp.map(i=>i.value).join('');
+    if(code.length!==6){challengeErr.textContent=t('mfa_err_code');challengeErr.style.display='block';return;}
+    const sb=window.VB_getSupabase&&window.VB_getSupabase();
+    if(!sb||!factorIdCourant||!challengeIdCourant)return;
+    try{
+      const {error}=await sb.auth.mfa.verify({factorId:factorIdCourant,challengeId:challengeIdCourant,code});
+      if(error){challengeErr.textContent=t('mfa_err_code');challengeErr.style.display='block';return;}
+      hideOverlay();
+      if(onSuccessCourant)onSuccessCourant();
+    }catch(e){
+      challengeErr.textContent=t('mfa_err_code');challengeErr.style.display='block';
+    }
+  });
 })();
 
 /* ---------- Notification (toast) ---------- */
