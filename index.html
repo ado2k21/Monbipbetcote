@@ -4435,7 +4435,7 @@ wiz_p_phone:"Votre numéro de compte", wiz_p_pay:"Payer {amount} HTG",
 wiz_p_secure:"Paiement sécurisé — aucune donnée bancaire n'est conservée",
 wiz_d_h:"Votre abonnement est actif", wiz_d_sub:"Votre compte est prêt. Vous pouvez accéder aux fiches VIP.",
 wiz_d_plan:"Plan", wiz_d_start:"Date de début", wiz_d_end:"Date d'expiration", wiz_d_ref:"Référence",
-wiz_d_never:"Sans expiration", wiz_d_cta:"Accéder au tableau de bord",
+wiz_d_never:"Sans expiration", wiz_d_cta:"Accéder au tableau de bord", wiz_d_pending_dates:"Fixée après confirmation",
 wiz_d_h_pending:"Paiement en cours de vérification", wiz_d_sub_pending:"Votre compte est prêt. Vos pronostics seront débloqués dès que notre équipe aura validé votre paiement.",
 wiz_lock_h:"Tableau de bord verrouillé", wiz_lock_cta:"Continuer mon inscription",
 wiz_lock_r1:"Vous devez d'abord créer un compte pour accéder au tableau de bord.",
@@ -4792,7 +4792,7 @@ wiz_p_phone:"Your account number", wiz_p_pay:"Pay {amount} HTG",
 wiz_p_secure:"Secure payment — no banking data is stored",
 wiz_d_h:"Your plan is active", wiz_d_sub:"Your account is ready. You can now access the VIP picks.",
 wiz_d_plan:"Plan", wiz_d_start:"Start date", wiz_d_end:"Expiry date", wiz_d_ref:"Reference",
-wiz_d_never:"No expiry", wiz_d_cta:"Go to dashboard",
+wiz_d_never:"No expiry", wiz_d_cta:"Go to dashboard", wiz_d_pending_dates:"Set after confirmation",
 wiz_d_h_pending:"Payment under verification", wiz_d_sub_pending:"Your account is ready. Your picks will unlock as soon as our team confirms your payment.",
 wiz_lock_h:"Dashboard locked", wiz_lock_cta:"Continue my sign-up",
 wiz_lock_r1:"You need to create an account first to access the dashboard.",
@@ -5149,7 +5149,7 @@ wiz_p_phone:"Nimewo kont ou", wiz_p_pay:"Peye {amount} HTG",
 wiz_p_secure:"Peman sekirize — nou pa konsève okenn done bankè",
 wiz_d_h:"Abònman ou aktive", wiz_d_sub:"Kont ou prè. Ou ka jwenn fich VIP yo kounye a.",
 wiz_d_plan:"Plan", wiz_d_start:"Dat kòmansman", wiz_d_end:"Dat ekspirasyon", wiz_d_ref:"Referans",
-wiz_d_never:"San ekspirasyon", wiz_d_cta:"Ale nan dashboard la",
+wiz_d_never:"San ekspirasyon", wiz_d_cta:"Ale nan dashboard la", wiz_d_pending_dates:"Fikse apre konfimasyon",
 wiz_d_h_pending:"Peman an ap verifye", wiz_d_sub_pending:"Kont ou pare. Pronostik ou yo ap debloke depi ekip nou konfime peman an.",
 wiz_lock_h:"Dashboard la fèmen", wiz_lock_cta:"Kontinye enskripsyon m",
 wiz_lock_r1:"Ou dwe kreye yon kont anvan pou w jwenn dashboard la.",
@@ -5863,7 +5863,7 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
      'none' = jamais paye ; 'pending' = paiement soumis, en attente de
      validation admin ; 'confirmed' = valide par un admin (ou passerelle
      automatique) ; 'rejected' = refuse par un admin, raison obligatoire. */
-  const blank=()=>({step:1,started:false,fullname:'',email:'',site:'paryajpam',pass:null,planId:null,pendingPlanId:null,emailVerified:false,paid:false,payStatus:'none',payMethod:null,code:null,startedAt:null,ref:null,startDate:null,endDate:null});
+  const blank=()=>({step:1,started:false,fullname:'',email:'',site:'paryajpam',pass:null,planId:null,pendingPlanId:null,pendingRef:null,emailVerified:false,paid:false,payStatus:'none',payMethod:null,code:null,startedAt:null,ref:null,startDate:null,endDate:null});
   let state=store.read()||blank();
   const save=()=>store.write(state);
 
@@ -5923,7 +5923,7 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
     // Aucun deuxieme paiement possible tant que le premier n'est pas
     // confirme : sinon deux paiements 'pending' s'empileraient pour la
     // meme personne, et l'admin ne saurait plus lequel valider.
-    if(st.payStatus==='pending')return {ok:false,raison:'renew_err_pending'};
+    if(st.payStatus==='pending'||st.pendingRef)return {ok:false,raison:'renew_err_pending'};
     if(st.planId==='p4')return {ok:false,raison:'renew_err_lifetime'};
 
     const fin=enPeriodeDeFin(st);
@@ -6472,28 +6472,33 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
         uid=(sessionData&&sessionData.session&&sessionData.session.user)?sessionData.session.user.id:null;
       }
       if(!uid)return {ok:true,hors_ligne:true,erreur:'Aucune session Supabase active (auth.uid() est null)'};
-      const pl=planById(state.planId);
-      /* Avant d'ecrire le nouvel abonnement, on cloture tout abonnement
-         "actif" precedent de cet utilisateur (renouvellement ou
-         changement de plan). Sans ca, un renouvellement laisserait
-         plusieurs lignes "active" empilees pour la meme personne, ce qui
-         fausserait les statistiques (nombre d'abonnements actifs, etc.)
-         que l'admin devra un jour afficher sans aucun chiffre invente. */
-      try{
-        await sb.from('subscriptions').update({status:'cancelled'})
-          .eq('user_id',uid).eq('status','active');
-      }catch(e){ /* si la cloture echoue, on ecrit quand meme le nouvel abonnement */ }
+      /* IMPORTANT : on ne ferme PLUS l'ancien abonnement actif ici.
+         Tant que le nouveau paiement n'est pas confirme par l'admin, la
+         personne garde son abonnement actif en cours — elle continue de
+         payer pour quelque chose de valide, elle ne doit jamais perdre
+         l'acces pendant l'attente. La fermeture de l'ancien abonnement se
+         fait desormais UNIQUEMENT au moment de la confirmation reelle
+         (voir traiterPaiement, module admin), jamais avant.
+         Si un changement est demande pendant qu'un plan valide est deja
+         actif, c'est le plan/reference EN ATTENTE (pendingPlanId/pendingRef)
+         qu'il faut ecrire — jamais celui reellement actif, qui ne bouge
+         pas encore. */
+      const planAEcrire=state.pendingPlanId||state.planId;
+      const refAEcrire=state.pendingRef||state.ref;
+      const pl=planById(planAEcrire);
       // status:'pending' — jamais 'active' ici : seul un admin (module Paiements)
       // pourra faire passer un abonnement a 'active', jamais ce parcours client.
+      // Les dates ecrites ici sont provisoires : traiterPaiement les
+      // recalcule et les ECRASE au moment de la vraie confirmation.
       const {data:subData,error:subErr}=await sb.from('subscriptions').insert({
-        user_id:uid, plan_id:state.planId, status:'pending',
+        user_id:uid, plan_id:planAEcrire, status:'pending',
         starts_at:state.startDate, expires_at:state.endDate
       }).select('id').single();
       if(subErr)return {ok:true,hors_ligne:true,erreur:'subscriptions: '+(subErr.message||JSON.stringify(subErr))};
       const {error:payErr}=await sb.from('payments').insert({
-        user_id:uid, subscription_id:subData?subData.id:null, plan_id:state.planId,
+        user_id:uid, subscription_id:subData?subData.id:null, plan_id:planAEcrire,
         amount_htg:pl?pl.prix:0, method:state.payMethod,
-        status:'pending', reference:state.ref
+        status:'pending', reference:refAEcrire
       });
       if(payErr)return {ok:true,hors_ligne:true,erreur:'payments: '+(payErr.message||JSON.stringify(payErr))};
       return {ok:true,hors_ligne:false};
@@ -6524,27 +6529,36 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
     state.payMethod=method;
     const pl=planById(planCible);
     const now=new Date();
-    /* Report des jours restants : si l'abonnement en cours n'est pas
-       termine, son reliquat s'ajoute a la duree du nouveau plan.
-       La barre de progression du dashboard, calculee sur startDate/endDate,
-       reflete donc automatiquement le total. */
-    let bonus=0;
-    if(state.paid&&state.endDate){
-      const reste=new Date(state.endDate).getTime()-now.getTime();
-      if(reste>0)bonus=reste;
-    }
-    // Le plan choisi est engage ici, mais son CONTENU reste verrouille
-    // (payStatus='pending') tant qu'un admin ne l'a pas confirme.
-    // paid=true ouvre seulement la porte du Dashboard (voir requiredStep) ;
-    // ce n'est jamais une preuve de paiement reel.
-    state.planId=pl.id;
-    state.pendingPlanId=null;
-    state.paid=true;
-    state.payStatus='pending';
-    state.startDate=now.toISOString();
-    state.endDate=pl.days?new Date(now.getTime()+pl.days*86400000+bonus).toISOString():null;
-    state.carryDays=bonus?Math.ceil(bonus/86400000):0;
+    /* Un abonnement deja actif et CONFIRME, pas encore termine, reste
+       tel quel pendant toute l'attente : la personne ne doit jamais
+       perdre l'acces a ce qu'elle paie deja pour un changement pas
+       encore valide par l'admin. Seul ce cas precis differe le
+       remplacement de planId/startDate/endDate — une premiere
+       souscription, ou un changement demande alors que le plan en
+       cours est deja termine, continue d'agir immediatement comme
+       avant. */
+    const planEnCoursValide=state.paid&&state.payStatus==='confirmed'&&state.endDate&&new Date(state.endDate).getTime()>now.getTime();
+
     state.ref='VB-'+now.getFullYear()+String(now.getMonth()+1).padStart(2,'0')+'-'+Math.floor(1000+Math.random()*9000);
+
+    if(planEnCoursValide){
+      // Le plan actif ne bouge pas : seul le CHANGEMENT est enregistre,
+      // separement, en attente de confirmation.
+      state.pendingPlanId=pl.id;
+      state.pendingRef=state.ref;
+    }else{
+      // Le plan choisi est engage ici, mais son CONTENU reste verrouille
+      // (payStatus='pending') tant qu'un admin ne l'a pas confirme.
+      // paid=true ouvre seulement la porte du Dashboard (voir requiredStep) ;
+      // ce n'est jamais une preuve de paiement reel.
+      state.planId=pl.id;
+      state.pendingPlanId=null;
+      state.pendingRef=null;
+      state.paid=true;
+      state.payStatus='pending';
+      state.startDate=now.toISOString();
+      state.endDate=pl.days?new Date(now.getTime()+pl.days*86400000).toISOString():null;
+    }
     state.step=4;
     state.started=false;                      // inscription terminee : plus de reprise
     save();
@@ -6554,31 +6568,32 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
       email:state.email.trim().toLowerCase(),
       pass:state.pass,
       fullname:state.fullname, site:state.site,
-      emailVerified:true, paid:true, payStatus:'pending',
+      emailVerified:true, paid:true,
+      payStatus:planEnCoursValide?state.payStatus:'pending',
       planId:state.planId, payMethod:state.payMethod,
-      startDate:state.startDate, endDate:state.endDate, ref:state.ref
+      startDate:state.startDate, endDate:state.endDate,
+      ref:state.ref
     });
     // Le compteur d'utilisateurs actifs ne compte QUE les premieres
     // inscriptions, pas les renouvellements.
     if(!wasRenew&&window.VB_countSignup)window.VB_countSignup();
 
     // Changement d'abonnement reussi : confirmation + notification
-    if(ancienPlan&&ancienPlan!==state.planId){
+    if(ancienPlan&&ancienPlan!==pl.id){
       /* Passage au Lifetime : jamais de mention de "jours ajoutes"
          (le Lifetime n'a pas de duree). Message dedie a l'acces a vie. */
-      if(state.planId==='p4'){
+      if(pl.id==='p4'){
         if(window.VB_toast)window.VB_toast('plan_changed_h',t('plan_changed_lifetime')+' '+t('pay_pending_note'));
       }else{
-        const sup=state.carryDays?' '+t('plan_changed_carry').replace('{n}',state.carryDays):'';
-        if(window.VB_toast)window.VB_toast('plan_changed_h',t('plan_changed_p')+sup+' '+t('pay_pending_note'));
+        if(window.VB_toast)window.VB_toast('plan_changed_h',t('plan_changed_p')+' '+t('pay_pending_note'));
       }
       if(window.VB_notify)window.VB_notify('plan',t('notif_plan_change').replace('{plan}',
-        String(t((planById(state.planId)||{}).nameKey||'')).replace(/<[^>]*>/g,'')));
+        String(t((pl||{}).nameKey||'')).replace(/<[^>]*>/g,'')));
     }else if(ancienPlan){
       // Meme plan reconduit : c'est un renouvellement, message dedie exact.
       if(window.VB_toast)window.VB_toast('renew_success_h',t('renew_success_p')+' '+t('pay_pending_note'));
       if(window.VB_notify)window.VB_notify('plan',t('notif_renewed').replace('{plan}',
-        String(t((planById(state.planId)||{}).nameKey||'')).replace(/<[^>]*>/g,'')));
+        String(t((pl||{}).nameKey||'')).replace(/<[^>]*>/g,'')));
     }
     syncAbonnementSupabase().then(res=>{
       if(res&&res.hors_ligne){
@@ -6604,9 +6619,14 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
 
   /* ================= ETAPE 4 : acces ================= */
   function renderStep4(){
-    const pl=planById(state.planId);
+    // Si un changement est en attente pendant qu'un plan reste actif,
+    // l'ecran de confirmation doit montrer CE qui vient d'etre paye
+    // (le nouveau plan en attente), pas le plan qui reste actif en
+    // arriere-plan.
+    const enAttenteChangement=!!state.pendingPlanId;
+    const pl=planById(enAttenteChangement?state.pendingPlanId:state.planId);
     const fmt=iso=>iso?new Date(iso).toLocaleDateString(currentLang==='en'?'en-US':'fr-FR',{day:'2-digit',month:'short',year:'numeric'}):'—';
-    const pend=state.payStatus==='pending';
+    const pend=enAttenteChangement||state.payStatus==='pending';
     const ic=document.getElementById('wizDoneIc');
     ic.classList.toggle('is-pending',pend);
     ic.innerHTML=pend
@@ -6615,9 +6635,13 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
     document.getElementById('wizDoneH').textContent=t(pend?'wiz_d_h_pending':'wiz_d_h');
     document.getElementById('wizDoneSub').textContent=t(pend?'wiz_d_sub_pending':'wiz_d_sub');
     document.getElementById('wizDonePlan').textContent=pl?stripTags(t(pl.nameKey)):'—';
-    document.getElementById('wizDoneStart').textContent=fmt(state.startDate);
-    document.getElementById('wizDoneEnd').textContent=state.endDate?fmt(state.endDate):t('wiz_d_never');
-    document.getElementById('wizDoneRef').textContent=state.ref||'—';
+    // Tant que ce n'est pas confirme, on ne peut pas encore montrer de
+    // vraies dates (elles ne sont fixees qu'a la confirmation admin) —
+    // on l'indique clairement plutot que d'afficher une date provisoire
+    // qui ne sera pas la vraie.
+    document.getElementById('wizDoneStart').textContent=enAttenteChangement?t('wiz_d_pending_dates'):fmt(state.startDate);
+    document.getElementById('wizDoneEnd').textContent=enAttenteChangement?t('wiz_d_pending_dates'):(state.endDate?fmt(state.endDate):t('wiz_d_never'));
+    document.getElementById('wizDoneRef').textContent=(enAttenteChangement?state.pendingRef:state.ref)||'—';
   }
 
   /* ================= REINITIALISATION DU MOT DE PASSE =================
@@ -7345,29 +7369,70 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
      correspond exactement — jamais un autre. */
   window.VB_syncPayStatus=async function(){
     const sb=window.VB_getSupabase&&window.VB_getSupabase();
-    if(!sb||!state.paid||!state.ref)return false;
+    if(!sb||!state.paid)return false;
+    let changed=false;
     try{
-      const {data:pays}=await sb.from('payments')
-        .select('status,subscription_id,plan_id')
-        .eq('reference',state.ref).limit(1);
-      if(!pays||!pays.length)return false;   // ce paiement precis n'existe pas encore cote serveur
-      const pay=pays[0];
-      // pay.status (colonne reelle) : pending/confirmed/failed/refunded.
-      // 'failed' et 'refunded' sont tous deux traites comme "refuse" cote
-      // client (verrouille le contenu) — seul 'confirmed' debloque.
-      const nouveau=pay.status==='confirmed'?'confirmed':(pay.status==='failed'||pay.status==='refunded'?'rejected':'pending');
-      if(nouveau===state.payStatus)return false;   // rien de nouveau
-      state.payStatus=nouveau;
-      if(nouveau==='confirmed'&&pay.subscription_id){
-        try{
-          const {data:sub}=await sb.from('subscriptions')
-            .select('plan_id,starts_at,expires_at')
-            .eq('id',pay.subscription_id).single();
-          if(sub){state.planId=sub.plan_id;state.startDate=sub.starts_at;state.endDate=sub.expires_at;}
-        }catch(e){ /* la date exacte n'a pas pu etre relue : le deverrouillage reste valide */ }
+      // Cas normal : le paiement du plan reellement actif (premiere
+      // souscription, ou renouvellement direct sans changement en cours).
+      if(state.ref&&!state.pendingRef){
+        const {data:pays}=await sb.from('payments')
+          .select('status,subscription_id,plan_id')
+          .eq('reference',state.ref).limit(1);
+        if(pays&&pays.length){
+          const pay=pays[0];
+          const nouveau=pay.status==='confirmed'?'confirmed':(pay.status==='failed'||pay.status==='refunded'?'rejected':'pending');
+          if(nouveau!==state.payStatus){
+            state.payStatus=nouveau;
+            if(nouveau==='confirmed'&&pay.subscription_id){
+              try{
+                const {data:sub}=await sb.from('subscriptions')
+                  .select('plan_id,starts_at,expires_at')
+                  .eq('id',pay.subscription_id).single();
+                if(sub){state.planId=sub.plan_id;state.startDate=sub.starts_at;state.endDate=sub.expires_at;}
+              }catch(e){}
+            }
+            changed=true;
+          }
+        }
       }
-      save();
-      return true;
+      // Cas changement en attente : le plan actif ne bouge pas tant que
+      // CE paiement-la (separe) n'est pas confirme.
+      if(state.pendingRef){
+        const {data:pays2}=await sb.from('payments')
+          .select('status,subscription_id,plan_id')
+          .eq('reference',state.pendingRef).limit(1);
+        if(pays2&&pays2.length){
+          const pay2=pays2[0];
+          if(pay2.status==='confirmed'&&pay2.subscription_id){
+            try{
+              const {data:sub2}=await sb.from('subscriptions')
+                .select('plan_id,starts_at,expires_at')
+                .eq('id',pay2.subscription_id).single();
+              if(sub2){
+                // Le changement est confirme : LA il faut basculer —
+                // nouveau plan, nouvelles dates (fixees par l'admin au
+                // moment reel de la confirmation), plus rien en attente.
+                state.planId=sub2.plan_id;
+                state.startDate=sub2.starts_at;
+                state.endDate=sub2.expires_at;
+                state.payStatus='confirmed';
+                state.ref=state.pendingRef;
+                state.pendingPlanId=null;
+                state.pendingRef=null;
+                changed=true;
+              }
+            }catch(e){}
+          }else if(pay2.status==='failed'||pay2.status==='refunded'){
+            // Changement refuse : le plan actif en cours n'est jamais
+            // touche, on efface simplement la tentative.
+            state.pendingPlanId=null;
+            state.pendingRef=null;
+            changed=true;
+          }
+        }
+      }
+      if(changed)save();
+      return changed;
     }catch(e){return false;}
   };
   /* Renouvellement / changement de plan : on ouvre DIRECTEMENT la page
@@ -8908,15 +8973,32 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
         const subStatus=newStatus==='confirmed'?'active':'cancelled';
         // Garde-fou absolu : avant d'activer ce nouvel abonnement, on
         // ferme TOUT autre abonnement encore marque 'active' pour cette
-        // meme personne — quelle que soit la raison pour laquelle il
-        // serait reste actif. Jamais deux lignes 'active' a la fois.
+        // meme personne — c'est ICI, au moment de la vraie confirmation,
+        // que l'ancien plan (garde actif pendant toute l'attente) doit
+        // ceder la place au nouveau. Jamais avant.
         if(subStatus==='active'&&p.user_id){
           try{
             await sb.from('subscriptions').update({status:'cancelled'})
               .eq('user_id',p.user_id).eq('status','active').neq('id',p.subscription_id);
           }catch(e){}
         }
-        await sb.from('subscriptions').update({status:subStatus}).eq('id',p.subscription_id);
+        const subUpdate={status:subStatus};
+        if(subStatus==='active'){
+          // Les vraies dates ne sont fixees qu'ici, au moment reel de la
+          // confirmation — jamais a la soumission du paiement, qui peut
+          // dater de plusieurs jours plus tot.
+          const plConfirme=window.VB_planById?window.VB_planById(p.plan_id):null;
+          const debut=new Date();
+          subUpdate.starts_at=debut.toISOString();
+          if(plConfirme&&plConfirme.days){
+            const fin=new Date(debut);
+            fin.setDate(fin.getDate()+plConfirme.days);
+            subUpdate.expires_at=fin.toISOString();
+          }else{
+            subUpdate.expires_at=null;   // plan Lifetime : jamais d'expiration
+          }
+        }
+        await sb.from('subscriptions').update(subUpdate).eq('id',p.subscription_id);
       }
       // Journal d'audit — schema reel : id, admin_id, action, target_user_id,
       // old_value (jsonb), new_value (jsonb), reason, created_at.
