@@ -1645,6 +1645,16 @@ footer{border-top:1px solid var(--ligne);padding:56px 0 36px;background:#030617}
   padding:9px 12px;display:flex;align-items:center;
 }
 .mfa-secret-row .btn{flex-shrink:0;padding:0 16px;font-size:12.5px}
+.mfa-remember-row{
+  display:flex;align-items:center;gap:9px;margin:2px 0 14px;font-size:12.5px;color:var(--gris);cursor:pointer;
+}
+.mfa-remember-row input{width:16px;height:16px;flex-shrink:0}
+.mfa-codes-list{
+  display:grid;grid-template-columns:1fr 1fr;gap:8px;
+  background:rgba(201,164,76,.08);border:1px solid rgba(201,164,76,.25);border-radius:9px;
+  padding:14px;margin-bottom:6px;
+}
+.mfa-codes-list span{font-family:var(--mono);font-size:13px;color:var(--or-clair);text-align:center;letter-spacing:.04em}
 .mfa-stage[hidden]{display:none}
 .wiz-demo[hidden]{display:none}
 .wiz-demo{
@@ -3742,6 +3752,22 @@ details p{font-size:15.5px;line-height:1.72;color:#CBD8E4}
       </div>
       <span class="field-err" id="mfaChallengeErr" style="display:none;text-align:center;margin-bottom:14px" data-i18n="mfa_err_code">Kòd la pa kòrèk</span>
       <button type="button" class="btn btn-or" id="mfaChallengeSubmit" style="width:100%" data-i18n="mfa_btn_verify">Verifye</button>
+      <button type="button" class="btn-link" id="mfaUseBackup" style="width:100%;margin-top:8px" data-i18n="mfa_use_backup">Sèvi ak yon kòd sekou</button>
+    </div>
+    <div class="mfa-stage" data-mfa="backup" hidden>
+      <h3 data-i18n="mfa_backup_h">Kòd sekou</h3>
+      <p data-i18n="mfa_backup_p">Antre youn nan kòd sekou ou te telechaje yo.</p>
+      <label class="field"><input type="text" id="mfaBackupInput" autocapitalize="characters" autocomplete="off" placeholder="XXXX-XXXX" style="text-align:center;font-family:var(--mono);letter-spacing:.08em;font-size:16px"></label>
+      <span class="field-err" id="mfaBackupErr" style="display:none;text-align:center;margin:8px 0"></span>
+      <button type="button" class="btn btn-or" id="mfaBackupSubmit" style="width:100%;margin-top:10px" data-i18n="mfa_btn_verify">Verifye</button>
+      <button type="button" class="btn-link" id="mfaBackToChallenge" style="width:100%;margin-top:8px" data-i18n="mfa_back_to_code">Retounen nan kòd la</button>
+    </div>
+    <div class="mfa-stage" data-mfa="codes" hidden>
+      <h3 data-i18n="mfa_codes_h">Kòd sekou ou yo</h3>
+      <p data-i18n="mfa_codes_p">Konsève kòd sa yo yon kote ki an sekirite. Chak kòd sèlman itilizab yon sèl fwa, si w pèdi aksè a app otantifikasyon ou a.</p>
+      <div class="mfa-codes-list" id="mfaCodesList"></div>
+      <button type="button" class="btn btn-or" id="mfaCodesDownload" style="width:100%;margin-top:14px" data-i18n="mfa_codes_download">Telechaje kòd yo</button>
+      <button type="button" class="btn btn-confirm" id="mfaCodesContinue" style="width:100%;margin-top:10px" data-i18n="mfa_codes_continue">Kontinye</button>
     </div>
     <div class="mfa-stage" data-mfa="error" hidden>
       <h3 data-i18n="mfa_error_h">Problème avec le 2FA</h3>
@@ -4670,6 +4696,15 @@ mfa_error_cleanup:"Impossible de nettoyer une inscription précédente.",
 mfa_error_nofactor:"Aucun code d'authentification actif trouvé.",
 mfa_btn_retry:"Réessayer",
 mfa_copy:"Copier", mfa_copied:"Copié !",
+mfa_remember:"Se souvenir de cet appareil pendant 30 jours",
+mfa_use_backup:"Utiliser un code de secours",
+mfa_backup_h:"Code de secours", mfa_backup_p:"Entrez un des codes de secours que vous avez téléchargés.",
+mfa_backup_err:"Ce code est invalide ou déjà utilisé.",
+mfa_back_to_code:"Revenir au code habituel",
+mfa_codes_h:"Vos codes de secours",
+mfa_codes_p:"Conservez ces codes dans un endroit sûr. Chaque code n'est utilisable qu'une seule fois, si jamais vous perdez l'accès à votre application d'authentification.",
+mfa_codes_download:"Télécharger les codes",
+mfa_codes_continue:"Continuer",
 auth_taken_cta:"Aller à la connexion",
 wiz_r_h:"Renouveler ou changer de plan", wiz_r_sub:"Choisissez votre plan et réglez — votre compte est déjà créé.",
 wiz_r_active:"Votre abonnement en cours reste actif. Le nouveau plan démarre après le paiement.",
@@ -5027,6 +5062,15 @@ mfa_error_cleanup:"Couldn't clean up a previous enrollment attempt.",
 mfa_error_nofactor:"No active authenticator found.",
 mfa_btn_retry:"Try again",
 mfa_copy:"Copy", mfa_copied:"Copied!",
+mfa_remember:"Remember this device for 30 days",
+mfa_use_backup:"Use a backup code",
+mfa_backup_h:"Backup code", mfa_backup_p:"Enter one of the backup codes you downloaded.",
+mfa_backup_err:"This code is invalid or already used.",
+mfa_back_to_code:"Back to the usual code",
+mfa_codes_h:"Your backup codes",
+mfa_codes_p:"Keep these codes somewhere safe. Each code works only once, in case you ever lose access to your authenticator app.",
+mfa_codes_download:"Download codes",
+mfa_codes_continue:"Continue",
 auth_taken_cta:"Go to login",
 wiz_r_h:"Renew or change plan", wiz_r_sub:"Pick your plan and pay — your account already exists.",
 wiz_r_active:"Your current plan stays active. The new plan starts after payment.",
@@ -5384,6 +5428,15 @@ mfa_error_cleanup:"Nou pa t kapab netwaye yon ansyen tantativ enskripsyon.",
 mfa_error_nofactor:"Pa gen okenn kòd otantifikasyon aktif.",
 mfa_btn_retry:"Eseye ankò",
 mfa_copy:"Kopye", mfa_copied:"Kopye!",
+mfa_remember:"Sonje aparèy sa a pandan 30 jou",
+mfa_use_backup:"Sèvi ak yon kòd sekou",
+mfa_backup_h:"Kòd sekou", mfa_backup_p:"Antre youn nan kòd sekou ou te telechaje yo.",
+mfa_backup_err:"Kòd sa a envalid oswa deja itilize.",
+mfa_back_to_code:"Retounen nan kòd la",
+mfa_codes_h:"Kòd sekou ou yo",
+mfa_codes_p:"Konsève kòd sa yo yon kote ki an sekirite. Chak kòd sèlman itilizab yon sèl fwa, si w pèdi aksè a app otantifikasyon ou a.",
+mfa_codes_download:"Telechaje kòd yo",
+mfa_codes_continue:"Kontinye",
 auth_taken_cta:"Ale nan koneksyon",
 wiz_r_h:"Renouvle oswa chanje plan", wiz_r_sub:"Chwazi plan ou epi peye — kont ou deja kreye.",
 wiz_r_active:"Abònman ou genyen an rete aktif. Nouvo plan an kòmanse apre peman an.",
@@ -6914,6 +6967,8 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
   fL.addEventListener('submit',async ev=>{
     ev.preventDefault();
     const id=fL.querySelector('[name=loginId]'),pw=fL.querySelector('[name=loginPassword]');
+    const seSouvenir=fL.querySelector('[name=remember]');
+    const veutSeSouvenir=!!(seSouvenir&&seSouvenir.checked);
     let ok=true;
     if(!id.value.trim()){setErr(id.closest('.field'),'auth_err_required');ok=false}else setErr(id.closest('.field'),null);
     if(!pw.value){setErr(pw.closest('.field'),'auth_err_required');ok=false}else setErr(pw.closest('.field'),null);
@@ -6963,7 +7018,7 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
               window.VB_handleAdminMFA(()=>{
                 closeAuth();
                 requestAnimationFrame(()=>{if(window.VB_openAdminDash)window.VB_openAdminDash(data.user);});
-              });
+              },data.user.email,data.user.id,veutSeSouvenir);
             }else{
               closeAuth();
               requestAnimationFrame(()=>{if(window.VB_openAdminDash)window.VB_openAdminDash(data.user);});
@@ -7262,6 +7317,11 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
   window.VB_getState=()=>state;
   window.VB_planById=planById;
   window.VB_allPlans=()=>PLANS;
+  // Utilise par le bootstrap de restauration au chargement de la page :
+  // vrai uniquement si le parcours est reellement termine (email verifie,
+  // paiement au moins tente) — jamais base sur une simple presence de
+  // donnees locales sans verification.
+  window.VB_dashboardReady=()=>requiredStep(state)===4;
   /* Synchronise prix/duree REELS depuis Supabase au demarrage. Ne touche
      jamais nameKey/perKey/feats/popular (purement presentation, pas en
      base) — seulement prix et days, qui pilotent l'argent reel partout
@@ -8184,7 +8244,19 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
   document.querySelectorAll('.dash-menu-item[data-dmenu]').forEach(b=>{
     b.addEventListener('click',()=>{closeMenuBox();setView(b.dataset.dmenu);});
   });
-  document.getElementById('dashMenuExit').addEventListener('click',()=>{closeMenuBox();closeDash();});
+  document.getElementById('dashMenuExit').addEventListener('click',()=>{
+    closeMenuBox();
+    closeDash();
+    // Deconnexion reelle, pas seulement visuelle : sans ca, la
+    // restauration automatique au prochain chargement rouvrirait le
+    // Dashboard malgre la demande explicite de sortie.
+    try{
+      if(window.VB_getSupabase){
+        const sb=window.VB_getSupabase();
+        if(sb&&sb.auth&&typeof sb.auth.signOut==='function')sb.auth.signOut().catch(()=>{});
+      }
+    }catch(e){ /* la sortie visuelle ne doit jamais dependre de ca */ }
+  });
 
   document.querySelectorAll('[data-dfilter]').forEach(g=>{
     const scope=g.closest('.dash-view').dataset.dview;
@@ -8237,6 +8309,25 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
     // Meme principe pour les fiches : toujours essayer de charger le vrai
     // contenu publie par l'admin, sans jamais bloquer l'affichage.
     chargerFichesReelles().then(changed=>{ if(changed)renderAll(); });
+    demarrerResyncPeriodique();
+  }
+  /* Re-synchronisation automatique en arriere-plan, tant que le Dashboard
+     reste ouvert : sans ca, une confirmation admin ne serait visible
+     qu'apres avoir ferme puis rouvert le Dashboard (ou rafraichi la
+     page). Toutes les 45 secondes suffit largement — jamais agressif,
+     jamais bloquant, s'arrete des que le Dashboard se ferme. */
+  let resyncTimer=null;
+  function demarrerResyncPeriodique(){
+    arreterResyncPeriodique();
+    resyncTimer=setInterval(()=>{
+      if(!dash.classList.contains('open')){arreterResyncPeriodique();return;}
+      if(window.VB_syncPayStatus){
+        window.VB_syncPayStatus().then(changed=>{ if(changed)renderAll(); });
+      }
+    },45000);
+  }
+  function arreterResyncPeriodique(){
+    if(resyncTimer){clearInterval(resyncTimer);resyncTimer=null;}
   }
   function closeDash(){
     dash.classList.remove('open');
@@ -8244,6 +8335,7 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
     document.getElementById('dashMenu').classList.remove('on');
     document.getElementById('dashMenuBtn').setAttribute('aria-expanded','false');
     document.body.style.overflow='';
+    arreterResyncPeriodique();
   }
   document.addEventListener('keydown',ev=>{
     if(ev.key==='Escape'&&dash.classList.contains('open')){
@@ -8366,6 +8458,9 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
   }
   document.getElementById('admMenuExit').addEventListener('click',()=>{
     closeAdmMenu();
+    // Deconnexion explicite : oublier cet appareil, la prochaine
+    // connexion redemandera le code 2FA meme s'il avait ete "retenu".
+    if(window.VB_mfaOublierAppareil&&currentUser&&currentUser.email)window.VB_mfaOublierAppareil(currentUser.email);
     closeAdminDash();
     try{
       if(window.VB_getSupabase){
@@ -8975,12 +9070,13 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
         // ferme TOUT autre abonnement encore marque 'active' pour cette
         // meme personne — c'est ICI, au moment de la vraie confirmation,
         // que l'ancien plan (garde actif pendant toute l'attente) doit
-        // ceder la place au nouveau. Jamais avant.
+        // ceder la place au nouveau. Jamais avant. Si cette fermeture
+        // echoue, on N'ACTIVE PAS le nouveau — jamais deux abonnements
+        // actifs en meme temps, meme temporairement.
         if(subStatus==='active'&&p.user_id){
-          try{
-            await sb.from('subscriptions').update({status:'cancelled'})
-              .eq('user_id',p.user_id).eq('status','active').neq('id',p.subscription_id);
-          }catch(e){}
+          const {error:closeErr}=await sb.from('subscriptions').update({status:'cancelled'})
+            .eq('user_id',p.user_id).eq('status','active').neq('id',p.subscription_id);
+          if(closeErr)throw closeErr;
         }
         const subUpdate={status:subStatus};
         if(subStatus==='active'){
@@ -8998,7 +9094,11 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
             subUpdate.expires_at=null;   // plan Lifetime : jamais d'expiration
           }
         }
-        await sb.from('subscriptions').update(subUpdate).eq('id',p.subscription_id);
+        // CORRECTIF IMPORTANT : cette ecriture n'etait auparavant jamais
+        // verifiee — un echec silencieux ici affichait quand meme "plan
+        // actif" a l'admin alors que rien n'avait reellement change.
+        const {error:subErr}=await sb.from('subscriptions').update(subUpdate).eq('id',p.subscription_id);
+        if(subErr)throw subErr;
       }
       // Journal d'audit — schema reel : id, admin_id, action, target_user_id,
       // old_value (jsonb), new_value (jsonb), reason, created_at.
@@ -9024,7 +9124,11 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
       else setView('payments',true);
     }catch(e){
       const err=opts.errBox||document.getElementById('admPayActionErr');
-      if(err){err.textContent=t('adm_pay_action_error');err.style.display='block';}
+      if(err){
+        const detail=(e&&e.message)?(' — '+e.message):'';
+        err.textContent=t('adm_pay_action_error')+detail;
+        err.style.display='block';
+      }
       if(btnV)btnV.disabled=false;
       if(btnR)btnR.disabled=false;
     }
@@ -9441,7 +9545,7 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
         window.VB_startMfaEnrollment(()=>{
           if(window.VB_toast)window.VB_toast('adm_settings_2fa_on_h',t('adm_settings_2fa_on_toast'));
           renderSettings();
-        });
+        },(currentUser&&currentUser.id)||null);
       }
     });
   }
@@ -9964,11 +10068,14 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
   if(!overlay)return;
   const stageEnroll=overlay.querySelector('[data-mfa="enroll"]');
   const stageChallenge=overlay.querySelector('[data-mfa="challenge"]');
+  const stageBackup=overlay.querySelector('[data-mfa="backup"]');
+  const stageCodes=overlay.querySelector('[data-mfa="codes"]');
   const stageError=overlay.querySelector('[data-mfa="error"]');
   const enrollOtp=[...document.getElementById('mfaEnrollOtp').querySelectorAll('input')];
   const challengeOtp=[...document.getElementById('mfaChallengeOtp').querySelectorAll('input')];
   const enrollErr=document.getElementById('mfaEnrollErr');
   const challengeErr=document.getElementById('mfaChallengeErr');
+  const backupErr=document.getElementById('mfaBackupErr');
   const errorDetail=document.getElementById('mfaErrorDetail');
   const T=()=>translations[currentLang]||translations.fr;
   const t=k=>(T()[k]!=null?T()[k]:(translations.fr[k]||''));
@@ -9976,6 +10083,100 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
   let factorIdCourant=null;
   let challengeIdCourant=null;
   let onSuccessCourant=null;
+  let emailCourant=null;
+  let adminIdCourant=null;
+  let seSouvenirCourant=false;
+  let dernierCodesGeneres=null;
+
+  /* ---- "Se souvenir de cet appareil" : purement local (ce navigateur
+     precis), jamais un remplacement de la vraie verification serveur —
+     juste un confort. Efface par une deconnexion explicite, expire seul
+     apres 30 jours, ne survit jamais un changement de navigateur
+     (localStorage est deja propre a chaque navigateur). */
+  const TRUST_KEY='vipbetcote.mfa_trusted.v1';
+  const TRUST_DUREE=30*24*60*60*1000;
+  function mfaGetTrustMap(){try{return JSON.parse(localStorage.getItem(TRUST_KEY)||'{}');}catch(e){return {};}}
+  function mfaEstDigneDeConfiance(email){
+    if(!email)return false;
+    const m=mfaGetTrustMap();
+    const e=m[email.toLowerCase()];
+    return !!(e&&e.expiresAt&&Date.now()<e.expiresAt);
+  }
+  function mfaFaireConfiance(email){
+    if(!email)return;
+    const m=mfaGetTrustMap();
+    m[email.toLowerCase()]={expiresAt:Date.now()+TRUST_DUREE};
+    try{localStorage.setItem(TRUST_KEY,JSON.stringify(m));}catch(e){}
+  }
+  window.VB_mfaOublierAppareil=function(email){
+    if(!email)return;
+    const m=mfaGetTrustMap();
+    delete m[email.toLowerCase()];
+    try{localStorage.setItem(TRUST_KEY,JSON.stringify(m));}catch(e){}
+  };
+  window.VB_mfaEstDigneDeConfiance=mfaEstDigneDeConfiance;
+  // "Verifie cet onglet" : sessionStorage (jamais localStorage) — survit
+  // un F5 dans le meme onglet, mais disparait a la fermeture de l'onglet
+  // ou dans un autre navigateur. Complementaire de la confiance 30 jours :
+  // meme sans avoir coche "se souvenir de moi", un simple rafraichissement
+  // pendant la meme visite ne doit jamais redemander le code.
+  const TAB_KEY='vipbetcote.mfa_verified_tab';
+  function mfaVerifieCetOnglet(email){
+    try{return sessionStorage.getItem(TAB_KEY)===((email||'').toLowerCase());}catch(e){return false;}
+  }
+  function mfaMarquerOngletVerifie(email){
+    if(!email)return;
+    try{sessionStorage.setItem(TAB_KEY,email.toLowerCase());}catch(e){}
+  }
+  window.VB_mfaVerifiedThisTab=mfaVerifieCetOnglet;
+
+  /* ---- Codes de secours : jamais stockes en clair — seul un hachage
+     SHA-256 est ecrit en base. Le code en clair n'existe qu'un instant,
+     le temps de l'afficher/telecharger, jamais conserve ensuite. */
+  function genererUnCode(){
+    const bytes=new Uint8Array(4);
+    crypto.getRandomValues(bytes);
+    const hex=[...bytes].map(b=>b.toString(16).padStart(2,'0')).join('').toUpperCase();
+    return hex.slice(0,4)+'-'+hex.slice(4,8);
+  }
+  async function hacherCode(code){
+    const norm=code.toUpperCase().replace(/[^0-9A-F]/g,'');
+    const enc=new TextEncoder().encode(norm);
+    const buf=await crypto.subtle.digest('SHA-256',enc);
+    return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
+  }
+  async function genererEtEnregistrerCodesSecours(sb,adminId){
+    const codes=Array.from({length:10},genererUnCode);
+    try{
+      const hashes=await Promise.all(codes.map(hacherCode));
+      const lignes=hashes.map(h=>({admin_id:adminId,code_hash:h,used:false}));
+      await sb.from('admin_mfa_backup_codes').insert(lignes);
+    }catch(e){}
+    return codes;
+  }
+  function afficherCodesSecours(codes){
+    dernierCodesGeneres=codes;
+    document.getElementById('mfaCodesList').innerHTML=
+      codes.map(c=>'<span>'+c+'</span>').join('');
+    showOverlay('codes');
+  }
+  document.getElementById('mfaCodesDownload').addEventListener('click',()=>{
+    if(!dernierCodesGeneres)return;
+    const contenu='VipBetcote — codes de secours 2FA\n'+
+      'Genere le '+new Date().toLocaleString('fr-FR')+'\n'+
+      'Chaque code n\'est utilisable qu\'une seule fois.\n\n'+
+      dernierCodesGeneres.join('\n')+'\n';
+    const blob=new Blob([contenu],{type:'text/plain'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;a.download='vipbetcote-codes-secours.txt';
+    document.body.appendChild(a);a.click();a.remove();
+    URL.revokeObjectURL(url);
+  });
+  document.getElementById('mfaCodesContinue').addEventListener('click',()=>{
+    hideOverlay();
+    if(onSuccessCourant)onSuccessCourant();
+  });
 
   function brancherOtp(inputs,errBox){
     inputs.forEach((inp,i)=>{
@@ -10023,11 +10224,19 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
     overlay.hidden=false;
     stageEnroll.hidden=(stage!=='enroll');
     stageChallenge.hidden=(stage!=='challenge');
+    stageBackup.hidden=(stage!=='backup');
+    stageCodes.hidden=(stage!=='codes');
     stageError.hidden=(stage!=='error');
     if(stage==='error'){
       errorDetail.textContent=detail?(t('mfa_error_p')+' — '+String(detail).slice(0,160)):t('mfa_error_p');
       return;
     }
+    if(stage==='backup'){
+      document.getElementById('mfaBackupInput').value='';
+      backupErr.style.display='none';
+      return;
+    }
+    if(stage==='codes')return;   // deja rempli par afficherCodesSecours
     const inputs=stage==='enroll'?enrollOtp:challengeOtp;
     inputs.forEach(i=>i.value='');
     (stage==='enroll'?enrollErr:challengeErr).style.display='none';
@@ -10040,16 +10249,25 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
      appelee QUE si le 2FA est reellement en regle — en cas d'echec
      technique, on affiche une erreur bloquante avec "Reessayer" plutot
      que de laisser passer en silence. Le 2FA admin est obligatoire, pas
-     "obligatoire sauf en cas d'erreur reseau". */
-  window.VB_handleAdminMFA=async function(onSuccess){
+     "obligatoire sauf en cas d'erreur reseau". Un appareil "de confiance"
+     (la case "Se souvenir de moi" de la page de connexion, cochee lors
+     d'une precedente verification reussie, toujours valide) saute la
+     demande de code — mais jamais l'inscription obligatoire si le 2FA
+     n'a encore jamais ete active du tout. */
+  window.VB_handleAdminMFA=async function(onSuccess,email,adminId,seSouvenir){
     const sb=window.VB_getSupabase&&window.VB_getSupabase();
     if(!sb){onSuccess();return;}   // ne devrait pas arriver : la connexion elle-meme aurait deja echoue
     onSuccessCourant=onSuccess;
+    emailCourant=email||null;
+    adminIdCourant=adminId||null;
+    seSouvenirCourant=!!seSouvenir;
     try{
       const {data:aal}=await sb.auth.mfa.getAuthenticatorAssuranceLevel();
       if(aal&&aal.nextLevel==='aal2'&&aal.currentLevel!=='aal2'){
         // Un facteur verifie existe : la personne a deja active le 2FA
-        // elle-meme depuis Parametres — on lui demande son code.
+        // elle-meme depuis Parametres. Si cet appareil est deja reconnu
+        // (et toujours valide), on ne redemande rien.
+        if(mfaEstDigneDeConfiance(emailCourant)){onSuccess();return;}
         await ouvrirChallenge(sb);
         return;
       }
@@ -10106,10 +10324,11 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
      onDone est appelee une fois l'inscription reussie (pas liee a
      l'ouverture du tableau de bord, contrairement a onSuccessCourant
      utilisee par le flux de connexion). */
-  window.VB_startMfaEnrollment=function(onDone){
+  window.VB_startMfaEnrollment=function(onDone,adminId){
     const sb=window.VB_getSupabase&&window.VB_getSupabase();
     if(!sb)return;
     onSuccessCourant=onDone;
+    adminIdCourant=adminId||adminIdCourant;
     ouvrirInscription(sb);
   };
   window.VB_disableMfa=async function(){
@@ -10151,7 +10370,7 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
   document.getElementById('mfaRetry').addEventListener('click',async()=>{
     const sb=window.VB_getSupabase&&window.VB_getSupabase();
     if(!sb||!onSuccessCourant)return;
-    if(window.VB_handleAdminMFA)await window.VB_handleAdminMFA(onSuccessCourant);
+    if(window.VB_handleAdminMFA)await window.VB_handleAdminMFA(onSuccessCourant,emailCourant,adminIdCourant,seSouvenirCourant);
   });
 
   document.getElementById('mfaEnrollSubmit').addEventListener('click',async()=>{
@@ -10164,6 +10383,16 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
       if(chErr){enrollErr.textContent=t('mfa_err_code')+(chErr.message?(' — '+chErr.message):'');enrollErr.style.display='block';return;}
       const {error:vErr}=await sb.auth.mfa.verify({factorId:factorIdCourant,challengeId:ch.id,code});
       if(vErr){enrollErr.textContent=t('mfa_err_code')+(vErr.message?(' — '+vErr.message):'');enrollErr.style.display='block';return;}
+      if(seSouvenirCourant)mfaFaireConfiance(emailCourant);
+      mfaMarquerOngletVerifie(emailCourant);
+      // Premiere activation : on genere les codes de secours et on les
+      // montre UNE FOIS avant de continuer — c'est la seule occasion de
+      // les voir en clair.
+      if(adminIdCourant){
+        const codes=await genererEtEnregistrerCodesSecours(sb,adminIdCourant);
+        afficherCodesSecours(codes);
+        return;   // mfaCodesContinue termine le parcours (voir plus haut)
+      }
       hideOverlay();
       if(onSuccessCourant)onSuccessCourant();
     }catch(e){
@@ -10179,10 +10408,40 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
     try{
       const {error}=await sb.auth.mfa.verify({factorId:factorIdCourant,challengeId:challengeIdCourant,code});
       if(error){challengeErr.textContent=t('mfa_err_code')+(error.message?(' — '+error.message):'');challengeErr.style.display='block';return;}
+      if(seSouvenirCourant)mfaFaireConfiance(emailCourant);
+      mfaMarquerOngletVerifie(emailCourant);
       hideOverlay();
       if(onSuccessCourant)onSuccessCourant();
     }catch(e){
       challengeErr.textContent=t('mfa_err_code')+(e&&e.message?(' — '+e.message):'');challengeErr.style.display='block';
+    }
+  });
+
+  /* ---- Chemin alternatif : code de secours, si le telephone est perdu ---- */
+  document.getElementById('mfaUseBackup').addEventListener('click',()=>{showOverlay('backup');});
+  document.getElementById('mfaBackToChallenge').addEventListener('click',()=>{showOverlay('challenge');});
+  document.getElementById('mfaBackupSubmit').addEventListener('click',async function(){
+    const saisi=document.getElementById('mfaBackupInput').value.trim();
+    if(!saisi){backupErr.textContent=t('mfa_err_code');backupErr.style.display='block';return;}
+    const sb=window.VB_getSupabase&&window.VB_getSupabase();
+    if(!sb||!adminIdCourant)return;
+    this.disabled=true;
+    try{
+      const hash=await hacherCode(saisi);
+      const {data:rows}=await sb.from('admin_mfa_backup_codes')
+        .select('id').eq('admin_id',adminIdCourant).eq('code_hash',hash).eq('used',false).limit(1);
+      if(!rows||!rows.length){
+        backupErr.textContent=t('mfa_backup_err');backupErr.style.display='block';
+        this.disabled=false;return;
+      }
+      // Usage unique : jamais reutilisable, meme s'il n'est pas expire.
+      await sb.from('admin_mfa_backup_codes').update({used:true}).eq('id',rows[0].id);
+      mfaMarquerOngletVerifie(emailCourant);
+      hideOverlay();
+      if(onSuccessCourant)onSuccessCourant();
+    }catch(e){
+      backupErr.textContent=t('mfa_err_code')+(e&&e.message?(' — '+e.message):'');backupErr.style.display='block';
+      this.disabled=false;
     }
   });
 })();
@@ -10354,6 +10613,74 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
   // Aucune entree correspondante : comportement par defaut du navigateur
   // (sommet de la page, c'est-a-dire le hero) — rien a faire de plus.
 })();
+
+/* ---------- Restauration de session au chargement ----------
+   Sans ca, tout rafraichissement (F5) renvoie n'importe qui vers la
+   page d'accueil, meme deja connecte — obligeant a tout recommencer a
+   chaque fois. Ici, on verifie s'il existe une VRAIE session Supabase
+   valide (jamais une simple presence de donnees locales, qui pourrait
+   etre perimee ou fabriquee) avant de restaurer quoi que ce soit.
+   Reessayable : le script Supabase (CDN, differe) peut ne pas encore
+   etre pret au tout premier appel — meme filet de securite que celui
+   deja utilise pour le client Supabase lui-meme. */
+let dejaRestaure=false;
+async function tenterRestaurationSession(){
+  if(dejaRestaure)return;   // jamais deux fois : la 2e tentative ne fait rien si la 1re a reussi
+  const sb=window.VB_getSupabase&&window.VB_getSupabase();
+  if(!sb)return;
+  try{
+    const {data:sessionData}=await sb.auth.getSession();
+    const session=sessionData&&sessionData.session;
+    if(!session||!session.user)return;   // pas de session valide : page d'accueil normale
+    dejaRestaure=true;
+    const emailSession=(session.user.email||'').trim().toLowerCase();
+
+    let profil=null;
+    try{
+      const {data:prof}=await sb.from('profiles')
+        .select('role,suspended_at').eq('id',session.user.id).single();
+      profil=prof;
+    }catch(e){}
+    if(profil&&profil.suspended_at){
+      // Compte suspendu : aucune session active n'est jamais gardee,
+      // meme retrouvee au chargement.
+      try{await sb.auth.signOut();}catch(e){}
+      return;
+    }
+
+    if(profil&&profil.role==='admin'){
+      // Un simple F5 pendant la meme visite ne redemande jamais le 2FA
+      // (marque "verifie cet onglet"), ni si l'appareil est retenu
+      // ("se souvenir de moi", 30 jours) — sinon le code est redemande,
+      // jamais un contournement silencieux.
+      const dejaOk=(window.VB_mfaVerifiedThisTab&&window.VB_mfaVerifiedThisTab(emailSession))
+                 ||(window.VB_mfaEstDigneDeConfiance&&window.VB_mfaEstDigneDeConfiance(emailSession));
+      if(dejaOk){
+        if(window.VB_openAdminDash)window.VB_openAdminDash(session.user);
+      }else if(window.VB_handleAdminMFA){
+        window.VB_handleAdminMFA(()=>{
+          if(window.VB_openAdminDash)window.VB_openAdminDash(session.user);
+        },session.user.email,session.user.id,false);
+      }
+      return;
+    }
+
+    // Utilisateur normal : on ne restaure QUE si l'etat local correspond
+    // bien a CETTE session precise (meme email) — jamais les donnees
+    // d'un autre compte qui seraient restees en cache localement, et
+    // jamais sans un parcours reellement termine (voir VB_dashboardReady).
+    if(window.VB_dashboardReady&&window.VB_dashboardReady()){
+      const st=window.VB_getState&&window.VB_getState();
+      const emailLocal=(st&&st.email||'').trim().toLowerCase();
+      if(emailLocal&&emailLocal===emailSession&&window.VB_openDash){
+        window.VB_openDash();
+      }
+    }
+  }catch(e){ /* toute erreur degrade simplement vers la page d'accueil normale */ }
+}
+tenterRestaurationSession();
+window.addEventListener('load',tenterRestaurationSession);
+window.VB_tenterRestaurationSession=tenterRestaurationSession;
 
 </script>
 </body>
