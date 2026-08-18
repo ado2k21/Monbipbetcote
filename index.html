@@ -1636,11 +1636,13 @@ footer{border-top:1px solid var(--ligne);padding:56px 0 36px;background:#030617}
 .mfa-box p{font-size:13.5px;color:var(--gris);line-height:1.55;margin-bottom:16px}
 .mfa-qr{width:172px;height:172px;margin:0 auto 14px;border-radius:12px;overflow:hidden;background:#fff;padding:8px}
 .mfa-qr svg{width:100%;height:100%}
+.mfa-secret-row{display:flex;align-items:stretch;gap:8px;margin-bottom:18px}
 .mfa-secret{
-  font-family:var(--mono);font-size:12.5px;color:var(--or-clair);word-break:break-all;
+  flex:1;font-family:var(--mono);font-size:12.5px;color:var(--or-clair);word-break:break-all;
   background:rgba(201,164,76,.08);border:1px solid rgba(201,164,76,.25);border-radius:9px;
-  padding:9px 12px;margin-bottom:18px;
+  padding:9px 12px;display:flex;align-items:center;
 }
+.mfa-secret-row .btn{flex-shrink:0;padding:0 16px;font-size:12.5px}
 .mfa-stage[hidden]{display:none}
 .wiz-demo[hidden]{display:none}
 .wiz-demo{
@@ -3710,7 +3712,10 @@ details p{font-size:15.5px;line-height:1.72;color:#CBD8E4}
       <h3 data-i18n="mfa_enroll_h">Sekirize kont admin ou</h3>
       <p data-i18n="mfa_enroll_p">Eskane kòd QR sa a ak Google Authenticator (oswa yon app similè), epi antre kòd 6 chif la pou aktive li.</p>
       <div class="mfa-qr" id="mfaQr"></div>
-      <div class="mfa-secret" id="mfaSecret"></div>
+      <div class="mfa-secret-row">
+        <div class="mfa-secret" id="mfaSecret"></div>
+        <button type="button" class="btn btn-ghost" id="mfaSecretCopy" data-i18n="mfa_copy">Kopye</button>
+      </div>
       <div class="wiz-otp" id="mfaEnrollOtp">
         <input type="text" inputmode="numeric" maxlength="1" aria-label="1">
         <input type="text" inputmode="numeric" maxlength="1" aria-label="2">
@@ -4497,6 +4502,9 @@ adm_settings_h:"Paramètres", adm_settings_p:"Votre mot de passe et la sécurit�
 adm_settings_pw_h:"Changer le mot de passe",
 adm_settings_pw_new:"Nouveau mot de passe", adm_settings_pw_confirm:"Confirmer le nouveau mot de passe",
 adm_settings_pw_save:"Enregistrer le mot de passe",
+adm_settings_pw_start_p:"Par sécurité, un code de vérification vous sera envoyé par e-mail avant de pouvoir changer votre mot de passe.",
+adm_settings_pw_start_btn:"Changer le mot de passe",
+adm_settings_pw_code_p:"Entrez le code envoyé à {email}.",
 adm_settings_pw_err:"Le changement a échoué.",
 adm_settings_pw_toast_h:"Mot de passe modifié", adm_settings_pw_toast_p:"Votre mot de passe a été changé avec succès.",
 adm_settings_2fa_h:"Double authentification (2FA)",
@@ -4609,6 +4617,7 @@ mfa_error_h:"Problème avec le 2FA", mfa_error_p:"Impossible de continuer pour l
 mfa_error_cleanup:"Impossible de nettoyer une inscription précédente.",
 mfa_error_nofactor:"Aucun code d'authentification actif trouvé.",
 mfa_btn_retry:"Réessayer",
+mfa_copy:"Copier", mfa_copied:"Copié !",
 auth_taken_cta:"Aller à la connexion",
 wiz_r_h:"Renouveler ou changer de plan", wiz_r_sub:"Choisissez votre plan et réglez — votre compte est déjà créé.",
 wiz_r_active:"Votre abonnement en cours reste actif. Le nouveau plan démarre après le paiement.",
@@ -4829,6 +4838,9 @@ adm_settings_h:"Settings", adm_settings_p:"Your password and admin account secur
 adm_settings_pw_h:"Change password",
 adm_settings_pw_new:"New password", adm_settings_pw_confirm:"Confirm new password",
 adm_settings_pw_save:"Save password",
+adm_settings_pw_start_p:"For security, a verification code will be emailed to you before you can change your password.",
+adm_settings_pw_start_btn:"Change password",
+adm_settings_pw_code_p:"Enter the code sent to {email}.",
 adm_settings_pw_err:"The change failed.",
 adm_settings_pw_toast_h:"Password changed", adm_settings_pw_toast_p:"Your password was updated successfully.",
 adm_settings_2fa_h:"Two-factor authentication (2FA)",
@@ -4941,6 +4953,7 @@ mfa_error_h:"2FA problem", mfa_error_p:"Can't continue right now. Try again — 
 mfa_error_cleanup:"Couldn't clean up a previous enrollment attempt.",
 mfa_error_nofactor:"No active authenticator found.",
 mfa_btn_retry:"Try again",
+mfa_copy:"Copy", mfa_copied:"Copied!",
 auth_taken_cta:"Go to login",
 wiz_r_h:"Renew or change plan", wiz_r_sub:"Pick your plan and pay — your account already exists.",
 wiz_r_active:"Your current plan stays active. The new plan starts after payment.",
@@ -5161,6 +5174,9 @@ adm_settings_h:"Paramèt", adm_settings_p:"Modpas ou ak sekirite kont admin ou."
 adm_settings_pw_h:"Chanje modpas",
 adm_settings_pw_new:"Nouvo modpas", adm_settings_pw_confirm:"Konfime nouvo modpas la",
 adm_settings_pw_save:"Anrejistre modpas la",
+adm_settings_pw_start_p:"Pou sekirite, y ap voye yon kòd verifikasyon nan imèl ou anvan ou ka chanje modpas ou.",
+adm_settings_pw_start_btn:"Chanje modpas",
+adm_settings_pw_code_p:"Antre kòd yo voye nan {email} la.",
 adm_settings_pw_err:"Chanjman an echwe.",
 adm_settings_pw_toast_h:"Modpas chanje", adm_settings_pw_toast_p:"Modpas ou chanje avèk siksè.",
 adm_settings_2fa_h:"Doub otantifikasyon (2FA)",
@@ -5273,6 +5289,7 @@ mfa_error_h:"Pwoblèm ak 2FA", mfa_error_p:"Nou pa ka kontinye kounye a. Eseye a
 mfa_error_cleanup:"Nou pa t kapab netwaye yon ansyen tantativ enskripsyon.",
 mfa_error_nofactor:"Pa gen okenn kòd otantifikasyon aktif.",
 mfa_btn_retry:"Eseye ankò",
+mfa_copy:"Kopye", mfa_copied:"Kopye!",
 auth_taken_cta:"Ale nan koneksyon",
 wiz_r_h:"Renouvle oswa chanje plan", wiz_r_sub:"Chwazi plan ou epi peye — kont ou deja kreye.",
 wiz_r_active:"Abònman ou genyen an rete aktif. Nouvo plan an kòmanse apre peman an.",
@@ -9144,6 +9161,9 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
   }
 
   /* ---- Parametres admin : mot de passe + 2FA (toujours optionnel) ---- */
+  let admPwStage='start';   // start | code | newpass
+  let admPwCode='';
+
   async function renderSettings(){
     const box=document.getElementById('admSettingsBody');
     const sb=window.VB_getSupabase&&window.VB_getSupabase();
@@ -9152,12 +9172,7 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
 
     box.innerHTML=
       '<div class="admdash-section-h">'+t('adm_settings_pw_h')+'</div>'+
-      '<label class="field"><span class="field-lbl">'+t('adm_settings_pw_new')+'</span>'+
-      '<input type="password" id="admSetPwNew" autocomplete="new-password"></label>'+
-      '<label class="field" style="margin-top:10px"><span class="field-lbl">'+t('adm_settings_pw_confirm')+'</span>'+
-      '<input type="password" id="admSetPwConfirm" autocomplete="new-password"></label>'+
-      '<button type="button" class="btn btn-confirm" id="admSetPwSave" style="width:100%;margin-top:14px">'+t('adm_settings_pw_save')+'</button>'+
-      '<div id="admSetPwErr" class="field-err" style="display:none;margin-top:8px"></div>'+
+      '<div id="admSetPwBox"></div>'+
 
       '<div class="admdash-section-h">'+t('adm_settings_2fa_h')+'</div>'+
       '<p style="font-size:13px;color:var(--gris);margin-bottom:14px;line-height:1.5">'+
@@ -9169,16 +9184,8 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
         '<button type="button" class="btn btn-confirm" id="admSet2faToggle" style="width:100%">'+t('adm_settings_2fa_enable')+'</button>')+
       '<div id="admSet2faErr" class="field-err" style="display:none;margin-top:8px"></div>';
 
-    document.getElementById('admSetPwSave').addEventListener('click',function(){
-      const np=document.getElementById('admSetPwNew').value;
-      const nc=document.getElementById('admSetPwConfirm').value;
-      const err=document.getElementById('admSetPwErr');
-      if(np.length<8){err.textContent=t('auth_err_password_len');err.style.display='block';return;}
-      if(!/\d/.test(np)){err.textContent=t('auth_err_password_digit');err.style.display='block';return;}
-      if(np!==nc){err.textContent=t('auth_err_password_match');err.style.display='block';return;}
-      err.style.display='none';
-      demanderConfirmation(this,t('adm_confirm_q_pw_change'),()=>sauvegarderMotDePasseAdmin(np));
-    });
+    admPwStage='start';admPwCode='';
+    renderAdmPwSection();
 
     document.getElementById('admSet2faToggle').addEventListener('click',function(){
       if(mfaStatus.actif){
@@ -9205,22 +9212,128 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
     });
   }
 
-  async function sauvegarderMotDePasseAdmin(nouveauMdp){
-    const sb=window.VB_getSupabase&&window.VB_getSupabase();
-    if(!sb)return;
+  /* Changement de mot de passe admin : MEME methode que "mot de passe
+     oublie" cote client — email, code, nouveau mot de passe — jamais un
+     changement direct sans re-verification, meme pour un admin deja
+     connecte. Reutilise EXACTEMENT les 2 memes fonctions Netlify. */
+  function renderAdmPwSection(){
+    const box=document.getElementById('admSetPwBox');
+    const email=(currentUser&&currentUser.email)||'';
+
+    if(admPwStage==='start'){
+      box.innerHTML=
+        '<p style="font-size:13px;color:var(--gris);margin-bottom:14px;line-height:1.5">'+t('adm_settings_pw_start_p')+'</p>'+
+        '<button type="button" class="btn btn-confirm" id="admPwStartBtn" style="width:100%">'+t('adm_settings_pw_start_btn')+'</button>'+
+        '<div id="admSetPwErr" class="field-err" style="display:none;margin-top:8px"></div>';
+      document.getElementById('admPwStartBtn').addEventListener('click',async function(){
+        this.disabled=true;
+        const err=document.getElementById('admSetPwErr');
+        err.style.display='none';
+        try{
+          const resp=await fetch('/.netlify/functions/request-password-reset',{
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({email})
+          });
+          const data=await resp.json().catch(()=>({}));
+          this.disabled=false;
+          if(!resp.ok){
+            err.textContent=t('adm_settings_pw_err')+' — '+((data&&data.error)||'');err.style.display='block';
+            return;
+          }
+          if(window.VB_toast)window.VB_toast('toast_mail_h',t('toast_mail_p').replace('{email}',email));
+          admPwStage='code';
+          renderAdmPwSection();
+        }catch(e){
+          this.disabled=false;
+          err.textContent=t('adm_settings_pw_err')+' — '+((e&&e.message)||'');err.style.display='block';
+        }
+      });
+      return;
+    }
+
+    if(admPwStage==='code'){
+      box.innerHTML=
+        '<p style="font-size:13px;color:var(--gris);margin-bottom:14px;line-height:1.5">'+t('adm_settings_pw_code_p').replace('{email}',email)+'</p>'+
+        '<div class="wiz-otp" id="admPwOtp">'+
+          Array.from({length:6}).map((_,i)=>'<input type="text" inputmode="numeric" maxlength="1" aria-label="'+(i+1)+'">').join('')+
+        '</div>'+
+        '<span class="field-err" id="admPwOtpErr" style="display:none;text-align:center;margin:8px 0"></span>'+
+        '<button type="button" class="btn btn-confirm" id="admPwCodeNext" style="width:100%;margin-top:10px">'+t('wiz_btn_verify')+'</button>'+
+        '<button type="button" class="btn-link" id="admPwCancel" style="width:100%;margin-top:4px">'+t('dash_back')+'</button>';
+      const inputs=[...document.querySelectorAll('#admPwOtp input')];
+      const errBox=document.getElementById('admPwOtpErr');
+      inputs.forEach((inp,i)=>{
+        inp.addEventListener('input',()=>{
+          inp.value=inp.value.replace(/\D/g,'').slice(0,1);
+          errBox.style.display='none';
+          if(inp.value&&i<inputs.length-1)inputs[i+1].focus();
+        });
+        inp.addEventListener('keydown',ev=>{
+          if(ev.key==='Backspace'&&!inp.value&&i>0)inputs[i-1].focus();
+        });
+      });
+      document.getElementById('admPwCodeNext').addEventListener('click',()=>{
+        const code=inputs.map(i=>i.value.trim()).join('');
+        if(code.length!==6){errBox.textContent=t('wiz_v_err');errBox.style.display='block';return;}
+        admPwCode=code;
+        admPwStage='newpass';
+        renderAdmPwSection();
+      });
+      document.getElementById('admPwCancel').addEventListener('click',()=>{
+        admPwStage='start';admPwCode='';renderAdmPwSection();
+      });
+      return;
+    }
+
+    // admPwStage==='newpass'
+    box.innerHTML=
+      '<label class="field"><span class="field-lbl">'+t('adm_settings_pw_new')+'</span>'+
+      '<input type="password" id="admSetPwNew" autocomplete="new-password"></label>'+
+      '<label class="field" style="margin-top:10px"><span class="field-lbl">'+t('adm_settings_pw_confirm')+'</span>'+
+      '<input type="password" id="admSetPwConfirm" autocomplete="new-password"></label>'+
+      '<button type="button" class="btn btn-confirm" id="admSetPwSave" style="width:100%;margin-top:14px">'+t('adm_settings_pw_save')+'</button>'+
+      '<div id="admSetPwErr" class="field-err" style="display:none;margin-top:8px"></div>';
+
+    document.getElementById('admSetPwSave').addEventListener('click',function(){
+      const np=document.getElementById('admSetPwNew').value;
+      const nc=document.getElementById('admSetPwConfirm').value;
+      const err=document.getElementById('admSetPwErr');
+      if(np.length<8){err.textContent=t('auth_err_password_len');err.style.display='block';return;}
+      if(!/\d/.test(np)){err.textContent=t('auth_err_password_digit');err.style.display='block';return;}
+      if(np!==nc){err.textContent=t('auth_err_password_match');err.style.display='block';return;}
+      err.style.display='none';
+      demanderConfirmation(this,t('adm_confirm_q_pw_change'),()=>sauvegarderMotDePasseAdmin(np,email));
+    });
+  }
+
+  async function sauvegarderMotDePasseAdmin(nouveauMdp,email){
     const btn=document.getElementById('admSetPwSave');
     if(btn)btn.disabled=true;
     try{
-      // Session admin deja active : Supabase change le vrai mot de passe
-      // directement, sans reprocesser un email/code.
-      const {error}=await sb.auth.updateUser({password:nouveauMdp});
-      if(error)throw error;
-      document.getElementById('admSetPwNew').value='';
-      document.getElementById('admSetPwConfirm').value='';
+      // Meme fonction serveur que "mot de passe oublie" cote client :
+      // le code est verifie CE SERVEUR, jamais localement, meme ici.
+      const resp=await fetch('/.netlify/functions/confirm-password-reset',{
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({email, code:admPwCode, newPassword:nouveauMdp})
+      });
+      const data=await resp.json().catch(()=>({}));
+      if(!resp.ok)throw new Error((data&&data.error)||'erreur');
       if(window.VB_toast)window.VB_toast('adm_settings_pw_toast_h',t('adm_settings_pw_toast_p'));
+      admPwStage='start';admPwCode='';
+      renderAdmPwSection();
     }catch(e){
       const err=document.getElementById('admSetPwErr');
-      if(err){err.textContent=t('adm_settings_pw_err')+' — '+((e&&e.message)?e.message:String(e)).slice(0,140);err.style.display='block';}
+      const msg=(e&&e.message)||'';
+      if(msg==='code_invalide'||msg==='code_expire'){
+        // Le code saisi ne colle plus : retour a l'etape code, jamais
+        // bloquant sans explication.
+        admPwStage='code';
+        renderAdmPwSection();
+        const errBox=document.getElementById('admPwOtpErr');
+        if(errBox){errBox.textContent=t('wiz_v_err');errBox.style.display='block';}
+        return;
+      }
+      if(err){err.textContent=t('adm_settings_pw_err')+' — '+msg.slice(0,140);err.style.display='block';}
     }
     if(btn)btn.disabled=false;
   }
@@ -9418,6 +9531,26 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
   }
   brancherOtp(enrollOtp,enrollErr);
   brancherOtp(challengeOtp,challengeErr);
+
+  document.getElementById('mfaSecretCopy').addEventListener('click',async function(){
+    const texte=document.getElementById('mfaSecret').textContent||'';
+    if(!texte)return;
+    const original=this.textContent;
+    try{
+      await navigator.clipboard.writeText(texte);
+      this.textContent=t('mfa_copied');
+    }catch(e){
+      // Repli si l'API Clipboard est indisponible : selection manuelle
+      // du texte exact, sans espace ni caractere invisible en trop.
+      const range=document.createRange();
+      range.selectNodeContents(document.getElementById('mfaSecret'));
+      const sel=window.getSelection();
+      sel.removeAllRanges();sel.addRange(range);
+      try{document.execCommand('copy');this.textContent=t('mfa_copied');}catch(e2){}
+      sel.removeAllRanges();
+    }
+    setTimeout(()=>{this.textContent=original;},1800);
+  });
 
   function showOverlay(stage,detail){
     overlay.hidden=false;
