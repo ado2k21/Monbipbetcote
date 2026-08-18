@@ -2210,6 +2210,12 @@ footer{border-top:1px solid var(--ligne);padding:56px 0 36px;background:#030617}
 }
 
 /* --- Mon abonnement --- */
+.dash-pending-banner{
+  display:flex;align-items:center;gap:10px;max-width:600px;
+  background:rgba(201,164,76,.1);border:1px solid rgba(201,164,76,.35);border-radius:var(--r-md);
+  padding:13px 16px;margin-bottom:16px;color:var(--or-clair);font-size:13.5px;font-weight:600;line-height:1.4;
+}
+.dash-pending-banner .ic{flex-shrink:0}
 .dash-sub{
   background:linear-gradient(152deg,rgba(201,164,76,.09),rgba(3,8,23,0) 62%),#0B1425;
   border:1px solid rgba(201,164,76,.3);border-radius:var(--r-md);padding:22px;max-width:600px;
@@ -4015,6 +4021,10 @@ details p{font-size:15.5px;line-height:1.72;color:#CBD8E4}
         <h2 data-i18n="dash_sub_h">Abònman m</h2>
         <p data-i18n="dash_sub_p">Detay plan ou ak dat yo.</p>
       </div>
+      <div class="dash-pending-banner" id="dashPendingBanner" hidden>
+        <svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>
+        <span id="dashPendingBannerTxt"></span>
+      </div>
       <div class="dash-sub">
         <div class="dash-sub-top">
           <div>
@@ -4491,6 +4501,7 @@ dash_stats_note:"Le taux de réussite porte sur les fiches ayant un résultat fi
 dash_note:"Les scores de confiance sont une évaluation de notre équipe d'experts, pas une garantie. Les résultats passés ne garantissent jamais les résultats futurs. Jouez de façon responsable.",
 dash_sub_h:"Mon abonnement", dash_sub_p:"Détails de votre plan et de vos dates.",
 dash_sub_active:"Actif", dash_sub_pending:"En attente de validation", dash_sub_holder:"Titulaire", dash_sub_email:"E-mail", dash_sub_method:"Moyen de paiement",
+dash_pending_change_banner:"Vous avez un changement vers {plan} en attente de confirmation. Votre plan actuel reste actif jusqu'à cette confirmation.",
 dash_sub_left:"Temps restant", dash_sub_days:"{n} jour(s)", dash_sub_upgrade:"Changer ou renouveler mon plan",
 mk_btts_l:"Les deux équipes marquent", mk_over_l:"Plus / Moins de buts", mk_1x2_l:"1X2",
 mk_dc_l:"Double chance", mk_total_l:"Total NBA", mk_hand_l:"Handicap", mk_score_l:"Score exact",
@@ -4857,6 +4868,7 @@ dash_stats_note:"The success rate covers slips with a final result. Pending slip
 dash_note:"Confidence scores are an assessment by our expert team, not a guarantee. Past results never guarantee future ones. Please play responsibly.",
 dash_sub_h:"My plan", dash_sub_p:"Your plan details and dates.",
 dash_sub_active:"Active", dash_sub_pending:"Pending verification", dash_sub_holder:"Account holder", dash_sub_email:"Email", dash_sub_method:"Payment method",
+dash_pending_change_banner:"You have a change to {plan} pending confirmation. Your current plan stays active until then.",
 dash_sub_left:"Time remaining", dash_sub_days:"{n} day(s)", dash_sub_upgrade:"Change or renew my plan",
 mk_btts_l:"Both teams to score", mk_over_l:"Over / Under goals", mk_1x2_l:"1X2",
 mk_dc_l:"Double chance", mk_total_l:"NBA total", mk_hand_l:"Handicap", mk_score_l:"Correct score",
@@ -5223,6 +5235,7 @@ dash_stats_note:"To reyisit la kalkile sou fich ki gen yon rezilta final. Fich k
 dash_note:"Nòt konfyans yo se yon evalyasyon ekip ekspè nou an, se pa yon garanti. Rezilta ki pase pa janm garanti rezilta kap vini. Jwe ak responsablite.",
 dash_sub_h:"Abònman m", dash_sub_p:"Detay plan ou ak dat yo.",
 dash_sub_active:"Aktif", dash_sub_pending:"Ap tann validasyon", dash_sub_holder:"Titilè", dash_sub_email:"Imèl", dash_sub_method:"Mwayen peman",
+dash_pending_change_banner:"Ou gen yon chanjman pou {plan} k ap tann konfimasyon. Plan aktyèl ou rete aktif jiskaske sa konfime.",
 dash_sub_left:"Tan ki rete", dash_sub_days:"{n} jou", dash_sub_upgrade:"Chanje oswa renouvle plan an",
 mk_btts_l:"De ekip yo make", mk_over_l:"Plis / Mwens gòl", mk_1x2_l:"1X2",
 mk_dc_l:"Doub chans", mk_total_l:"Total NBA", mk_hand_l:"Andikap", mk_score_l:"Eskò egzak",
@@ -7379,8 +7392,12 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
       }
     });
   }
-  // Lancement au chargement : discret, jamais bloquant.
+  // Lancement au chargement : discret, jamais bloquant. Reessaie aussi
+  // apres le chargement complet de la page (le script Supabase, differe,
+  // peut ne pas etre pret au tout premier appel) — sans ce filet, un
+  // premier echec silencieux ne se corrigeait plus jamais tout seul.
   window.VB_syncPlansFromSupabase();
+  window.addEventListener('load',()=>{window.VB_syncPlansFromSupabase();});
   // Reappliquer au changement de langue (le texte de duree, genere
   // dynamiquement, ne beneficie plus de la traduction automatique du DOM
   // une fois son attribut data-i18n retire).
@@ -7412,6 +7429,7 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
     }catch(e){ /* le contenu statique deja present reste affiche */ }
   };
   window.VB_renderFAQ();
+  window.addEventListener('load',()=>{window.VB_renderFAQ();});
   document.addEventListener('vb:langchange',()=>{window.VB_renderFAQ();});
 
   window.VB_isExpired=()=>subscriptionExpired(state);
@@ -8105,12 +8123,28 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
     // Lifetime : aucune option de renouvellement n'apparait.
     // Pendant l'attente de validation : rien a payer de plus non plus.
     const life=!!(window.VB_isLifetime&&window.VB_isLifetime());
+    const changementEnAttente=!!st.pendingPlanId;
     const upg=document.getElementById('dashSubUpgrade');
-    upg.hidden=life||pend;
+    upg.hidden=life||pend||changementEnAttente;
     upg.textContent=t(exp?'dash_expired_cta':'dash_sub_upgrade');
     const pl=(window.VB_planById?window.VB_planById(st.planId):null);
     document.getElementById('dashSubName').textContent=pl?String(t(pl.nameKey)).replace(/<[^>]*>/g,''):'—';
     document.getElementById('dashSubPrix').textContent=pl?money(pl.prix)+' HTG':'—';
+
+    // Bandeau visible : un changement de plan est en cours, en attente de
+    // confirmation admin — le plan actuel (ci-dessus) reste actif et
+    // deverrouille tel quel jusqu'a cette confirmation.
+    const banner=document.getElementById('dashPendingBanner');
+    if(changementEnAttente){
+      const plCible=window.VB_planById?window.VB_planById(st.pendingPlanId):null;
+      const nomCible=plCible?String(t(plCible.nameKey)).replace(/<[^>]*>/g,''):'—';
+      document.getElementById('dashPendingBannerTxt').textContent=
+        t('dash_pending_change_banner').replace('{plan}',nomCible);
+      banner.hidden=false;
+    }else{
+      banner.hidden=true;
+    }
+
     document.getElementById('dashSubHolder').textContent=st.fullname||'—';
     document.getElementById('dashSubEmail').textContent=st.email||'—';
     document.getElementById('dashSubStart').textContent=fmtLong(st.startDate);
@@ -9989,7 +10023,18 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
       return null;
     }
     if(!window.VB_supabase){
-      window.VB_supabase=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+      /* IMPORTANT : sessionStorage (jamais localStorage) pour le stockage
+         de la session Supabase. Par defaut, Supabase utilise localStorage,
+         qui est PARTAGE entre tous les onglets d'un meme navigateur — se
+         connecter en admin dans un onglet puis en utilisateur normal dans
+         un autre onglet ferait "gagner" la derniere connexion partout, y
+         compris au rafraichissement (chaque onglet afficherait le
+         Dashboard de l'autre). sessionStorage isole chaque onglet
+         completement : sa session survit a un F5 dans CE meme onglet,
+         mais n'est jamais partagee avec un autre onglet. */
+      window.VB_supabase=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{
+        auth:{storage:window.sessionStorage,persistSession:true,autoRefreshToken:true}
+      });
     }
     return window.VB_supabase;
   }
