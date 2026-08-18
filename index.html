@@ -2927,17 +2927,17 @@ details p{font-size:15.5px;line-height:1.72;color:#CBD8E4}
 
       <span class="sim2-step" data-i18n="sim_step2">2. CHOISIR LA FORMULE D'ABONNEMENT VIP</span>
       <div class="sim2-formules" id="sim2-formules">
-        <button class="sim2-formule" data-formule="VIP 7 JOU" data-cote="14.80">
+        <button class="sim2-formule" data-plan="p1" data-formule="VIP 7 JOU" data-cote="14.80">
           <span class="f2-name">VIP 7 JOU</span>
           <span class="f2-lab" data-i18n="lbl_cote">Cote</span>
           <span class="f2-cote">~14.80</span>
         </button>
-        <button class="sim2-formule on" data-formule="VIP 21 JOU" data-cote="45.65">
+        <button class="sim2-formule on" data-plan="p2" data-formule="VIP 21 JOU" data-cote="45.65">
           <span class="f2-name">VIP 21 JOU</span>
           <span class="f2-lab" data-i18n="lbl_cote">Cote</span>
           <span class="f2-cote">~45.65</span>
         </button>
-        <button class="sim2-formule" data-formule="VIP 30 JOU" data-cote="125.47">
+        <button class="sim2-formule" data-plan="p3" data-formule="VIP 30 JOU" data-cote="125.47">
           <span class="f2-name">VIP 30 JOU</span>
           <span class="f2-lab" data-i18n="lbl_cote">Cote</span>
           <span class="f2-cote">~125.47</span>
@@ -4624,7 +4624,11 @@ adm_confirm_q_reactivate:"Confirmer la réactivation de ce compte ?",
 adm_confirm_q_plan_save:"Confirmer la modification de ce plan ? Le changement s'applique immédiatement sur tout le site.",
 adm_plans_h:"Plans", adm_plans_p:"Modifiez le prix et la durée de chaque plan — les changements s'appliquent PARTOUT sur le site, immédiatement.",
 adm_plans_empty:"Aucun plan trouvé.",
-adm_plans_price_lbl:"Prix (HTG)", adm_plans_days_lbl:"Durée (jours) — laisser vide pour Lifetime",
+adm_plans_price_lbl:"Prix (HTG)",
+adm_plans_price_before_lbl:"Prix barré (optionnel, argument marketing)",
+adm_plans_price_before_ph:"Ex. : 999 (laisser vide pour ne rien afficher)",
+adm_plans_err_price_before:"Entrez un prix barré valide ou laissez vide.",
+adm_plans_days_lbl:"Durée (jours) — laisser vide pour Lifetime",
 adm_plans_days_ph:"Ex. : 21 (vide = sans expiration)",
 adm_plans_save:"Enregistrer", adm_plans_err_price:"Entrez un prix valide.", adm_plans_err_days:"Entrez un nombre de jours valide ou laissez vide.",
 adm_plans_err_save:"L'enregistrement a échoué.",
@@ -4991,7 +4995,11 @@ adm_confirm_q_reactivate:"Confirm reactivation of this account?",
 adm_confirm_q_plan_save:"Confirm this plan change? It applies immediately across the whole site.",
 adm_plans_h:"Plans", adm_plans_p:"Edit the price and duration of each plan — changes apply EVERYWHERE on the site, immediately.",
 adm_plans_empty:"No plans found.",
-adm_plans_price_lbl:"Price (HTG)", adm_plans_days_lbl:"Duration (days) — leave blank for Lifetime",
+adm_plans_price_lbl:"Price (HTG)",
+adm_plans_price_before_lbl:"Crossed-out price (optional, marketing)",
+adm_plans_price_before_ph:"E.g.: 999 (leave blank to show nothing)",
+adm_plans_err_price_before:"Enter a valid crossed-out price or leave blank.",
+adm_plans_days_lbl:"Duration (days) — leave blank for Lifetime",
 adm_plans_days_ph:"E.g.: 21 (blank = no expiry)",
 adm_plans_save:"Save", adm_plans_err_price:"Enter a valid price.", adm_plans_err_days:"Enter a valid number of days or leave blank.",
 adm_plans_err_save:"Save failed.",
@@ -5358,7 +5366,11 @@ adm_confirm_q_reactivate:"Konfime reyaktivasyon kont sa a ?",
 adm_confirm_q_plan_save:"Konfime chanjman plan sa a ? Chanjman an aplike imedyatman sou tout sit la.",
 adm_plans_h:"Plan", adm_plans_p:"Modifye pri ak dire chak plan — chanjman yo aplike PATOUT sou sit la imedyatman.",
 adm_plans_empty:"Pa gen plan.",
-adm_plans_price_lbl:"Pri (HTG)", adm_plans_days_lbl:"Dire (jou) — kite vid pou Lifetime",
+adm_plans_price_lbl:"Pri (HTG)",
+adm_plans_price_before_lbl:"Ansyen pri baré (opsyonèl, marketing)",
+adm_plans_price_before_ph:"Egz. : 999 (kite vid pou pa afiche anyen)",
+adm_plans_err_price_before:"Antre yon ansyen pri ki valid oswa kite vid.",
+adm_plans_days_lbl:"Dire (jou) — kite vid pou Lifetime",
 adm_plans_days_ph:"Egz. : 21 (vid = san ekspirasyon)",
 adm_plans_save:"Anrejistre", adm_plans_err_price:"Antre yon pri ki valid.", adm_plans_err_days:"Antre yon kantite jou ki valid oswa kite vid.",
 adm_plans_err_save:"Anrejistreman echwe.",
@@ -7346,33 +7358,40 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
     const sb=window.VB_getSupabase&&window.VB_getSupabase();
     if(!sb)return false;
     try{
-      const {data,error}=await sb.from('plans').select('id,name,price_htg,duration_days,rank');
+      const {data,error}=await sb.from('plans').select('id,name,price_htg,price_before_htg,duration_days,rank');
       if(error||!data)return false;
       let changed=false;
       data.forEach(row=>{
         const local=PLANS.find(p=>p.id===row.id);
-        if(local&&(local.prix!==row.price_htg||local.days!==row.duration_days)){
+        if(local&&(local.prix!==row.price_htg||local.days!==row.duration_days||local.prixAvant!==row.price_before_htg)){
           local.prix=row.price_htg;
           local.days=row.duration_days;
+          local.prixAvant=row.price_before_htg!=null?row.price_before_htg:local.prixAvant;
           changed=true;
         }
       });
-      if(changed)syncerCartesTarifsLanding();
+      if(changed){syncerCartesTarifsLanding();syncerSimulateurFormules();}
       return changed;
     }catch(e){return false;}
   };
-  /* Met a jour le prix REEL et la duree affiches sur les cartes de la
-     page d'accueil, sans jamais toucher au prix barre (.prix-old) —
-     purement un argument marketing, independant du vrai prix en base —
-     ni au reste de la mise en forme (badges, logos de paiement, etc.). */
+  /* Met a jour le prix REEL, le prix barre (si defini par l'admin) et la
+     duree affiches sur les cartes de la page d'accueil. Le prix barre
+     n'est touche QUE si l'admin en a explicitement defini un — sinon le
+     texte deja integre au fichier reste affiche tel quel (repli). Le
+     selecteur est volontairement limite a la section #abonnements : le
+     simulateur, plus haut sur la page, utilise desormais lui aussi
+     data-plan, il ne faut jamais confondre les deux. */
   function syncerCartesTarifsLanding(){
     (window.VB_allPlans?window.VB_allPlans():[]).forEach(pl=>{
-      const btn=document.querySelector('[data-plan="'+pl.id+'"]');
+      const btn=document.querySelector('#abonnements [data-plan="'+pl.id+'"]');
       const carte=btn&&btn.closest('.plan');
       if(!carte)return;
       const prixEl=carte.querySelector('.prix');
       if(prixEl){
         const old=prixEl.querySelector('.prix-old');
+        if(old&&pl.prixAvant){
+          old.innerHTML=money(pl.prixAvant)+' <small>Gdes</small>';
+        }
         prixEl.innerHTML='';
         if(old)prixEl.appendChild(old);
         prixEl.appendChild(document.createTextNode(money(pl.prix)+' '));
@@ -7392,12 +7411,37 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
       }
     });
   }
+  /* Synchronise le simulateur ("Essayer la demo") : le nom de chaque
+     formule (ex. "VIP 7 JOU") reflete la VRAIE duree du plan. La cote
+     illustrative (data-cote) n'a pas de formule mathematique reliee au
+     prix/duree — elle reste telle quelle, c'est un exemple, pas un vrai
+     calcul. Le Lifetime n'apparait jamais ici : la formule "X JOU" n'a
+     pas de sens pour un acces a vie. */
+  function syncerSimulateurFormules(){
+    (window.VB_allPlans?window.VB_allPlans():[]).forEach(pl=>{
+      if(!pl.days)return;   // exclut Lifetime automatiquement
+      const btn=document.querySelector('.sim2-formule[data-plan="'+pl.id+'"]');
+      if(!btn)return;
+      const nomEl=btn.querySelector('.f2-name');
+      const nouveauNom='VIP '+pl.days+' JOU';
+      if(nomEl)nomEl.textContent=nouveauNom;
+      btn.dataset.formule=nouveauNom;
+      // Si cette formule est actuellement affichee dans le resultat, on
+      // rafraichit aussi son libelle la-bas — sinon elle resterait perimee
+      // jusqu'au prochain clic.
+      const badge=document.getElementById('s2-formule');
+      if(badge&&btn.classList.contains('on'))badge.textContent=nouveauNom;
+    });
+  }
   // Lancement au chargement : discret, jamais bloquant. Reessaie aussi
   // apres le chargement complet de la page (le script Supabase, differe,
   // peut ne pas etre pret au tout premier appel) — sans ce filet, un
   // premier echec silencieux ne se corrigeait plus jamais tout seul.
   window.VB_syncPlansFromSupabase();
   window.addEventListener('load',()=>{window.VB_syncPlansFromSupabase();});
+  // Le simulateur doit refleter les vraies durees des le premier
+  // affichage, pas seulement apres un changement ulterieur.
+  syncerSimulateurFormules();
   // Reappliquer au changement de langue (le texte de duree, genere
   // dynamiquement, ne beneficie plus de la traduction automatique du DOM
   // une fois son attribut data-i18n retire).
@@ -9179,7 +9223,7 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
     if(!sb)return [];
     if(plansCache)return plansCache;
     try{
-      const {data,error}=await sb.from('plans').select('id,name,price_htg,duration_days,rank').order('rank',{ascending:true});
+      const {data,error}=await sb.from('plans').select('id,name,price_htg,price_before_htg,duration_days,rank').order('rank',{ascending:true});
       plansCache=(!error&&data)?data:[];
     }catch(e){plansCache=[];}
     return plansCache;
@@ -9196,7 +9240,9 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
       const nom=local?stripTags(t(local.nameKey)):(p.name||p.id);
       return '<button type="button" class="admdash-row" data-plid="'+p.id+'">'+
         '<span class="admdash-row-av">'+p.id.toUpperCase().slice(0,2)+'</span>'+
-        '<span class="admdash-row-tx"><b>'+nom+'</b><span>'+money(p.price_htg)+' HTG · '+
+        '<span class="admdash-row-tx"><b>'+nom+'</b><span>'+
+        (p.price_before_htg?'<s style="opacity:.6">'+money(p.price_before_htg)+'</s> ':'')+
+        money(p.price_htg)+' HTG · '+
         (p.duration_days?p.duration_days+' j':t('wiz_d_never'))+'</span></span>'+
         '</button>';
     }).join('');
@@ -9222,6 +9268,8 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
       '</div>'+
       '<label class="field" style="margin-top:16px"><span class="field-lbl">'+t('adm_plans_price_lbl')+'</span>'+
       '<input type="number" min="0" step="1" id="admPlanPrice" value="'+p.price_htg+'"></label>'+
+      '<label class="field" style="margin-top:10px"><span class="field-lbl">'+t('adm_plans_price_before_lbl')+'</span>'+
+      '<input type="number" min="0" step="1" id="admPlanPriceBefore" value="'+(p.price_before_htg!=null?p.price_before_htg:'')+'" placeholder="'+t('adm_plans_price_before_ph')+'"></label>'+
       '<label class="field" style="margin-top:10px"><span class="field-lbl">'+t('adm_plans_days_lbl')+'</span>'+
       '<input type="number" min="0" step="1" id="admPlanDays" value="'+(p.duration_days||'')+'" placeholder="'+t('adm_plans_days_ph')+'"></label>'+
       '<button type="button" class="btn btn-confirm" id="admPlanSave" style="width:100%;margin-top:14px">'+t('adm_plans_save')+'</button>'+
@@ -9229,31 +9277,34 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
 
     document.getElementById('admPlanSave').addEventListener('click',function(){
       const prixSaisi=parseInt(document.getElementById('admPlanPrice').value,10);
+      const prixAvantSaisi=document.getElementById('admPlanPriceBefore').value.trim();
       const joursSaisis=document.getElementById('admPlanDays').value.trim();
       const err=document.getElementById('admPlanErr');
       if(isNaN(prixSaisi)||prixSaisi<0){err.textContent=t('adm_plans_err_price');err.style.display='block';return;}
+      const prixAvant=prixAvantSaisi===''?null:parseInt(prixAvantSaisi,10);
+      if(prixAvantSaisi!==''&&(isNaN(prixAvant)||prixAvant<0)){err.textContent=t('adm_plans_err_price_before');err.style.display='block';return;}
       const jours=joursSaisis===''?null:parseInt(joursSaisis,10);
       if(joursSaisis!==''&&(isNaN(jours)||jours<0)){err.textContent=t('adm_plans_err_days');err.style.display='block';return;}
       err.style.display='none';
-      demanderConfirmation(this,t('adm_confirm_q_plan_save'),()=>sauvegarderPlan(p,prixSaisi,jours));
+      demanderConfirmation(this,t('adm_confirm_q_plan_save'),()=>sauvegarderPlan(p,prixSaisi,jours,prixAvant));
     });
   }
 
-  async function sauvegarderPlan(p,prix,jours){
+  async function sauvegarderPlan(p,prix,jours,prixAvant){
     const sb=window.VB_getSupabase&&window.VB_getSupabase();
     if(!sb)return;
     const btn=document.getElementById('admPlanSave');
     if(btn)btn.disabled=true;
     try{
-      const {error}=await sb.from('plans').update({price_htg:prix, duration_days:jours}).eq('id',p.id);
+      const {error}=await sb.from('plans').update({price_htg:prix, price_before_htg:prixAvant, duration_days:jours}).eq('id',p.id);
       if(error)throw error;
       try{
         await sb.from('audit_log').insert({
           admin_id:(currentUser&&currentUser.id)||null,
           action:'plan_updated',
           target_user_id:null,
-          old_value:{plan_id:p.id, price_htg:p.price_htg, duration_days:p.duration_days},
-          new_value:{plan_id:p.id, price_htg:prix, duration_days:jours},
+          old_value:{plan_id:p.id, price_htg:p.price_htg, price_before_htg:p.price_before_htg, duration_days:p.duration_days},
+          new_value:{plan_id:p.id, price_htg:prix, price_before_htg:prixAvant, duration_days:jours},
           reason:null
         });
       }catch(e){}
