@@ -1065,6 +1065,8 @@ footer{border-top:1px solid var(--ligne);padding:56px 0 36px;background:#030617}
 .admdash-row-badge.expire{background:rgba(226,99,79,.13);color:#E2634F}
 .admdash-row-badge.aucun{background:rgba(244,243,237,.06);color:var(--gris)}
 .admdash-row-badge.pending{background:rgba(201,164,76,.14);color:var(--or-clair)}
+.admdash-row-badge.won{background:rgba(46,212,127,.16);color:var(--vert-vif);font-weight:900}
+.admdash-row-badge.lost{background:rgba(226,99,79,.14);color:#E2634F}
 .admdash-row-badge.suspendu{background:rgba(226,99,79,.16);color:#E2634F}
 .admdash-empty{text-align:center;padding:40px 20px;color:var(--gris);font-size:13.5px}
 
@@ -2875,10 +2877,10 @@ details p{font-size:15.5px;line-height:1.72;color:#CBD8E4}
         <div><b id="statUsers" data-count="11850" data-base="11850" data-suffix="+" data-sep="comma">0</b><span data-i18n="stat_pronostiqueurs">ITILIZATÈ AKTIF</span></div>
       </div>
       <div class="h2-stat">
-        <div><b data-count="6390" data-sep="none">0</b><span data-i18n="stat_pronostics_jour">PRONOSTIK REYISI</span></div>
+        <div><b id="statWon" data-count="6390" data-base="6390" data-sep="none">0</b><span data-i18n="stat_pronostics_jour">PRONOSTIK REYISI</span></div>
       </div>
       <div class="h2-stat">
-        <div><b data-count="83" data-suffix="%">0</b><span data-i18n="stat_gratuits">PRONOSTIC KI GENYEN</span></div>
+        <div><b id="statRate" data-count="83" data-base="83" data-suffix="%">0</b><span data-i18n="stat_gratuits">PRONOSTIC KI GENYEN</span></div>
       </div>
     </div>
 
@@ -4057,6 +4059,10 @@ details p{font-size:15.5px;line-height:1.72;color:#CBD8E4}
             <svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
             <span data-i18n="adm_nav_plans">Plan</span>
           </button>
+          <button class="dash-menu-item" type="button" role="menuitem" data-adm="fiches">
+            <svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="2.3"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
+            <span data-i18n="adm_nav_fiches">Fich</span>
+          </button>
           <button class="dash-menu-item" type="button" role="menuitem" data-adm="faq">
             <svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.5"/><path d="M9.2 9.3a2.8 2.8 0 1 1 3.9 2.6c-.9.4-1.6 1-1.6 2v.3"/><circle cx="12" cy="17" r=".3" fill="currentColor"/></svg>
             <span data-i18n="adm_nav_faq">FAQ</span>
@@ -4181,6 +4187,31 @@ details p{font-size:15.5px;line-height:1.72;color:#CBD8E4}
         <span data-i18n="dash_back">Retounen</span>
       </button>
       <div id="admPlanDetail"></div>
+    </div>
+
+    <!-- VUE : FICHES -->
+    <div class="dash-view" data-adview="fiches">
+      <button class="dash-back" type="button" data-adback>
+        <svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
+        <span data-i18n="dash_back">Retounen</span>
+      </button>
+      <div class="dash-hi">
+        <h2 data-i18n="adm_fiches_h">Fich</h2>
+        <p data-i18n="adm_fiches_p">Fich pou chak jou, gwoupe pa plan. Istorik la toujou disponib.</p>
+      </div>
+      <label class="field"><span class="field-lbl" data-i18n="adm_fiches_date_lbl">Dat</span>
+        <input type="date" id="admFichesDate"></label>
+      <button type="button" class="btn btn-or" id="admFichesNew" style="width:100%;margin:12px 0 14px" data-i18n="adm_fiches_new">+ Nouvelle fiche</button>
+      <div id="admFichesBody"></div>
+    </div>
+
+    <!-- VUE : DETAIL FICHE -->
+    <div class="dash-view" data-adview="fichedetail">
+      <button class="dash-back" type="button" data-adback>
+        <svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
+        <span data-i18n="dash_back">Retounen</span>
+      </button>
+      <div id="admFicheDetail"></div>
     </div>
 
     <!-- VUE : FAQ -->
@@ -4497,7 +4528,7 @@ session_stale_h:"Compte ouvert ailleurs",
 session_stale_p:"Ce compte est ouvert dans une autre fenêtre. Rafraîchissez la page pour continuer.",
 dash_menu_lang:"Langue",
 adm_role_badge:"ADMIN",
-adm_nav_home:"Vue d'ensemble", adm_nav_users:"Utilisateurs", adm_nav_payments:"Paiements", adm_nav_plans:"Plans", adm_nav_faq:"FAQ", adm_nav_testimonials:"Témoignages", adm_nav_settings:"Paramètres",
+adm_nav_home:"Vue d'ensemble", adm_nav_users:"Utilisateurs", adm_nav_payments:"Paiements", adm_nav_plans:"Plans", adm_nav_fiches:"Fiches", adm_nav_faq:"FAQ", adm_nav_testimonials:"Témoignages", adm_nav_settings:"Paramètres",
 adm_settings_h:"Paramètres", adm_settings_p:"Votre mot de passe et la sécurité de votre compte admin.",
 adm_settings_pw_h:"Changer le mot de passe",
 adm_settings_pw_new:"Nouveau mot de passe", adm_settings_pw_confirm:"Confirmer le nouveau mot de passe",
@@ -4516,6 +4547,27 @@ adm_settings_2fa_on_h:"2FA activé", adm_settings_2fa_on_toast:"La double authen
 adm_settings_2fa_off_h:"2FA désactivé", adm_settings_2fa_off_toast:"La double authentification a été retirée de ce compte.",
 adm_confirm_q_pw_change:"Confirmer le changement de mot de passe ?",
 adm_confirm_q_2fa_disable:"Confirmer la désactivation du 2FA ? Votre compte sera moins protégé.",
+adm_fiches_h:"Fiches", adm_fiches_p:"Fiches pour chaque jour, groupées par plan. L'historique reste toujours disponible.",
+adm_fiches_date_lbl:"Date", adm_fiches_new:"+ Nouvelle fiche", adm_fiches_empty:"Aucune fiche pour cette date.",
+adm_fiche_draft:"brouillon", adm_fiche_legs:"match(s)",
+adm_fiche_st_pending:"En cours", adm_fiche_st_won:"Gagné", adm_fiche_st_lost:"Perdu",
+adm_fiche_code:"Référence", adm_fiche_code_ph:"Ex. : VB-2451 (optionnel)",
+adm_fiche_plan:"Plan minimum requis", adm_fiche_sport:"Sport",
+adm_fiche_sport_foot:"Football", adm_fiche_sport_nba:"NBA",
+adm_fiche_confidence:"Score de confiance (%)", adm_fiche_date:"Date de la fiche", adm_fiche_status:"Résultat",
+adm_fiche_legs_h:"Matchs de la fiche",
+adm_fiche_leg_match:"Équipes (ex. Chelsea - Liverpool)", adm_fiche_leg_time:"Heure",
+adm_fiche_leg_league:"Championnat", adm_fiche_leg_market:"Marché (ex. Les 2 équipes marquent)",
+adm_fiche_leg_pick:"Pronostic (ex. Oui)", adm_fiche_leg_odd:"Cote",
+adm_fiche_leg_remove:"Retirer ce match", adm_fiche_leg_add:"+ Ajouter un match",
+adm_fiche_leg_none:"Aucun match ajouté pour l'instant.",
+adm_fiche_save:"Enregistrer la fiche", adm_fiche_delete:"Supprimer cette fiche",
+adm_fiche_err_incomplete:"La date est obligatoire.",
+adm_fiche_err_nolegs:"Ajoutez au moins un match.",
+adm_fiche_err_leg_incomplete:"Chaque match doit avoir au moins les équipes, le pronostic et la cote.",
+adm_fiche_err_save:"L'enregistrement a échoué.",
+adm_fiche_toast_h:"Fiche enregistrée", adm_fiche_toast_p:"Visible immédiatement si publiée.",
+adm_fiche_toast_del_h:"Fiche supprimée", adm_fiche_toast_del_p:"Elle n'apparaît plus nulle part.",
 adm_menu_exit:"Quitter le Dashboard Admin",
 adm_home_h:"Vue d'ensemble", adm_home_p:"Chiffres réels, directement issus de la base de données.",
 adm_refresh:"Rafraîchir", adm_updated_at:"Mis à jour à {t}",
@@ -4833,7 +4885,7 @@ session_stale_h:"Account open elsewhere",
 session_stale_p:"This account is open in another window. Refresh the page to continue.",
 dash_menu_lang:"Language",
 adm_role_badge:"ADMIN",
-adm_nav_home:"Overview", adm_nav_users:"Users", adm_nav_payments:"Payments", adm_nav_plans:"Plans", adm_nav_faq:"FAQ", adm_nav_testimonials:"Testimonials", adm_nav_settings:"Settings",
+adm_nav_home:"Overview", adm_nav_users:"Users", adm_nav_payments:"Payments", adm_nav_plans:"Plans", adm_nav_fiches:"Tickets", adm_nav_faq:"FAQ", adm_nav_testimonials:"Testimonials", adm_nav_settings:"Settings",
 adm_settings_h:"Settings", adm_settings_p:"Your password and admin account security.",
 adm_settings_pw_h:"Change password",
 adm_settings_pw_new:"New password", adm_settings_pw_confirm:"Confirm new password",
@@ -4852,6 +4904,27 @@ adm_settings_2fa_on_h:"2FA enabled", adm_settings_2fa_on_toast:"Two-factor authe
 adm_settings_2fa_off_h:"2FA disabled", adm_settings_2fa_off_toast:"Two-factor authentication was removed from this account.",
 adm_confirm_q_pw_change:"Confirm the password change?",
 adm_confirm_q_2fa_disable:"Confirm disabling 2FA? Your account will be less protected.",
+adm_fiches_h:"Tickets", adm_fiches_p:"Tickets for each day, grouped by plan. History always stays available.",
+adm_fiches_date_lbl:"Date", adm_fiches_new:"+ New ticket", adm_fiches_empty:"No tickets for this date.",
+adm_fiche_draft:"draft", adm_fiche_legs:"match(es)",
+adm_fiche_st_pending:"In progress", adm_fiche_st_won:"Won", adm_fiche_st_lost:"Lost",
+adm_fiche_code:"Reference", adm_fiche_code_ph:"E.g.: VB-2451 (optional)",
+adm_fiche_plan:"Minimum required plan", adm_fiche_sport:"Sport",
+adm_fiche_sport_foot:"Football", adm_fiche_sport_nba:"NBA",
+adm_fiche_confidence:"Confidence score (%)", adm_fiche_date:"Ticket date", adm_fiche_status:"Result",
+adm_fiche_legs_h:"Ticket matches",
+adm_fiche_leg_match:"Teams (e.g. Chelsea - Liverpool)", adm_fiche_leg_time:"Time",
+adm_fiche_leg_league:"League", adm_fiche_leg_market:"Market (e.g. Both teams to score)",
+adm_fiche_leg_pick:"Pick (e.g. Yes)", adm_fiche_leg_odd:"Odds",
+adm_fiche_leg_remove:"Remove this match", adm_fiche_leg_add:"+ Add a match",
+adm_fiche_leg_none:"No matches added yet.",
+adm_fiche_save:"Save ticket", adm_fiche_delete:"Delete this ticket",
+adm_fiche_err_incomplete:"Date is required.",
+adm_fiche_err_nolegs:"Add at least one match.",
+adm_fiche_err_leg_incomplete:"Each match needs at least the teams, the pick, and the odds.",
+adm_fiche_err_save:"Save failed.",
+adm_fiche_toast_h:"Ticket saved", adm_fiche_toast_p:"Visible immediately if published.",
+adm_fiche_toast_del_h:"Ticket deleted", adm_fiche_toast_del_p:"It no longer appears anywhere.",
 adm_menu_exit:"Leave Admin Dashboard",
 adm_home_h:"Overview", adm_home_p:"Real figures, taken directly from the database.",
 adm_refresh:"Refresh", adm_updated_at:"Updated at {t}",
@@ -5169,7 +5242,7 @@ session_stale_h:"Kont ouvri yon lòt kote",
 session_stale_p:"Kont sa a ouvri nan yon lòt fenèt. Rafrechi paj la pou kontinye.",
 dash_menu_lang:"Lang",
 adm_role_badge:"ADMIN",
-adm_nav_home:"Vi jeneral", adm_nav_users:"Itilizatè", adm_nav_payments:"Peman", adm_nav_plans:"Plan", adm_nav_faq:"FAQ", adm_nav_testimonials:"Temwayaj", adm_nav_settings:"Paramèt",
+adm_nav_home:"Vi jeneral", adm_nav_users:"Itilizatè", adm_nav_payments:"Peman", adm_nav_plans:"Plan", adm_nav_fiches:"Fich", adm_nav_faq:"FAQ", adm_nav_testimonials:"Temwayaj", adm_nav_settings:"Paramèt",
 adm_settings_h:"Paramèt", adm_settings_p:"Modpas ou ak sekirite kont admin ou.",
 adm_settings_pw_h:"Chanje modpas",
 adm_settings_pw_new:"Nouvo modpas", adm_settings_pw_confirm:"Konfime nouvo modpas la",
@@ -5188,6 +5261,27 @@ adm_settings_2fa_on_h:"2FA aktif", adm_settings_2fa_on_toast:"Doub otantifikasyo
 adm_settings_2fa_off_h:"2FA dezaktive", adm_settings_2fa_off_toast:"Doub otantifikasyon retire nan kont sa a.",
 adm_confirm_q_pw_change:"Konfime chanjman modpas la ?",
 adm_confirm_q_2fa_disable:"Konfime dezaktivasyon 2FA a ? Kont ou ap mwen pwoteje.",
+adm_fiches_h:"Fich", adm_fiches_p:"Fich pou chak jou, gwoupe pa plan. Istorik la toujou disponib.",
+adm_fiches_date_lbl:"Dat", adm_fiches_new:"+ Nouvo fich", adm_fiches_empty:"Pa gen fich pou dat sa a.",
+adm_fiche_draft:"bouyon", adm_fiche_legs:"match",
+adm_fiche_st_pending:"An kou", adm_fiche_st_won:"Genyen", adm_fiche_st_lost:"Pèdi",
+adm_fiche_code:"Referans", adm_fiche_code_ph:"Egz. : VB-2451 (opsyonèl)",
+adm_fiche_plan:"Plan minimòm ki mande", adm_fiche_sport:"Espò",
+adm_fiche_sport_foot:"Foutbòl", adm_fiche_sport_nba:"NBA",
+adm_fiche_confidence:"Nòt konfyans (%)", adm_fiche_date:"Dat fich la", adm_fiche_status:"Rezilta",
+adm_fiche_legs_h:"Match fich la",
+adm_fiche_leg_match:"Ekip yo (egz. Chelsea - Liverpool)", adm_fiche_leg_time:"Lè",
+adm_fiche_leg_league:"Chanpyona", adm_fiche_leg_market:"Mache (egz. Tou de ekip make)",
+adm_fiche_leg_pick:"Pronostik (egz. Wi)", adm_fiche_leg_odd:"Kòt",
+adm_fiche_leg_remove:"Retire match sa a", adm_fiche_leg_add:"+ Ajoute yon match",
+adm_fiche_leg_none:"Pa gen match ajoute toujou.",
+adm_fiche_save:"Anrejistre fich la", adm_fiche_delete:"Efase fich sa a",
+adm_fiche_err_incomplete:"Dat la obligatwa.",
+adm_fiche_err_nolegs:"Ajoute omwen yon match.",
+adm_fiche_err_leg_incomplete:"Chak match dwe gen omwen ekip yo, pronostik la, ak kòt la.",
+adm_fiche_err_save:"Anrejistreman echwe.",
+adm_fiche_toast_h:"Fich anrejistre", adm_fiche_toast_p:"Vizib imedyatman si li pibliye.",
+adm_fiche_toast_del_h:"Fich efase", adm_fiche_toast_del_p:"Li pa parèt okenn kote ankò.",
 adm_menu_exit:"Kite Dashboard Admin",
 adm_home_h:"Vi jeneral", adm_home_p:"Chif reyèl, dirèkteman soti nan baz done a.",
 adm_refresh:"Rafrechi", adm_updated_at:"Mizajou a {t}",
@@ -7459,6 +7553,54 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
   const fmtDate=d=>d.toLocaleDateString(currentLang==='en'?'en-US':'fr-FR',{day:'2-digit',month:'short'});
   const fmtLong=iso=>iso?new Date(iso).toLocaleDateString(currentLang==='en'?'en-US':'fr-FR',{day:'2-digit',month:'long',year:'numeric'}):'—';
 
+  /* ---- Chargement des VRAIES fiches (Supabase) ----
+     Remplace DATA.tickets par le contenu reel publie par l'admin, en
+     conservant EXACTEMENT la meme forme que les donnees de demo (voir
+     le commentaire au-dessus de DATA) — aucune autre fonction n'a besoin
+     d'etre modifiee, elles lisent toutes DATA.tickets sans savoir d'ou
+     il vient. Si Supabase est injoignable ou qu'aucune fiche publiee
+     n'existe encore, les donnees de demo integrees au fichier restent
+     affichees telles quelles — jamais un dashboard vide sans explication. */
+  async function chargerFichesReelles(){
+    const sb=window.VB_getSupabase&&window.VB_getSupabase();
+    if(!sb)return false;
+    try{
+      const limite=new Date();limite.setDate(limite.getDate()-90);
+      const limiteISO=limite.toISOString().slice(0,10);
+      const {data:tickets,error}=await sb.from('tickets')
+        .select('id,code,sport,min_plan_rank,status,confidence,play_date,published')
+        .eq('published',true).gte('play_date',limiteISO)
+        .order('play_date',{ascending:false});
+      if(error||!tickets||!tickets.length)return false;
+
+      const ids=tickets.map(tk=>tk.id);
+      const {data:legs}=await sb.from('ticket_legs').select('*').in('ticket_id',ids).order('position',{ascending:true});
+      const legsByTicket={};
+      (legs||[]).forEach(l=>{
+        (legsByTicket[l.ticket_id]=legsByTicket[l.ticket_id]||[]).push({
+          time:l.match_time||'', league:l.league||'', match:l.match_label||'',
+          market:l.market||'', pick:l.pick||'', odd:Number(l.odd)||0
+        });
+      });
+
+      const aujourdhui=new Date();aujourdhui.setHours(0,0,0,0);
+      const nouveaux=tickets.map(tk=>{
+        const pd=new Date(tk.play_date+'T00:00:00');
+        const jourOffset=Math.round((aujourdhui-pd)/86400000);
+        return {
+          id:tk.code||tk.id.slice(0,8).toUpperCase(),
+          day:jourOffset, sport:tk.sport, minPlan:tk.min_plan_rank,
+          status:tk.status, conf:tk.confidence!=null?tk.confidence:0,
+          legs:legsByTicket[tk.id]||[]
+        };
+      }).filter(tk=>tk.legs.length>0);   // une fiche sans match n'a rien a afficher
+
+      if(!nouveaux.length)return false;
+      DATA.tickets=nouveaux;
+      return true;
+    }catch(e){return false;}
+  }
+
   /* ---- Etat de la vue ---- */
   let view='today';
   const filters={today:{sport:'all'},history:{sport:'all',status:'all'}};
@@ -7551,11 +7693,16 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
     tk.legs.forEach(lg=>{
       const li=document.createElement('li');
       li.className='dtk-leg';
-      const pick=lg.pick.indexOf(' — ')>-1?lg.pick:t(lg.pick);
+      // Une fiche de demo utilise des CLES i18n (mk_btts_l, pick_oui...).
+      // Une vraie fiche creee par l'admin contient du texte libre — on ne
+      // le fait passer par t() que si c'est reconnu comme une cle, sinon
+      // on l'affiche tel quel.
+      const pick=(lg.pick.indexOf(' — ')>-1||!translations.fr[lg.pick])?lg.pick:t(lg.pick);
+      const marketTxt=translations.fr[lg.market]?t(lg.market):(lg.market||'');
       li.innerHTML='<div class="dtk-leg-top"><span class="dtk-leg-time">'+lg.time+'</span>'+
         '<span class="dtk-leg-league">'+lg.league+'</span></div>'+
         '<div class="dtk-leg-match">'+lg.match+'</div>'+
-        '<div class="dtk-leg-bot"><span class="dtk-leg-pick"><em>'+t(lg.market)+'</em>'+pick+'</span>'+
+        '<div class="dtk-leg-bot"><span class="dtk-leg-pick"><em>'+marketTxt+'</em>'+pick+'</span>'+
         '<span class="dtk-leg-odd">'+lg.odd.toFixed(2)+'</span></div>';
       ul.appendChild(li);
     });
@@ -8022,6 +8169,9 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
     if(window.VB_syncPayStatus){
       window.VB_syncPayStatus().then(changed=>{ if(changed)renderAll(); });
     }
+    // Meme principe pour les fiches : toujours essayer de charger le vrai
+    // contenu publie par l'admin, sans jamais bloquer l'affichage.
+    chargerFichesReelles().then(changed=>{ if(changed)renderAll(); });
   }
   function closeDash(){
     dash.classList.remove('open');
@@ -8071,6 +8221,7 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
   const t=k=>(T()[k]!=null?T()[k]:(translations.fr[k]||''));
   const stripTags=h=>{const d=document.createElement('div');d.innerHTML=h;return d.textContent||'';};
   const money=n=>n.toLocaleString('fr-FR').replace(/\u202f|\u00a0/g,' ');
+  const rank={p1:1,p2:2,p3:3,p4:4};
 
   let view='home';
   let viewStack=[];
@@ -8088,6 +8239,7 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
     if(view==='users')renderUsers();
     if(view==='payments')renderPayments();
     if(view==='plans')renderPlans();
+    if(view==='fiches')renderFiches();
     if(view==='faq')renderFaqList();
     if(view==='testimonials')renderTestiList();
     if(view==='settings')renderSettings();
@@ -9338,6 +9490,239 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
     if(btn)btn.disabled=false;
   }
 
+  /* ---- Donnees reelles : Fiches (tickets + ticket_legs) ----
+     Une seule source de verite pour tout le site : c'est cette table
+     que le Dashboard client lira aussi (etape suivante). Rien n'est
+     jamais supprime automatiquement : chaque jour reste consultable
+     via le selecteur de date — c'est la "memoire" demandee. */
+  let selectedFicheId=null;
+  let fbLegsCourantes=[];   // manches en cours d'edition (pas encore enregistrees)
+  function dateAujourdhui(){
+    const d=new Date();
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  }
+  async function renderFiches(){
+    const dateInput=document.getElementById('admFichesDate');
+    if(!dateInput.value)dateInput.value=dateAujourdhui();
+    const body=document.getElementById('admFichesBody');
+    const sb=window.VB_getSupabase&&window.VB_getSupabase();
+    if(!sb){body.innerHTML='<div class="admdash-empty">'+t('adm_k_offline')+'</div>';return;}
+    body.innerHTML='<div class="admdash-empty">'+t('adm_k_loading')+'</div>';
+    try{
+      const {data:tickets,error}=await sb.from('tickets')
+        .select('id,code,sport,min_plan_rank,status,confidence,play_date,published,created_at')
+        .eq('play_date',dateInput.value)
+        .order('min_plan_rank',{ascending:true}).order('created_at',{ascending:true});
+      if(error)throw error;
+      if(!tickets||!tickets.length){
+        body.innerHTML='<div class="admdash-empty">'+t('adm_fiches_empty')+'</div>';
+        return;
+      }
+      const ids=tickets.map(tk=>tk.id);
+      const {data:legs}=await sb.from('ticket_legs').select('ticket_id').in('ticket_id',ids);
+      const legCount={};(legs||[]).forEach(l=>{legCount[l.ticket_id]=(legCount[l.ticket_id]||0)+1;});
+
+      const plans=(window.VB_allPlans?window.VB_allPlans():[]).slice().sort((a,b)=>rank[a.id]-rank[b.id]);
+      const badgeCls={pending:'pending',won:'won',lost:'lost'};
+      const badgeLbl={pending:'adm_fiche_st_pending',won:'adm_fiche_st_won',lost:'adm_fiche_st_lost'};
+
+      body.innerHTML=plans.map(pl=>{
+        const items=tickets.filter(tk=>tk.min_plan_rank===rank[pl.id]);
+        if(!items.length)return '';
+        const nom=stripTags(t(pl.nameKey));
+        return '<div class="admdash-section-h">'+nom+' — '+items.length+'</div>'+
+          '<div class="admdash-list">'+items.map(tk=>{
+            const badge=badgeCls[tk.status]||'aucun';
+            const lbl=badgeLbl[tk.status]?t(badgeLbl[tk.status]):tk.status;
+            return '<button type="button" class="admdash-row" data-fid="'+tk.id+'">'+
+              '<span class="admdash-row-av">'+(tk.sport||'?').slice(0,2).toUpperCase()+'</span>'+
+              '<span class="admdash-row-tx"><b>'+(tk.code||tk.id.slice(0,8))+
+              (tk.published?'':' · '+t('adm_fiche_draft'))+'</b>'+
+              '<span>'+(legCount[tk.id]||0)+' '+t('adm_fiche_legs')+' · '+(tk.confidence!=null?tk.confidence+'%':'—')+'</span></span>'+
+              '<span class="admdash-row-badge '+badge+'">'+lbl+'</span>'+
+              '</button>';
+          }).join('')+'</div>';
+      }).join('') || '<div class="admdash-empty">'+t('adm_fiches_empty')+'</div>';
+
+      body.querySelectorAll('[data-fid]').forEach(b=>{
+        b.addEventListener('click',()=>{selectedFicheId=b.dataset.fid;setView('fichedetail');renderFicheDetail();});
+      });
+    }catch(e){
+      body.innerHTML='<div class="admdash-empty">'+t('adm_k_error')+'</div>';
+    }
+  }
+  document.getElementById('admFichesDate').addEventListener('change',renderFiches);
+  document.getElementById('admFichesNew').addEventListener('click',()=>{
+    selectedFicheId=null;
+    fbLegsCourantes=[];
+    setView('fichedetail');
+    renderFicheDetail();
+  });
+
+  function legRowHtml(leg,i){
+    return '<div class="admdash-hist-row" data-legidx="'+i+'" style="flex-direction:column;align-items:stretch;gap:8px;padding:12px">'+
+      '<div style="display:flex;gap:8px;flex-wrap:wrap">'+
+        '<input type="text" class="fb-leg-field" data-f="match_label" placeholder="'+t('adm_fiche_leg_match')+'" value="'+(leg.match_label||'').replace(/"/g,'&quot;')+'" style="flex:2;min-width:140px">'+
+        '<input type="text" class="fb-leg-field" data-f="match_time" placeholder="'+t('adm_fiche_leg_time')+'" value="'+(leg.match_time||'').replace(/"/g,'&quot;')+'" style="flex:1;min-width:70px">'+
+      '</div>'+
+      '<div style="display:flex;gap:8px;flex-wrap:wrap">'+
+        '<input type="text" class="fb-leg-field" data-f="league" placeholder="'+t('adm_fiche_leg_league')+'" value="'+(leg.league||'').replace(/"/g,'&quot;')+'" style="flex:1;min-width:100px">'+
+        '<input type="text" class="fb-leg-field" data-f="market" placeholder="'+t('adm_fiche_leg_market')+'" value="'+(leg.market||'').replace(/"/g,'&quot;')+'" style="flex:1;min-width:100px">'+
+      '</div>'+
+      '<div style="display:flex;gap:8px;flex-wrap:wrap">'+
+        '<input type="text" class="fb-leg-field" data-f="pick" placeholder="'+t('adm_fiche_leg_pick')+'" value="'+(leg.pick||'').replace(/"/g,'&quot;')+'" style="flex:2;min-width:100px">'+
+        '<input type="number" step="0.01" class="fb-leg-field" data-f="odd" placeholder="'+t('adm_fiche_leg_odd')+'" value="'+(leg.odd!=null?leg.odd:'')+'" style="flex:1;min-width:70px">'+
+      '</div>'+
+      '<button type="button" class="btn btn-reject fb-leg-del" data-idx="'+i+'" style="align-self:flex-end;padding:7px 14px;font-size:12px">'+t('adm_fiche_leg_remove')+'</button>'+
+    '</div>';
+  }
+  function rebrancherLegs(){
+    document.querySelectorAll('.fb-leg-field').forEach(inp=>{
+      inp.addEventListener('input',()=>{
+        const idx=parseInt(inp.closest('[data-legidx]').dataset.legidx,10);
+        const champ=inp.dataset.f;
+        fbLegsCourantes[idx][champ]=champ==='odd'?(inp.value?parseFloat(inp.value):null):inp.value;
+      });
+    });
+    document.querySelectorAll('.fb-leg-del').forEach(b=>{
+      b.addEventListener('click',()=>{
+        fbLegsCourantes.splice(parseInt(b.dataset.idx,10),1);
+        rerenderLegsList();
+      });
+    });
+  }
+  function rerenderLegsList(){
+    const box=document.getElementById('admFicheLegsList');
+    if(!box)return;
+    box.innerHTML=fbLegsCourantes.map((l,i)=>legRowHtml(l,i)).join('')||'<div class="admdash-hist-empty">'+t('adm_fiche_leg_none')+'</div>';
+    rebrancherLegs();
+  }
+
+  async function renderFicheDetail(){
+    const box=document.getElementById('admFicheDetail');
+    const sb=window.VB_getSupabase&&window.VB_getSupabase();
+    box.innerHTML='<div class="admdash-empty">'+t('adm_k_loading')+'</div>';
+    if(!sb)return;
+    let tk={code:'',sport:'foot',min_plan_rank:1,status:'pending',confidence:70,play_date:document.getElementById('admFichesDate').value||dateAujourdhui(),published:false};
+    fbLegsCourantes=[];
+    if(selectedFicheId){
+      try{
+        const {data:tdata}=await sb.from('tickets').select('*').eq('id',selectedFicheId).single();
+        if(tdata)tk=tdata;
+        const {data:ldata}=await sb.from('ticket_legs').select('*').eq('ticket_id',selectedFicheId).order('position',{ascending:true});
+        fbLegsCourantes=(ldata||[]).map(l=>({match_label:l.match_label,match_time:l.match_time,league:l.league,market:l.market,pick:l.pick,odd:l.odd}));
+      }catch(e){}
+    }
+    const plans=(window.VB_allPlans?window.VB_allPlans():[]).slice().sort((a,b)=>rank[a.id]-rank[b.id]);
+    const optionsPlans=plans.map(pl=>'<option value="'+rank[pl.id]+'"'+(tk.min_plan_rank===rank[pl.id]?' selected':'')+'>'+stripTags(t(pl.nameKey))+'</option>').join('');
+    const optionsSport=['foot','nba'].map(s=>'<option value="'+s+'"'+(tk.sport===s?' selected':'')+'>'+(s==='foot'?t('adm_fiche_sport_foot'):t('adm_fiche_sport_nba'))+'</option>').join('');
+    const optionsStatus=['pending','won','lost'].map(s=>'<option value="'+s+'"'+(tk.status===s?' selected':'')+'>'+t('adm_fiche_st_'+s)+'</option>').join('');
+
+    box.innerHTML=
+      '<label class="field"><span class="field-lbl">'+t('adm_fiche_code')+'</span>'+
+      '<input type="text" id="admFicheCode" value="'+(tk.code||'').replace(/"/g,'&quot;')+'" placeholder="'+t('adm_fiche_code_ph')+'"></label>'+
+      '<label class="field" style="margin-top:10px"><span class="field-lbl">'+t('adm_fiche_plan')+'</span>'+
+      '<select id="admFichePlan">'+optionsPlans+'</select></label>'+
+      '<label class="field" style="margin-top:10px"><span class="field-lbl">'+t('adm_fiche_sport')+'</span>'+
+      '<select id="admFicheSport">'+optionsSport+'</select></label>'+
+      '<label class="field" style="margin-top:10px"><span class="field-lbl">'+t('adm_fiche_confidence')+'</span>'+
+      '<input type="number" min="0" max="100" id="admFicheConf" value="'+(tk.confidence!=null?tk.confidence:70)+'"></label>'+
+      '<label class="field" style="margin-top:10px"><span class="field-lbl">'+t('adm_fiche_date')+'</span>'+
+      '<input type="date" id="admFicheDate" value="'+(tk.play_date||dateAujourdhui())+'"></label>'+
+      '<label class="field" style="margin-top:10px"><span class="field-lbl">'+t('adm_fiche_status')+'</span>'+
+      '<select id="admFicheStatus">'+optionsStatus+'</select></label>'+
+      '<label style="display:flex;align-items:center;gap:9px;margin-top:12px;font-size:13.5px;color:#F4F3ED">'+
+      '<input type="checkbox" id="admFichePub" style="width:17px;height:17px"'+(tk.published?' checked':'')+'> '+t('adm_published_toggle')+
+      '</label>'+
+
+      '<div class="admdash-section-h">'+t('adm_fiche_legs_h')+'</div>'+
+      '<div id="admFicheLegsList"></div>'+
+      '<button type="button" class="btn btn-ghost" id="admFicheLegAdd" style="width:100%;margin-top:10px">'+t('adm_fiche_leg_add')+'</button>'+
+
+      '<button type="button" class="btn btn-confirm" id="admFicheSave" style="width:100%;margin-top:18px">'+t('adm_fiche_save')+'</button>'+
+      (selectedFicheId?'<button type="button" class="btn btn-reject" id="admFicheDelete" style="width:100%;margin-top:10px">'+t('adm_fiche_delete')+'</button>':'')+
+      '<div id="admFicheErr" class="field-err" style="display:none;margin-top:8px"></div>';
+
+    rerenderLegsList();
+
+    document.getElementById('admFicheLegAdd').addEventListener('click',()=>{
+      fbLegsCourantes.push({match_label:'',match_time:'',league:'',market:'',pick:'',odd:null});
+      rerenderLegsList();
+    });
+
+    document.getElementById('admFicheSave').addEventListener('click',function(){
+      const err=document.getElementById('admFicheErr');
+      const payload={
+        code:document.getElementById('admFicheCode').value.trim()||null,
+        min_plan_rank:parseInt(document.getElementById('admFichePlan').value,10),
+        sport:document.getElementById('admFicheSport').value,
+        confidence:parseInt(document.getElementById('admFicheConf').value,10)||null,
+        play_date:document.getElementById('admFicheDate').value,
+        status:document.getElementById('admFicheStatus').value,
+        published:document.getElementById('admFichePub').checked
+      };
+      if(!payload.play_date){err.textContent=t('adm_fiche_err_incomplete');err.style.display='block';return;}
+      if(!fbLegsCourantes.length){err.textContent=t('adm_fiche_err_nolegs');err.style.display='block';return;}
+      const legsIncomplets=fbLegsCourantes.some(l=>!l.match_label||!l.pick||l.odd==null);
+      if(legsIncomplets){err.textContent=t('adm_fiche_err_leg_incomplete');err.style.display='block';return;}
+      err.style.display='none';
+      demanderConfirmation(this,t('adm_confirm_q_save'),()=>sauvegarderFiche(payload));
+    });
+    if(selectedFicheId){
+      document.getElementById('admFicheDelete').addEventListener('click',function(){
+        demanderConfirmation(this,t('adm_confirm_q_delete'),()=>supprimerFiche(selectedFicheId));
+      });
+    }
+  }
+
+  async function sauvegarderFiche(payload){
+    const sb=window.VB_getSupabase&&window.VB_getSupabase();
+    if(!sb)return;
+    const btn=document.getElementById('admFicheSave');
+    if(btn)btn.disabled=true;
+    try{
+      let ticketId=selectedFicheId;
+      if(ticketId){
+        const {error}=await sb.from('tickets').update(payload).eq('id',ticketId);
+        if(error)throw error;
+        // On remplace toutes les manches : plus simple et fiable que de
+        // detecter ce qui a change ligne par ligne.
+        await sb.from('ticket_legs').delete().eq('ticket_id',ticketId);
+      }else{
+        const {data,error}=await sb.from('tickets').insert(payload).select('id').single();
+        if(error)throw error;
+        ticketId=data.id;
+      }
+      const legsAEcrire=fbLegsCourantes.map((l,i)=>({
+        ticket_id:ticketId, match_label:l.match_label, match_time:l.match_time||null,
+        league:l.league||null, market:l.market||null, pick:l.pick, odd:l.odd, position:i+1
+      }));
+      const {error:legErr}=await sb.from('ticket_legs').insert(legsAEcrire);
+      if(legErr)throw legErr;
+
+      if(window.VB_toast)window.VB_toast('adm_fiche_toast_h',t('adm_fiche_toast_p'));
+      if(viewStack.length)setView(viewStack.pop(),true);else setView('fiches',true);
+    }catch(e){
+      const err=document.getElementById('admFicheErr');
+      if(err){err.textContent=t('adm_fiche_err_save')+' — '+((e&&e.message)?e.message:String(e)).slice(0,140);err.style.display='block';}
+      if(btn)btn.disabled=false;
+    }
+  }
+  async function supprimerFiche(id){
+    const sb=window.VB_getSupabase&&window.VB_getSupabase();
+    if(!sb)return;
+    try{
+      await sb.from('ticket_legs').delete().eq('ticket_id',id);
+      const {error}=await sb.from('tickets').delete().eq('id',id);
+      if(error)throw error;
+      if(window.VB_toast)window.VB_toast('adm_fiche_toast_del_h',t('adm_fiche_toast_del_p'));
+      setView('fiches',true);
+    }catch(e){
+      const err=document.getElementById('admFicheErr');
+      if(err){err.textContent=t('adm_fiche_err_save')+' — '+((e&&e.message)?e.message:String(e)).slice(0,140);err.style.display='block';}
+    }
+  }
+
   window.VB_openAdminDash=openAdminDash;
 })();
 
@@ -9813,7 +10198,7 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
   const writeN=n=>{window.__vbSignups=n;try{localStorage.setItem(KEY,String(n));}catch(e){}};
 
   function paint(){
-    const total=base+readN();
+    const total=(parseInt(el.dataset.base,10)||0)+readN();
     el.dataset.count=String(total);
     el.textContent=total.toLocaleString('en-US');
   }
@@ -9827,6 +10212,42 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
     el.style.transform='scale(1.14)';
     setTimeout(()=>{el.style.transform='';},360);
   };
+
+  /* Vraies statistiques : remplace les valeurs de depart integrees au
+     fichier par les vrais chiffres Supabase, UNIQUEMENT si la lecture
+     reussit. Sinon, les valeurs de demo deja presentes restent affichees
+     telles quelles — jamais un "0" ou un chiffre errone. */
+  async function chargerStatsReelles(){
+    const sb=window.VB_getSupabase&&window.VB_getSupabase();
+    if(!sb)return;
+    try{
+      const [{count:users},{data:tickets}]=await Promise.all([
+        sb.from('profiles').select('id',{count:'exact',head:true}),
+        sb.from('tickets').select('status').neq('status','pending')
+      ]);
+      if(users!=null){
+        el.dataset.base=String(users);
+        paint();
+      }
+      if(tickets&&tickets.length){
+        const gagnes=tickets.filter(t=>t.status==='won').length;
+        const taux=Math.round((gagnes/tickets.length)*100);
+        const elWon=document.getElementById('statWon');
+        const elRate=document.getElementById('statRate');
+        if(elWon){
+          elWon.dataset.count=String(gagnes);elWon.dataset.base=String(gagnes);
+          elWon.textContent=String(gagnes);   // ecrase l'affichage meme si l'animation a deja tourne avec l'ancienne valeur
+        }
+        if(elRate){
+          elRate.dataset.count=String(taux);elRate.dataset.base=String(taux);
+          elRate.textContent=taux+'%';
+        }
+      }
+    }catch(e){ /* les valeurs de demo integrees restent affichees */ }
+  }
+  chargerStatsReelles();
+  window.addEventListener('load',chargerStatsReelles);
+  window.VB_chargerStatsReelles=chargerStatsReelles;   // rejouable a la demande
 })();
 
 /* ---------- Routage simple : hero par defaut, sauf lien direct connu ----------
