@@ -1,29 +1,22 @@
 /* ============================================================
    VIP BETCOTE — request-signup-code
    ------------------------------------------------------------
-   Génère le code de vérification d'inscription ENTIÈREMENT côté
-   serveur (jamais dans le navigateur), le stocke haché dans
-   Supabase (table signup_codes), puis déclenche l'envoi réel de
-   l'e-mail en réutilisant la fonction send-email déjà en place
-   (celle qui parle à Resend).
+   Version SANS dépendance npm (aucun "require" externe) : parle
+   directement à l'API REST de Supabase via fetch (déjà disponible
+   nativement dans le runtime Node de Netlify). Corrige l'erreur
+   "Cannot find module '@supabase/supabase-js'".
 
-   À placer dans le même dossier que vos fonctions existantes
-   (request-password-reset.js, confirm-password-reset.js,
-   send-email.js) et redéployer sur Netlify.
-
-   Variables d'environnement nécessaires (Netlify > Site settings
-   > Environment variables) — les deux premières sont sûrement
-   déjà définies puisque request-password-reset.js les utilise :
+   Variables d'environnement nécessaires (déjà utilisées par
+   request-password-reset.js, donc normalement déjà présentes) :
      SUPABASE_URL
-     SUPABASE_SERVICE_ROLE_KEY   (jamais la clé "anon" ici)
-     SITE_URL   (optionnel — sinon on déduit l'URL depuis la requête)
+     SUPABASE_SERVICE_ROLE_KEY
+     SITE_URL   (optionnel)
    ============================================================ */
 
-const { createClient } = require('@supabase/supabase-js');
 const crypto = require('crypto');
 
 const CODE_TTL_MINUTES = 10;
-const MAX_CODES_PER_WINDOW = 5;   // anti-abus simple
+const MAX_CODES_PER_WINDOW = 5;
 const WINDOW_MINUTES = 15;
 
 function hashCode(code) {
@@ -32,6 +25,14 @@ function hashCode(code) {
 
 function isValidEmail(email) {
   return typeof email === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function sbHeaders() {
+  return {
+    'Content-Type': 'application/json',
+    apikey: process.env.SUPABASE_SERVICE_ROLE_KEY,
+    Authorization: 'Bearer ' + process.env.SUPABASE_SERVICE_ROLE_KEY
+  };
 }
 
 exports.handler = async function (event) {
@@ -51,21 +52,18 @@ exports.handler = async function (event) {
     return { statusCode: 400, body: JSON.stringify({ error: 'email_invalide' }) };
   }
 
-  const supabase = createClient(
-    process.env.SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY
-  );
+  const base = process.env.SUPABASE_URL + '/rest/v1';
 
   try {
     // Anti-abus : trop de demandes recentes pour cette adresse ?
     const fenetre = new Date(Date.now() - WINDOW_MINUTES * 60000).toISOString();
-    const { count } = await supabase
-      .from('signup_codes')
-      .select('id', { count: 'exact', head: true })
-      .eq('email', email)
-      .gte('created_at', fenetre);
-
-    if ((count || 0) >= MAX_CODES_PER_WINDOW) {
+    const countResp = await fetch(
+      base + '/signup_codes?select=id&email=eq.' + encodeURIComponent(email) +
+      '&created_at=gte.' + encodeURIComponent(fenetre) + '&limit=' + (MAX_CODES_PER_WINDOW + 1),
+      { headers: sbHeaders() }
+    );
+    const countRows = countResp.ok ? await countResp.json() : [];
+    if (countRows.length >= MAX_CODES_PER_WINDOW) {
       return { statusCode: 429, body: JSON.stringify({ error: 'trop_de_demandes' }) };
     }
 
@@ -73,12 +71,12 @@ exports.handler = async function (event) {
     const code = String(crypto.randomInt(100000, 1000000));
     const expiresAt = new Date(Date.now() + CODE_TTL_MINUTES * 60000).toISOString();
 
-    const { error: insErr } = await supabase.from('signup_codes').insert({
-      email,
-      code_hash: hashCode(code),
-      expires_at: expiresAt
+    const insResp = await fetch(base + '/signup_codes', {
+      method: 'POST',
+      headers: { ...sbHeaders(), Prefer: 'return=minimal' },
+      body: JSON.stringify({ email, code_hash: hashCode(code), expires_at: expiresAt })
     });
-    if (insErr) {
+    if (!insResp.ok) {
       return { statusCode: 500, body: JSON.stringify({ error: 'stockage_echoue' }) };
     }
 

@@ -1,21 +1,26 @@
 /* ============================================================
    VIP BETCOTE — confirm-signup-code
    ------------------------------------------------------------
-   Vérifie le code d'inscription ENTIÈREMENT côté serveur. Le
-   navigateur envoie uniquement (email, code saisi) ; la comparaison
-   se fait ici contre le hash stocké — jamais dans le JS client.
+   Version SANS dépendance npm — parle directement à l'API REST
+   de Supabase via fetch. Même correctif que request-signup-code.js.
 
-   Variables d'environnement : identiques à request-signup-code.js
-   (SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY).
+   Variables d'environnement : SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
    ============================================================ */
 
-const { createClient } = require('@supabase/supabase-js');
 const crypto = require('crypto');
 
 const MAX_ATTEMPTS = 5;
 
 function hashCode(code) {
   return crypto.createHash('sha256').update(code).digest('hex');
+}
+
+function sbHeaders() {
+  return {
+    'Content-Type': 'application/json',
+    apikey: process.env.SUPABASE_SERVICE_ROLE_KEY,
+    Authorization: 'Bearer ' + process.env.SUPABASE_SERVICE_ROLE_KEY
+  };
 }
 
 exports.handler = async function (event) {
@@ -36,21 +41,18 @@ exports.handler = async function (event) {
     return { statusCode: 400, body: JSON.stringify({ error: 'code_invalide' }) };
   }
 
-  const supabase = createClient(
-    process.env.SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY
-  );
+  const base = process.env.SUPABASE_URL + '/rest/v1';
 
   try {
-    const { data: rows, error } = await supabase
-      .from('signup_codes')
-      .select('id,code_hash,expires_at,attempts,consumed')
-      .eq('email', email)
-      .eq('consumed', false)
-      .order('created_at', { ascending: false })
-      .limit(1);
+    const getResp = await fetch(
+      base + '/signup_codes?select=id,code_hash,expires_at,attempts,consumed' +
+      '&email=eq.' + encodeURIComponent(email) + '&consumed=eq.false' +
+      '&order=created_at.desc&limit=1',
+      { headers: sbHeaders() }
+    );
 
-    if (error || !rows || !rows.length) {
+    const rows = getResp.ok ? await getResp.json() : [];
+    if (!rows.length) {
       return { statusCode: 400, body: JSON.stringify({ error: 'code_invalide' }) };
     }
 
@@ -67,11 +69,20 @@ exports.handler = async function (event) {
     if (hashCode(code) !== row.code_hash) {
       // On compte la tentative ratee, sans jamais reveler la difference
       // entre "code inconnu" et "code expire" au-dela de ces deux cas.
-      await supabase.from('signup_codes').update({ attempts: row.attempts + 1 }).eq('id', row.id);
+      await fetch(base + '/signup_codes?id=eq.' + row.id, {
+        method: 'PATCH',
+        headers: { ...sbHeaders(), Prefer: 'return=minimal' },
+        body: JSON.stringify({ attempts: row.attempts + 1 })
+      });
       return { statusCode: 400, body: JSON.stringify({ error: 'code_invalide' }) };
     }
 
-    await supabase.from('signup_codes').update({ consumed: true }).eq('id', row.id);
+    await fetch(base + '/signup_codes?id=eq.' + row.id, {
+      method: 'PATCH',
+      headers: { ...sbHeaders(), Prefer: 'return=minimal' },
+      body: JSON.stringify({ consumed: true })
+    });
+
     return { statusCode: 200, body: JSON.stringify({ ok: true }) };
   } catch (e) {
     return { statusCode: 500, body: JSON.stringify({ error: (e && e.message) || 'erreur_inconnue' }) };
