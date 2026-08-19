@@ -449,7 +449,7 @@ exports.handler = async (event) => {
         body: JSON.stringify({
 
           from:
-            'VipBetcote <onboarding@resend.dev>',
+            'VipBetcote <noreply@vipbetcote.com>',
 
           to:
             email,
