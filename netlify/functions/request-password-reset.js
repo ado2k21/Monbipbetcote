@@ -76,7 +76,7 @@ exports.handler = async (event) => {
       method: 'POST',
       headers: { Authorization: `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        from: 'VipBetcote <onboarding@resend.dev>',
+        from: 'VipBetcote <contact@mail.vipbetcote.com>',
         to: emailNorm,
         subject: 'Code de réinitialisation de votre mot de passe VipBetcote',
         html: construireEmailCode(code)

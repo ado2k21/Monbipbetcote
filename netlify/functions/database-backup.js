@@ -110,7 +110,7 @@ exports.handler = async () => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        from: 'VipBetcote <onboarding@resend.dev>',
+        from: 'VipBetcote <contact@mail.vipbetcote.com>',
         to: BACKUP_EMAIL,
         subject: `Sauvegarde VipBetcote — ${dateISO}`,
         html: construireEmailRecap(dateISO, nbLignes, erreursTables),

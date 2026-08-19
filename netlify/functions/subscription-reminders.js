@@ -105,7 +105,7 @@ exports.handler = async () => {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            from: 'VipBetcote <onboarding@resend.dev>',
+            from: 'VipBetcote <contact@mail.vipbetcote.com>',
             to: email,
             subject: 'Votre abonnement VipBetcote expire bientôt',
             html
