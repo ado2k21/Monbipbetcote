@@ -1656,14 +1656,6 @@ footer{border-top:1px solid var(--ligne);padding:56px 0 36px;background:#030617}
 }
 .mfa-codes-list span{font-family:var(--mono);font-size:13px;color:var(--or-clair);text-align:center;letter-spacing:.04em}
 .mfa-stage[hidden]{display:none}
-.wiz-demo[hidden]{display:none}
-.wiz-demo{
-  display:flex;align-items:flex-start;gap:9px;padding:11px 13px;border-radius:var(--r-sm);
-  background:rgba(201,164,76,.09);border:1px solid rgba(201,164,76,.28);
-  font-size:12.5px;color:var(--or-clair);line-height:1.5;
-}
-.wiz-demo svg{flex-shrink:0;margin-top:1px}
-.wiz-demo b{font-family:var(--mono);font-size:15px;letter-spacing:.14em;color:#F4E3B4}
 
 /* --- Etape 3 : recapitulatif du plan + paiement --- */
 .wiz-recap{
@@ -3531,10 +3523,6 @@ details p{font-size:15.5px;line-height:1.72;color:#CBD8E4}
               <input type="text" inputmode="numeric" maxlength="1" aria-label="6">
             </div>
             <span class="field-err" id="wizOtpErr" style="display:none;text-align:center" data-i18n="wiz_v_err">Kòd la pa kòrèk</span>
-            <div class="wiz-demo" id="wizDemoBox" hidden>
-              <svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 8v5M12 16.5v.5"/><circle cx="12" cy="12" r="9"/></svg>
-              <span><span data-i18n="wiz_v_fallback">Nou pa t kapab voye imèl la — itilize kòd sa a pou kontinye</span> <b id="wizDemoCode"></b></span>
-            </div>
             <p class="authpage-switch" style="margin:0">
               <span data-i18n="wiz_v_noreceive">Ou pa resevwa l?</span><button type="button" class="authpage-switch-link" id="wizResend" data-i18n="wiz_v_resend">Voye l ankò</button>
             </p>
@@ -3648,10 +3636,6 @@ details p{font-size:15.5px;line-height:1.72;color:#CBD8E4}
                 <input type="text" inputmode="numeric" maxlength="1" aria-label="6">
               </div>
               <span class="field-err" id="pwrOtpErr" style="display:none;text-align:center" data-i18n="wiz_v_err">Kòd la pa kòrèk</span>
-              <div class="wiz-demo" id="pwrDemoBox" hidden>
-                <svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 8v5M12 16.5v.5"/><circle cx="12" cy="12" r="9"/></svg>
-                <span><span data-i18n="wiz_v_fallback">Nou pa t kapab voye imèl la — itilize kòd sa a pou kontinye</span> <b id="pwrDemoCode"></b></span>
-              </div>
               <p class="authpage-switch" style="margin:0">
                 <span data-i18n="wiz_v_noreceive">Ou pa resevwa l?</span><button type="button" class="authpage-switch-link" id="pwrResend" data-i18n="wiz_v_resend">Voye l ankò</button>
               </p>
@@ -4542,6 +4526,9 @@ notif_soon:"Votre abonnement expire dans {n} jour(s)",
 notif_today:"{n} fiche(s) disponible(s) aujourd'hui",
 notif_won:"Votre fiche {id} est gagnante",
 notif_ago_min:"Il y a {n} min", notif_ago_h:"Il y a {n} h", notif_ago_d:"Il y a {n} j",
+dash_badge_none:"Aucun plan",
+err_action_unavailable_h:"Action indisponible", err_action_unavailable_p:"Cette action est temporairement indisponible. Veuillez réessayer dans quelques secondes.",
+notif_pay_confirmed:"Votre paiement pour {plan} a été confirmé", notif_pay_rejected:"Votre paiement pour {plan} a été refusé : {raison}", notif_pay_rejected_defaut:"raison non précisée",
 dash_f_other:"Fiches autres plans",
 dash_empty_other:"Toutes les fiches du jour sont incluses dans votre plan.",
 dash_sub_lifetime:"Lifetime — sans expiration",
@@ -4689,7 +4676,6 @@ sb_sync_err_p:"La synchronisation avec le serveur a échoué. Réessayez plus ta
 sb_pay_sync_err_p:"Le paiement n'a pas pu être enregistré côté serveur — il ne sera jamais visible dans l'espace admin en l'état.",
 pwr_back_dash:"Retour au tableau de bord",
 wiz_sending:"Voye...",
-wiz_v_fallback:"Nous n'avons pas pu envoyer l'e-mail — utilisez ce code pour continuer",
 toast_mail_err_h:"Envoi impossible",
 toast_mail_err_p:"L'e-mail n'a pas pu être envoyé. Réessayez dans un instant.",
 plan_changed_lifetime:"Vous avez débloqué l'accès à vie !", dash_menu_exit:"Quitter le tableau de bord",
@@ -4913,6 +4899,9 @@ notif_soon:"Your plan expires in {n} day(s)",
 notif_today:"{n} slip(s) available today",
 notif_won:"Your slip {id} is a winner",
 notif_ago_min:"{n} min ago", notif_ago_h:"{n} h ago", notif_ago_d:"{n} d ago",
+dash_badge_none:"No plan",
+err_action_unavailable_h:"Action unavailable", err_action_unavailable_p:"This action is temporarily unavailable. Please try again in a few seconds.",
+notif_pay_confirmed:"Your payment for {plan} has been confirmed", notif_pay_rejected:"Your payment for {plan} was declined: {raison}", notif_pay_rejected_defaut:"no reason given",
 dash_f_other:"Other plans' slips",
 dash_empty_other:"Every slip today is already included in your plan.",
 dash_sub_lifetime:"Lifetime — no expiry",
@@ -5060,7 +5049,6 @@ sb_sync_err_p:"Server sync failed. Try again later from My subscription.",
 sb_pay_sync_err_p:"The payment could not be saved on the server — it won't be visible in the admin area as-is.",
 pwr_back_dash:"Back to dashboard",
 wiz_sending:"Sending...",
-wiz_v_fallback:"We couldn't send the email — use this code to continue",
 toast_mail_err_h:"Couldn't send email",
 toast_mail_err_p:"The email couldn't be sent. Please try again in a moment.",
 plan_changed_lifetime:"You have unlocked lifetime access!", dash_menu_exit:"Leave the dashboard",
@@ -5284,6 +5272,9 @@ notif_soon:"Abònman ou ap ekspire nan {n} jou",
 notif_today:"{n} fich disponib jodi a",
 notif_won:"Fich {id} ou an genyen",
 notif_ago_min:"Gen {n} min", notif_ago_h:"Gen {n} è", notif_ago_d:"Gen {n} jou",
+dash_badge_none:"Okenn plan",
+err_action_unavailable_h:"Aksyon pa disponib", err_action_unavailable_p:"Aksyon sa a pa disponib pou kounye a. Tanpri eseye ankò nan kèk segond.",
+notif_pay_confirmed:"Peman ou pou {plan} konfime", notif_pay_rejected:"Peman ou pou {plan} refize : {raison}", notif_pay_rejected_defaut:"pa gen rezon presize",
 dash_f_other:"Fich lòt plan",
 dash_empty_other:"Tout fich jodi a deja nan plan ou.",
 dash_sub_lifetime:"Lifetime — san ekspirasyon",
@@ -5431,7 +5422,6 @@ sb_sync_err_p:"Senkronizasyon ak sèvè a echwe. Eseye ankò pita.",
 sb_pay_sync_err_p:"Peman an pa t kapab anrejistre kote sèvè a — li pap parèt nan espas admin lan konsa.",
 pwr_back_dash:"Retounen nan Dashboard la",
 wiz_sending:"Ap voye...",
-wiz_v_fallback:"Nou pa t kapab voye imèl la — itilize kòd sa a pou kontinye",
 toast_mail_err_h:"Nou pa ka voye imèl la",
 toast_mail_err_p:"Imèl la pa t kapab voye. Tanpri eseye ankò nan yon ti moman.",
 plan_changed_lifetime:"Ou debloke aksè a vi a !", dash_menu_exit:"Kite dashboard la",
@@ -6182,14 +6172,18 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
 
     // 1er envoi : on affiche le bloc de verification sous le formulaire
     if(!state.emailVerified){
-      // Le code part et la verification s'ouvre sur sa propre page (etape 1)
-      state.code=String(Math.floor(100000+Math.random()*900000));
+      // Le code n'est plus genere ici : il est genere, stocke et envoye
+      // entierement cote serveur (voir VB_requestSignupCode).
       state.codeFor=state.email;
       save();
       closeInlineOtp();
       openInlineOtp();
-      window.VB_sendCode(state.email,state.code,submitBtn,'wizDemoBox').then(ok=>{
-        if(ok&&window.VB_toast)window.VB_toast('toast_mail_h',t('toast_mail_p').replace('{email}',state.email));
+      window.VB_requestSignupCode(state.email,submitBtn).then(res=>{
+        if(res.ok&&window.VB_toast)window.VB_toast('toast_mail_h',t('toast_mail_p').replace('{email}',state.email));
+        else if(!res.ok){
+          if(window.VB_logErreurTechnique)window.VB_logErreurTechnique('envoi_code_signup',res.erreur);
+          if(window.VB_toast)window.VB_toast('toast_mail_err_h',t('toast_mail_err_p'));
+        }
       });
       return;
     }
@@ -6238,10 +6232,10 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
     }
   }
 
-  fVerify.addEventListener('submit',ev=>{
+  fVerify.addEventListener('submit',async ev=>{
     ev.preventDefault();
     const entered=otpInputs.map(i=>i.value).join('');
-    if(!state.code||entered!==state.code){
+    if(entered.length!==6){
       otp.classList.add('invalid');
       otpErr.textContent=t('wiz_v_err');
       otpErr.style.display='block';
@@ -6250,6 +6244,17 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
     }
     const submitBtnVerify=fVerify.querySelector('button[type=submit]');
     submitBtnVerify.disabled=true;
+    // Le VRAI code n'est plus verifie que cote serveur — jamais de
+    // comparaison locale a une valeur connue du navigateur.
+    const codeRes=await window.VB_confirmSignupCode(state.email,entered);
+    if(!codeRes.ok){
+      submitBtnVerify.disabled=false;
+      otp.classList.add('invalid');
+      otpErr.textContent=t('wiz_v_err');
+      otpErr.style.display='block';
+      otpInputs[0].focus();
+      return;
+    }
     creerCompteSupabase().then(res=>{
       submitBtnVerify.disabled=false;
       if(!res.ok&&res.raison==='existe_deja'){
@@ -6261,11 +6266,14 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
       }
       /* Le compte local avance toujours (jamais bloque), mais si la
          synchronisation avec le serveur a echoue, on le dit clairement —
-         plutot que de laisser croire a tort que le compte existe partout. */
+         plutot que de laisser croire a tort que le compte existe partout.
+         CORRECTIF : plus jamais de detail technique brut affiche a
+         l'utilisateur ("subscriptions: ...", "auth.uid() est null", etc.) —
+         message generique cote utilisateur, detail reel enregistre pour
+         l'admin (voir VB_logErreurTechnique). */
       if(res.hors_ligne){
-        const d=translations[currentLang]||translations.fr;
-        const detail=res.erreur?(' — '+String(res.erreur).slice(0,160)):'';
-        if(window.VB_toast)window.VB_toast('sb_sync_err_h',(d.sb_sync_err_p||'')+detail);
+        if(window.VB_logErreurTechnique)window.VB_logErreurTechnique('creation_compte',res.erreur);
+        if(window.VB_toast)window.VB_toast('err_action_unavailable_h',t('err_action_unavailable_p'));
       }
       state.emailVerified=true;
       state.step=3;
@@ -6359,7 +6367,6 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
 
   function openInlineOtp(){
     document.getElementById('wizInlineMail').textContent=state.email||'';
-    document.getElementById('wizDemoCode').textContent=state.code||'';
     otpInputs.forEach(i=>i.value='');
     otp.classList.remove('invalid');
     otpErr.style.display='none';
@@ -6391,12 +6398,15 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
     });
   });
   document.getElementById('wizResend').addEventListener('click',ev=>{
-    state.code=String(Math.floor(100000+Math.random()*900000));
     state.codeFor=state.email;
     save();
     openInlineOtp();
-    window.VB_sendCode(state.email,state.code,ev.currentTarget,'wizDemoBox').then(ok=>{
-      if(ok&&window.VB_toast)window.VB_toast('toast_mail_h',t('toast_mail_p').replace('{email}',state.email));
+    window.VB_requestSignupCode(state.email,ev.currentTarget).then(res=>{
+      if(res.ok&&window.VB_toast)window.VB_toast('toast_mail_h',t('toast_mail_p').replace('{email}',state.email));
+      else if(!res.ok){
+        if(window.VB_logErreurTechnique)window.VB_logErreurTechnique('renvoi_code_signup',res.erreur);
+        if(window.VB_toast)window.VB_toast('toast_mail_err_h',t('toast_mail_err_p'));
+      }
     });
   });
   // toute modification de l'e-mail invalide le code deja envoye
@@ -6675,9 +6685,10 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
     }
     syncAbonnementSupabase().then(res=>{
       if(res&&res.hors_ligne){
-        const d=translations[currentLang]||translations.fr;
-        const detail=res.erreur?(' — '+String(res.erreur).slice(0,160)):'';
-        if(window.VB_toast)window.VB_toast('sb_sync_err_h',(d.sb_pay_sync_err_p||d.sb_sync_err_p||'')+detail);
+        // CORRECTIF : meme principe que ci-dessus — jamais de detail
+        // technique brut a l'ecran ; l'admin recoit le vrai detail.
+        if(window.VB_logErreurTechnique)window.VB_logErreurTechnique('paiement_sync',res.erreur);
+        if(window.VB_toast)window.VB_toast('err_action_unavailable_h',t('err_action_unavailable_p'));
       }
     });   // en parallele, sans jamais bloquer l'affichage — mais jamais silencieux non plus
     showStep(4);
@@ -7051,9 +7062,68 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
             return;
           }
           const localAcc=accounts.find(data.user.email);
-          if(localAcc&&isComplete(localAcc)){
-            // Identite reelle confirmee ET abonnement connu sur cet appareil :
-            // comportement inchange, acces direct au dashboard.
+          /* CORRECTIF SYNCHRONISATION (prioritaire) : Supabase est desormais
+             TOUJOURS consulte ici, meme si un compte local complet existe
+             deja sur cet appareil. Un instantane local (ecrit par ce meme
+             appareil a sa derniere transaction) devient perime des qu'un
+             admin agit depuis un autre appareil — changement de plan
+             (changerPlanAdmin), validation ou refus de paiement
+             (traiterPaiement). Le local ne sert plus que de repli si
+             Supabase est REELLEMENT injoignable : aucun etat temporaire du
+             navigateur ne doit pouvoir remplacer l'etat reel en base. */
+          const meta=data.user.user_metadata||{};
+          const identite={
+            email:data.user.email,
+            fullname:(localAcc&&localAcc.fullname)||meta.username||'',
+            site:(localAcc&&localAcc.site)||meta.preferred_site||'paryajpam',
+            supabaseUserId:data.user.id
+          };
+          let abonnementActif=null, abonnementPendant=null, supabaseJoignable=true;
+          try{
+            // On lit 'active' ET 'pending' pour cette personne, toutes les
+            // lignes (pas juste la plus recente) : un plan actif et un
+            // changement en attente peuvent coexister, et doivent etre
+            // distingues plutot que confondus en une seule ligne.
+            const {data:subs}=await sb.from('subscriptions')
+              .select('plan_id,status,starts_at,expires_at')
+              .eq('user_id',data.user.id).in('status',['active','pending'])
+              .order('starts_at',{ascending:false});
+            if(subs&&subs.length){
+              abonnementActif=subs.find(x=>x.status==='active')||null;
+              const p=subs.find(x=>x.status==='pending')||null;
+              // Un "pending" n'est un CHANGEMENT en attente que s'il existe
+              // deja un plan actif different ; sinon c'est la toute premiere
+              // souscription, encore en attente de validation admin.
+              if(abonnementActif&&p&&p.plan_id!==abonnementActif.plan_id)abonnementPendant=p;
+              else if(!abonnementActif&&p)abonnementActif={...p,__pending:true};
+            }
+          }catch(e){ supabaseJoignable=false; /* Supabase injoignable pour cette lecture */ }
+
+          if(abonnementActif){
+            /* "paid" signifie "a deja paye au moins une fois" — jamais remis
+               a false a l'expiration. C'est isExpired()/subscriptionExpired()
+               qui verrouille les cotes DANS le dashboard ; l'acces au
+               dashboard lui-meme reste ouvert, exactement comme pour un
+               compte cree localement. Ne pas confondre les deux notions. */
+            state=Object.assign(blank(),{
+              step:4, started:false, ...identite,
+              pass:(localAcc&&localAcc.pass)||null,
+              emailVerified:true,
+              planId:abonnementActif.plan_id, paid:true,
+              payStatus:abonnementActif.__pending?'pending':'confirmed',
+              startDate:abonnementActif.starts_at, endDate:abonnementActif.expires_at,
+              pendingPlanId:abonnementPendant?abonnementPendant.plan_id:null,
+              payMethod:(localAcc&&localAcc.payMethod)||null,
+              ref:(localAcc&&!abonnementActif.__pending)?localAcc.ref:null
+            });
+            save();
+            closeAuth();
+            requestAnimationFrame(()=>{if(window.VB_openDash)window.VB_openDash();});
+          }else if(!supabaseJoignable&&localAcc&&isComplete(localAcc)){
+            // Repli degrade UNIQUEMENT si Supabase est reellement
+            // injoignable (panne reseau) : on ne bloque jamais l'acces,
+            // mais des que la connexion revient, VB_syncPayStatus corrige
+            // silencieusement tout ecart avec l'etat reel en base.
             state=Object.assign(blank(),{
               step:4, started:false, fullname:localAcc.fullname, email:localAcc.email, pass:localAcc.pass,
               site:localAcc.site||'paryajpam', supabaseUserId:data.user.id,
@@ -7064,48 +7134,9 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
             save();
             closeAuth();
             requestAnimationFrame(()=>{if(window.VB_openDash)window.VB_openDash();});
-            return;
-          }
-
-          // Rien sur CET appareil : on va chercher l'abonnement REEL dans
-          // Supabase avant de conclure qu'il n'y en a pas. C'est ce qui
-          // permet desormais de se connecter depuis un nouvel appareil
-          // sans perdre son abonnement.
-          const meta=data.user.user_metadata||{};
-          const identite={
-            email:data.user.email, fullname:meta.username||'',
-            site:meta.preferred_site||'paryajpam', supabaseUserId:data.user.id
-          };
-          let abonnementReel=null;
-          try{
-            // On lit 'active' ET 'pending' : un paiement deja soumis mais
-            // pas encore valide par un admin ne doit jamais renvoyer
-            // l'utilisateur vers un nouveau paiement sur un autre appareil.
-            const {data:subs}=await sb.from('subscriptions')
-              .select('plan_id,status,starts_at,expires_at')
-              .eq('user_id',data.user.id).in('status',['active','pending'])
-              .order('starts_at',{ascending:false}).limit(1);
-            if(subs&&subs.length)abonnementReel=subs[0];
-          }catch(e){ /* Supabase injoignable pour cette lecture : on degrade vers le paiement */ }
-
-          if(abonnementReel){
-            /* "paid" signifie "a deja paye au moins une fois" — jamais remis
-               a false a l'expiration. C'est isExpired()/subscriptionExpired()
-               qui verrouille les cotes DANS le dashboard ; l'acces au
-               dashboard lui-meme reste ouvert, exactement comme pour un
-               compte cree localement. Ne pas confondre les deux notions. */
-            state=Object.assign(blank(),{
-              step:4, started:false, ...identite, emailVerified:true,
-              planId:abonnementReel.plan_id, paid:true,
-              payStatus:abonnementReel.status==='active'?'confirmed':'pending',
-              startDate:abonnementReel.starts_at, endDate:abonnementReel.expires_at
-            });
-            save();
-            closeAuth();
-            requestAnimationFrame(()=>{if(window.VB_openDash)window.VB_openDash();});
           }else{
-            // Aucun abonnement, ni localement ni dans Supabase : parcours
-            // de paiement, avec l'identite reelle deja restauree.
+            // Aucun abonnement, ni en base ni en repli local : parcours de
+            // paiement, avec l'identite reelle deja restauree.
             state=Object.assign(blank(),{...identite, emailVerified:true, started:false});
             save();
             showMode('wizard');
@@ -7494,6 +7525,53 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
     if(!sb||!state.paid)return false;
     let changed=false;
     try{
+      /* CORRECTIF SYNCHRONISATION (prioritaire) : avant tout le reste, on
+         relit l'etat REEL des abonnements de cette personne directement
+         par son identifiant Supabase. C'est la seule maniere de detecter
+         un changement fait par un admin SANS paiement associe
+         (changerPlanAdmin) — un tel changement n'est rattache a aucune
+         reference locale (ref/pendingRef) et ne serait donc jamais vu par
+         les blocs bases sur les references, plus bas. Cette lecture fait
+         TOUJOURS autorite sur planId/dates/payStatus/pendingPlanId :
+         aucun etat local ne doit pouvoir la remplacer. */
+      if(state.supabaseUserId){
+        const {data:subsUid}=await sb.from('subscriptions')
+          .select('plan_id,status,starts_at,expires_at')
+          .eq('user_id',state.supabaseUserId).in('status',['active','pending'])
+          .order('starts_at',{ascending:false});
+        if(subsUid&&subsUid.length){
+          const actifUid=subsUid.find(x=>x.status==='active')||null;
+          const pendUid=subsUid.find(x=>x.status==='pending')||null;
+          if(actifUid){
+            // Le plan actif reel fait toujours foi. Un "pending" ne
+            // compte comme changement en attente que s'il differe du
+            // plan actif — sinon (meme plan) on l'ignore ici.
+            const changementUid=(pendUid&&pendUid.plan_id!==actifUid.plan_id)?pendUid.plan_id:null;
+            if(actifUid.plan_id!==state.planId||actifUid.starts_at!==state.startDate||
+               actifUid.expires_at!==state.endDate||state.payStatus!=='confirmed'||
+               state.pendingPlanId!==changementUid){
+              state.planId=actifUid.plan_id;
+              state.startDate=actifUid.starts_at;
+              state.endDate=actifUid.expires_at;
+              state.paid=true;
+              state.payStatus='confirmed';
+              state.pendingPlanId=changementUid;
+              if(!changementUid){state.pendingRef=null;}
+              changed=true;
+            }
+          }else if(pendUid&&(!state.paid||state.payStatus!=='pending'||pendUid.plan_id!==state.planId)){
+            // Aucun plan actif : seule une premiere souscription encore en
+            // attente de validation admin existe pour cette personne.
+            state.planId=pendUid.plan_id;
+            state.startDate=pendUid.starts_at;
+            state.endDate=pendUid.expires_at;
+            state.paid=true;
+            state.payStatus='pending';
+            state.pendingPlanId=null;
+            changed=true;
+          }
+        }
+      }
       // Cas normal : le paiement du plan reellement actif (premiere
       // souscription, ou renouvellement direct sans changement en cours).
       if(state.ref&&!state.pendingRef){
@@ -7788,6 +7866,31 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
     }catch(e){return false;}
   }
 
+  /* ---- Chargement des VRAIES notifications (Supabase) ----
+     Meme principe que chargerFichesReelles() : un evenement survenu cote
+     admin (paiement confirme/refuse, changement de plan force) doit
+     atteindre l'utilisateur, sur n'importe quel appareil — jamais
+     seulement sur celui d'ou l'action a ete faite. Sans cette lecture,
+     'pushed' (voir plus bas) ne contient QUE les evenements declenches
+     depuis CE navigateur. */
+  let notifsReels=[];
+  async function chargerNotifsReelles(){
+    const sb=window.VB_getSupabase&&window.VB_getSupabase();
+    const st=getState();
+    if(!sb||!st||!st.supabaseUserId)return false;
+    try{
+      const {data:rows,error}=await sb.from('notifications')
+        .select('id,type,plan_id,reason,read,created_at')
+        .eq('user_id',st.supabaseUserId)
+        .order('created_at',{ascending:false}).limit(20);
+      if(error||!rows)return false;
+      const avant=JSON.stringify(notifsReels);
+      notifsReels=rows;
+      return JSON.stringify(notifsReels)!==avant;
+    }catch(e){return false;}
+  }
+  window.VB_chargerNotifsReelles=chargerNotifsReelles;
+
   /* ---- Etat de la vue ---- */
   let view='today';
   const filters={today:{sport:'all'},history:{sport:'all',status:'all'}};
@@ -7822,8 +7925,29 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
     const out=[];
     const RAPPEL={p1:1,p2:3,p3:7};
 
-    // 1. Evenements pousses (changement de plan, renouvellement)
+    // 1. Evenements pousses (changement de plan, renouvellement) —
+    //    generes localement par CE navigateur au moment de l'action.
     pushed.forEach(n=>out.push({id:n.id,type:n.type,texte:n.texte,ts:n.ts}));
+
+    // 1bis. Evenements REELS survenus cote serveur (paiement confirme ou
+    //       refuse par un admin, changement de plan force par un admin) —
+    //       visibles sur N'IMPORTE QUEL appareil, contrairement aux
+    //       evenements "pousses" ci-dessus. Voir chargerNotifsReelles().
+    notifsReels.forEach(n=>{
+      const plObj=(n.plan_id&&window.VB_planById)?window.VB_planById(n.plan_id):null;
+      const plNom=plObj?String(t(plObj.nameKey||'')).replace(/<[^>]*>/g,''):'—';
+      let texte='', type='sub';
+      if(n.type==='payment_confirmed'){
+        texte=t('notif_pay_confirmed').replace('{plan}',plNom); type='plan';
+      }else if(n.type==='payment_rejected'){
+        texte=t('notif_pay_rejected').replace('{plan}',plNom)
+          .replace('{raison}',n.reason||t('notif_pay_rejected_defaut')); type='sub';
+      }else if(n.type==='admin_plan_change'){
+        texte=t('notif_plan_change').replace('{plan}',plNom); type='plan';
+      }else return;
+      out.push({id:'sb'+n.id, sbId:n.id, type:type, texte:texte,
+        ts:new Date(n.created_at).getTime(), sbRead:!!n.read});
+    });
 
     if(st.paid){
       const d=st.endDate?Math.ceil((new Date(st.endDate).getTime()-Date.now())/86400000):null;
@@ -7848,7 +7972,11 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
                      ts:Date.now()-won.day*86400000});
 
     out.sort((a,b)=>b.ts-a.ts);
-    return out.slice(0,12).map(n=>({...n,unread:!lus[n.id]}));
+    // Une notification issue du serveur (prefixe 'sb') se base sur son
+    // propre statut 'read' en base, jamais sur le seul marqueur local —
+    // sinon deux appareils du meme compte se desynchroniseraient l'un
+    // l'autre sur ce qui est deja lu ou non.
+    return out.slice(0,12).map(n=>({...n,unread:n.sbId!=null?!n.sbRead:!lus[n.id]}));
   }
   let notifs=[];
 
@@ -8257,8 +8385,12 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
   /* ---- Bascule de vue ---- */
   function renderAll(){
     document.getElementById('dashPlanName').textContent=(function(){
-      const pl=(window.VB_planById?window.VB_planById(userPlan()):null);
-      if(!pl)return '';
+      // CORRECTIF : si la personne n'a reellement aucun plan actif (ni
+      // paye, ni planId connu), le badge doit le dire clairement plutot
+      // que de retomber silencieusement sur le plan Starter.
+      const stB=getState();
+      const pl=(stB&&stB.paid&&stB.planId&&window.VB_planById)?window.VB_planById(stB.planId):null;
+      if(!pl)return t('dash_badge_none');
       // Libelle court reserve au badge du header (les cartes de plan gardent le nom complet)
       const court={p4:'LIFETIME'};
       return court[pl.id]||String(t(pl.nameKey)).replace(/<[^>]*>/g,'');
@@ -8364,6 +8496,19 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
   document.getElementById('dashNotifClear').addEventListener('click',()=>{
     notifs.forEach(n=>{lus[n.id]=1;});
     saveLus();
+    // Les notifications REELLES (issues du serveur) doivent aussi passer
+    // 'read' en base — sinon elles reapparaitraient comme non lues sur un
+    // autre appareil du meme compte, ou au prochain chargement des
+    // qu'elles sont relues depuis Supabase.
+    const idsAMarquer=notifs.filter(n=>n.sbId!=null&&!n.sbRead).map(n=>n.sbId);
+    if(idsAMarquer.length){
+      const sb=window.VB_getSupabase&&window.VB_getSupabase();
+      if(sb){
+        sb.from('notifications').update({read:true}).in('id',idsAMarquer)
+          .then(()=>{ notifsReels.forEach(n=>{if(idsAMarquer.includes(n.id))n.read=true;}); })
+          .catch(()=>{});
+      }
+    }
     renderNotifs();
   });
 
@@ -8387,6 +8532,10 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
     // Meme principe pour les fiches : toujours essayer de charger le vrai
     // contenu publie par l'admin, sans jamais bloquer l'affichage.
     chargerFichesReelles().then(changed=>{ if(changed)renderAll(); });
+    // Meme principe pour les notifications reelles (paiement confirme ou
+    // refuse, changement de plan admin) : elles doivent apparaitre des
+    // l'ouverture, meme si l'action admin a eu lieu depuis un autre appareil.
+    chargerNotifsReelles().then(changed=>{ if(changed)renderNotifs(); });
     demarrerResyncPeriodique();
   }
   /* Re-synchronisation automatique en arriere-plan, tant que le Dashboard
@@ -8402,6 +8551,7 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
       if(window.VB_syncPayStatus){
         window.VB_syncPayStatus().then(changed=>{ if(changed)renderAll(); });
       }
+      chargerNotifsReelles().then(changed=>{ if(changed)renderNotifs(); });
     },45000);
   }
   function arreterResyncPeriodique(){
@@ -8932,6 +9082,14 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
           reason:raison||null
         });
       }catch(e){}
+      // Notification REELLE pour l'utilisateur concerne : sans cette
+      // ligne, un changement de plan fait depuis l'admin ne serait
+      // jamais signale a la personne (voir table 'notifications').
+      try{
+        await sb.from('notifications').insert({
+          user_id:u.id, type:'admin_plan_change', plan_id:nouveauPlanId, reason:raison||null
+        });
+      }catch(e){}
       if(window.VB_toast)window.VB_toast('adm_user_plan_changed_h',t('adm_user_plan_changed_p'));
       renderUserDetail();
     }catch(e){
@@ -9192,6 +9350,20 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
           reason:newStatus==='rejected'?(raison||null):null
         });
       }catch(e){}
+      // Notification REELLE pour l'utilisateur concerne : c'est ce qui
+      // manquait pour que "paiement pending -> reussi/refuse" declenche
+      // effectivement quelque chose cote utilisateur (voir table
+      // 'notifications' + construireNotifs/chargerNotifsReelles cote client).
+      if(p.user_id){
+        try{
+          await sb.from('notifications').insert({
+            user_id:p.user_id,
+            type:newStatus==='confirmed'?'payment_confirmed':'payment_rejected',
+            plan_id:p.plan_id||null,
+            reason:newStatus==='rejected'?(raison||null):null
+          });
+        }catch(e){}
+      }
       paysCache=null;   // le prochain affichage relira l'etat reel — quel que soit l'endroit d'ou on relit
       if(window.VB_toast)window.VB_toast(
         newStatus==='confirmed'?'adm_pay_toast_confirmed_h':'adm_pay_toast_rejected_h',
@@ -9997,64 +10169,70 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
   window.VB_openAdminDash=openAdminDash;
 })();
 
-/* ---------- Envoi reel du code de verification (Resend via Netlify) ---------- */
+/* ---------- Journal d'erreurs techniques a destination de l'admin ----------
+   Remplace toute exposition de detail technique brut a l'utilisateur.
+   Ecriture "best effort" : ne bloque et ne notifie jamais l'utilisateur,
+   degrade silencieusement si la table est injoignable. */
 (function(){
-  const ENDPOINT='https://vipbet2.netlify.app/.netlify/functions/send-email';
+  window.VB_logErreurTechnique=function(contexte,message){
+    try{
+      const sb=window.VB_getSupabase&&window.VB_getSupabase();
+      if(!sb)return;
+      const st=window.VB_getState?window.VB_getState():null;
+      sb.from('error_log').insert({
+        user_id:(st&&st.supabaseUserId)||null,
+        email:(st&&st.email)||null,
+        context:String(contexte||'').slice(0,80),
+        message:String(message||'').slice(0,500)
+      }).then(()=>{}).catch(()=>{});
+    }catch(e){}
+  };
+})();
 
-  /* Retourne une promesse resolue a true si l'e-mail est parti reellement,
-     false sinon (le filet de secours prend alors le relais). */
-  window.VB_sendCode=async function(email,code,btn,demoBoxId){
-    let orig=null;
-    let texteEnvoi=null;
+/* ---------- Codes de verification par e-mail (signup) ----------
+   Le code n'est plus JAMAIS genere, stocke ou compare dans le navigateur —
+   c'est desormais 100% cote serveur (Netlify Functions + Resend), exactement
+   selon le meme principe que la reinitialisation de mot de passe
+   (request-password-reset / confirm-password-reset). Aucun filet de secours
+   n'affiche plus le code a l'ecran en cas d'echec d'envoi : un echec reste
+   un echec, signale clairement, jamais contourne. */
+(function(){
+  window.VB_requestSignupCode=async function(email,btn){
+    let orig=null, texteEnvoi=null;
     if(btn){
       orig=btn.textContent;
       texteEnvoi=(translations[currentLang]||translations.fr).wiz_sending||orig;
       btn.disabled=true;
       btn.textContent=texteEnvoi;
     }
-    const demoBox=demoBoxId?document.getElementById(demoBoxId):null;
-    if(demoBox)demoBox.hidden=true;
-    let raison='';
     try{
-      const resp=await fetch(ENDPOINT,{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({email:email,code:code})
+      const resp=await fetch('/.netlify/functions/request-signup-code',{
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({email:email})
       });
-      if(!resp.ok){
-        // On lit le corps de la reponse pour recuperer la VRAIE raison
-        // (celle que Netlify/Resend renvoie), utile le temps de mettre
-        // le service au point.
-        try{
-          const data=await resp.json();
-          raison=(data&&data.error)?JSON.stringify(data.error).slice(0,200):('HTTP '+resp.status);
-        }catch(e2){raison='HTTP '+resp.status;}
-        throw new Error(raison);
-      }
-      return true;
+      const data=await resp.json().catch(()=>({}));
+      if(!resp.ok)return {ok:false, erreur:(data&&data.error)||('HTTP '+resp.status)};
+      return {ok:true};
     }catch(e){
-      if(!raison)raison=(e&&e.message)?e.message:'';
-      // Filet de secours : le code s'affiche a l'ecran pour ne jamais bloquer
-      // l'utilisateur si l'envoi reel echoue (fonction pas encore prete, etc.).
-      if(demoBox){
-        const codeEl=demoBox.querySelector('b');
-        if(codeEl)codeEl.textContent=code;
-        demoBox.hidden=false;
-      }
-      const d=translations[currentLang]||translations.fr;
-      const msg=(d.toast_mail_err_p||'')+(raison?' — '+raison:'');
-      if(window.VB_toast)window.VB_toast('toast_mail_err_h',msg);
-      return false;
+      return {ok:false, erreur:(e&&e.message)?e.message:String(e)};
     }finally{
       if(btn){
         btn.disabled=false;
-        // Si le texte affiche est toujours celui d'attente ("Envoi..."),
-        // rien d'autre ne l'a modifie entre-temps : on peut restaurer
-        // l'original en toute securite. Si le texte a change (ex. le
-        // passage a l'etape "code" du mot de passe oublie a deja mis
-        // "Verifier"), on respecte ce nouveau texte et on n'ecrase rien.
         if(btn.textContent===texteEnvoi)btn.textContent=orig;
       }
+    }
+  };
+  window.VB_confirmSignupCode=async function(email,code){
+    try{
+      const resp=await fetch('/.netlify/functions/confirm-signup-code',{
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({email:email, code:code})
+      });
+      const data=await resp.json().catch(()=>({}));
+      if(!resp.ok)return {ok:false, erreur:(data&&data.error)||('HTTP '+resp.status)};
+      return {ok:true};
+    }catch(e){
+      return {ok:false, erreur:(e&&e.message)?e.message:String(e)};
     }
   };
 })();
