@@ -1,16 +1,14 @@
 /* ============================================================
    VIP BETCOTE — request-signup-code
    ------------------------------------------------------------
-   Version SANS dépendance npm (aucun "require" externe) : parle
-   directement à l'API REST de Supabase via fetch (déjà disponible
-   nativement dans le runtime Node de Netlify). Corrige l'erreur
-   "Cannot find module '@supabase/supabase-js'".
+   Version SANS dépendance npm + logs détaillés à chaque étape,
+   pour diagnostiquer précisément où ça bloque (visible dans
+   Netlify > Functions > request-signup-code > logs).
 
-   Variables d'environnement nécessaires (déjà utilisées par
-   request-password-reset.js, donc normalement déjà présentes) :
+   Variables d'environnement nécessaires :
      SUPABASE_URL
      SUPABASE_SERVICE_ROLE_KEY
-     SITE_URL   (optionnel)
+     SITE_URL   (optionnel — sinon on déduit l'URL depuis la requête)
    ============================================================ */
 
 const crypto = require('crypto');
@@ -40,15 +38,20 @@ exports.handler = async function (event) {
     return { statusCode: 405, body: JSON.stringify({ error: 'method_not_allowed' }) };
   }
 
+  console.log('[request-signup-code] env check — SUPABASE_URL present:', !!process.env.SUPABASE_URL,
+    '| SERVICE_ROLE_KEY present:', !!process.env.SUPABASE_SERVICE_ROLE_KEY);
+
   let email;
   try {
     const body = JSON.parse(event.body || '{}');
     email = (body.email || '').trim().toLowerCase();
   } catch (e) {
+    console.error('[request-signup-code] body JSON invalide:', event.body);
     return { statusCode: 400, body: JSON.stringify({ error: 'bad_request' }) };
   }
 
   if (!isValidEmail(email)) {
+    console.error('[request-signup-code] email invalide recu:', email);
     return { statusCode: 400, body: JSON.stringify({ error: 'email_invalide' }) };
   }
 
@@ -57,13 +60,15 @@ exports.handler = async function (event) {
   try {
     // Anti-abus : trop de demandes recentes pour cette adresse ?
     const fenetre = new Date(Date.now() - WINDOW_MINUTES * 60000).toISOString();
-    const countResp = await fetch(
-      base + '/signup_codes?select=id&email=eq.' + encodeURIComponent(email) +
-      '&created_at=gte.' + encodeURIComponent(fenetre) + '&limit=' + (MAX_CODES_PER_WINDOW + 1),
-      { headers: sbHeaders() }
-    );
+    const countUrl = base + '/signup_codes?select=id&email=eq.' + encodeURIComponent(email) +
+      '&created_at=gte.' + encodeURIComponent(fenetre) + '&limit=' + (MAX_CODES_PER_WINDOW + 1);
+    const countResp = await fetch(countUrl, { headers: sbHeaders() });
+    if (!countResp.ok) {
+      console.error('[request-signup-code] lecture signup_codes echouee, status:', countResp.status, await countResp.text());
+    }
     const countRows = countResp.ok ? await countResp.json() : [];
     if (countRows.length >= MAX_CODES_PER_WINDOW) {
+      console.error('[request-signup-code] rate limit atteint pour', email);
       return { statusCode: 429, body: JSON.stringify({ error: 'trop_de_demandes' }) };
     }
 
@@ -77,13 +82,27 @@ exports.handler = async function (event) {
       body: JSON.stringify({ email, code_hash: hashCode(code), expires_at: expiresAt })
     });
     if (!insResp.ok) {
-      return { statusCode: 500, body: JSON.stringify({ error: 'stockage_echoue' }) };
+      // DIAGNOSTIC RENFORCE : le corps de reponse peut etre vide selon
+      // ce qui a repondu (Supabase, ou un intermediaire type proxy/CDN
+      // qui intercepte la requete avant Supabase). On capture donc AUSSI
+      // le statut HTTP exact et le content-type, qui eux ne peuvent
+      // jamais etre vides — de quoi trancher meme si le corps l'est.
+      const rawText = await insResp.text();
+      const contentType = insResp.headers.get('content-type') || '(aucun)';
+      const detail = 'HTTP ' + insResp.status + ' [' + contentType + '] ' +
+        (rawText ? rawText.slice(0, 300) : '(corps de reponse vide)');
+      console.error('[request-signup-code] insertion signup_codes echouee, status:', insResp.status,
+        'content-type:', contentType, 'corps brut:', rawText);
+      return { statusCode: 500, body: JSON.stringify({ error: 'stockage_echoue', detail }) };
     }
+    console.log('[request-signup-code] code stocke en base pour', email);
 
     // Envoi réel : on réutilise send-email, déjà connectée à Resend,
     // plutôt que de dupliquer cette intégration ici.
     const siteUrl = process.env.SITE_URL || ('https://' + (event.headers.host || 'vipbet2.netlify.app'));
-    const sendResp = await fetch(siteUrl + '/.netlify/functions/send-email', {
+    const sendEmailUrl = siteUrl + '/.netlify/functions/send-email';
+    console.log('[request-signup-code] appel de send-email sur:', sendEmailUrl);
+    const sendResp = await fetch(sendEmailUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, code })
@@ -93,13 +112,18 @@ exports.handler = async function (event) {
       let detail = 'HTTP ' + sendResp.status;
       try {
         const d = await sendResp.json();
-        detail = (d && d.error) ? JSON.stringify(d.error).slice(0, 200) : detail;
-      } catch (e2) {}
+        detail = (d && d.error) ? JSON.stringify(d.error).slice(0, 300) : detail;
+      } catch (e2) {
+        try { detail = (await sendResp.text()).slice(0, 300); } catch (e3) {}
+      }
+      console.error('[request-signup-code] send-email a echoue:', detail);
       return { statusCode: 502, body: JSON.stringify({ error: 'envoi_echoue', detail }) };
     }
 
+    console.log('[request-signup-code] email envoye avec succes pour', email);
     return { statusCode: 200, body: JSON.stringify({ ok: true }) };
   } catch (e) {
+    console.error('[request-signup-code] exception non geree:', e && e.message, e && e.stack);
     return { statusCode: 500, body: JSON.stringify({ error: (e && e.message) || 'erreur_inconnue' }) };
   }
 };
