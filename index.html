@@ -4528,7 +4528,7 @@ notif_won:"Votre fiche {id} est gagnante",
 notif_ago_min:"Il y a {n} min", notif_ago_h:"Il y a {n} h", notif_ago_d:"Il y a {n} j",
 dash_badge_none:"Aucun plan",
 err_action_unavailable_h:"Action indisponible", err_action_unavailable_p:"Cette action est temporairement indisponible. Veuillez réessayer dans quelques secondes.",
-notif_pay_confirmed:"Votre paiement pour {plan} a été confirmé", notif_pay_rejected:"Votre paiement pour {plan} a été refusé : {raison}", notif_pay_rejected_defaut:"raison non précisée",
+notif_pay_pending:"Votre paiement pour {plan} est en attente de validation", notif_pay_confirmed:"Votre paiement pour {plan} a été confirmé", notif_pay_rejected:"Votre paiement pour {plan} a été refusé : {raison}", notif_pay_rejected_defaut:"raison non précisée",
 dash_f_other:"Fiches autres plans",
 dash_empty_other:"Toutes les fiches du jour sont incluses dans votre plan.",
 dash_sub_lifetime:"Lifetime — sans expiration",
@@ -4901,7 +4901,7 @@ notif_won:"Your slip {id} is a winner",
 notif_ago_min:"{n} min ago", notif_ago_h:"{n} h ago", notif_ago_d:"{n} d ago",
 dash_badge_none:"No plan",
 err_action_unavailable_h:"Action unavailable", err_action_unavailable_p:"This action is temporarily unavailable. Please try again in a few seconds.",
-notif_pay_confirmed:"Your payment for {plan} has been confirmed", notif_pay_rejected:"Your payment for {plan} was declined: {raison}", notif_pay_rejected_defaut:"no reason given",
+notif_pay_pending:"Your payment for {plan} is awaiting validation", notif_pay_confirmed:"Your payment for {plan} has been confirmed", notif_pay_rejected:"Your payment for {plan} was declined: {raison}", notif_pay_rejected_defaut:"no reason given",
 dash_f_other:"Other plans' slips",
 dash_empty_other:"Every slip today is already included in your plan.",
 dash_sub_lifetime:"Lifetime — no expiry",
@@ -5274,7 +5274,7 @@ notif_won:"Fich {id} ou an genyen",
 notif_ago_min:"Gen {n} min", notif_ago_h:"Gen {n} è", notif_ago_d:"Gen {n} jou",
 dash_badge_none:"Okenn plan",
 err_action_unavailable_h:"Aksyon pa disponib", err_action_unavailable_p:"Aksyon sa a pa disponib pou kounye a. Tanpri eseye ankò nan kèk segond.",
-notif_pay_confirmed:"Peman ou pou {plan} konfime", notif_pay_rejected:"Peman ou pou {plan} refize : {raison}", notif_pay_rejected_defaut:"pa gen rezon presize",
+notif_pay_pending:"Peman ou pou {plan} ap tann validasyon", notif_pay_confirmed:"Peman ou pou {plan} konfime", notif_pay_rejected:"Peman ou pou {plan} refize : {raison}", notif_pay_rejected_defaut:"pa gen rezon presize",
 dash_f_other:"Fich lòt plan",
 dash_empty_other:"Tout fich jodi a deja nan plan ou.",
 dash_sub_lifetime:"Lifetime — san ekspirasyon",
@@ -6088,9 +6088,44 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
       resume.hidden=false;
       const labels={1:t('wiz_s1'),3:t('wiz_s3')};
       resumeTxt.textContent=t('wiz_resume_at').replace('{step}',labels[need]||'');
+      /* CORRECTIF : 'started' est un marqueur local qui, jusqu'ici, ne
+         retombait jamais si la personne abandonnait avant l'etape 3 — le
+         bandeau restait donc affiche indefiniment, y compris pour
+         quelqu'un dont l'inscription est en realite deja terminee (compte
+         cree depuis un autre appareil, ou paiement finalise ailleurs).
+         On verifie donc l'etat REEL en base : si un abonnement existe
+         deja pour cette adresse, l'inscription est terminee et le
+         bandeau n'a plus lieu d'etre. */
+      verifierInscriptionTerminee();
     }else{
       resume.hidden=true;
     }
+  }
+  /* Verification serveur, asynchrone et non bloquante : masque le bandeau
+     de reprise si l'inscription s'avere deja terminee cote base. */
+  let resumeVerifEnCours=false;
+  async function verifierInscriptionTerminee(){
+    if(resumeVerifEnCours)return;
+    const sb=window.VB_getSupabase&&window.VB_getSupabase();
+    const email=(state.email||'').trim().toLowerCase();
+    if(!sb||!email)return;
+    resumeVerifEnCours=true;
+    try{
+      const {data:profs}=await sb.from('profiles').select('id').eq('email',email).limit(1);
+      if(profs&&profs.length){
+        const {data:subs}=await sb.from('subscriptions')
+          .select('id').eq('user_id',profs[0].id)
+          .in('status',['active','pending']).limit(1);
+        if(subs&&subs.length){
+          // Inscription reellement terminee : on retire le marqueur local
+          // perime pour de bon, le bandeau ne reviendra plus.
+          state.started=false;
+          save();
+          resume.hidden=true;
+        }
+      }
+    }catch(e){ /* injoignable : on laisse le bandeau tel quel, jamais bloquant */ }
+    finally{ resumeVerifEnCours=false; }
   }
 
   /* ================= ETAPE 1 : creation du compte ================= */
@@ -6589,6 +6624,15 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
         status:'pending', reference:refAEcrire
       });
       if(payErr)return {ok:true,hors_ligne:true,erreur:'payments: '+(payErr.message||JSON.stringify(payErr))};
+      // Notification "paiement en attente" : l'evenement existe des
+      // maintenant cote base, et sera suivi plus tard d'une notification
+      // DISTINCTE de validation ou de refus emise par l'admin — jamais
+      // d'un simple remplacement de celle-ci.
+      try{
+        await sb.from('notifications').insert({
+          user_id:uid, type:'payment_pending', plan_id:planAEcrire, reason:null
+        });
+      }catch(e){}
       return {ok:true,hors_ligne:false};
     }catch(e){
       return {ok:true,hors_ligne:true,erreur:(e&&e.message)?e.message:String(e)};
@@ -7079,6 +7123,7 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
             supabaseUserId:data.user.id
           };
           let abonnementActif=null, abonnementPendant=null, supabaseJoignable=true;
+          let aDejaEuUnAbonnement=false;
           try{
             // On lit 'active' ET 'pending' pour cette personne, toutes les
             // lignes (pas juste la plus recente) : un plan actif et un
@@ -7089,6 +7134,7 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
               .eq('user_id',data.user.id).in('status',['active','pending'])
               .order('starts_at',{ascending:false});
             if(subs&&subs.length){
+              aDejaEuUnAbonnement=true;
               abonnementActif=subs.find(x=>x.status==='active')||null;
               const p=subs.find(x=>x.status==='pending')||null;
               // Un "pending" n'est un CHANGEMENT en attente que s'il existe
@@ -7096,6 +7142,20 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
               // souscription, encore en attente de validation admin.
               if(abonnementActif&&p&&p.plan_id!==abonnementActif.plan_id)abonnementPendant=p;
               else if(!abonnementActif&&p)abonnementActif={...p,__pending:true};
+            }
+            if(!aDejaEuUnAbonnement){
+              /* REGLE : l'inscription terminee et le plan actif sont deux
+                 choses distinctes. Un paiement refuse passe l'abonnement
+                 en 'cancelled', et une expiration le sort aussi de la
+                 liste ci-dessus — sans cette verification, la personne
+                 serait renvoyee vers le parcours de paiement comme un
+                 nouveau visiteur, et perdrait l'acces a son Dashboard.
+                 Des qu'un abonnement a EXISTE, quel que soit son statut,
+                 l'inscription est terminee : le Dashboard reste ouvert,
+                 seuls les contenus lies a un plan restent verrouilles. */
+              const {data:histo}=await sb.from('subscriptions')
+                .select('id').eq('user_id',data.user.id).limit(1);
+              if(histo&&histo.length)aDejaEuUnAbonnement=true;
             }
           }catch(e){ supabaseJoignable=false; /* Supabase injoignable pour cette lecture */ }
 
@@ -7115,6 +7175,22 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
               pendingPlanId:abonnementPendant?abonnementPendant.plan_id:null,
               payMethod:(localAcc&&localAcc.payMethod)||null,
               ref:(localAcc&&!abonnementActif.__pending)?localAcc.ref:null
+            });
+            save();
+            closeAuth();
+            requestAnimationFrame(()=>{if(window.VB_openDash)window.VB_openDash();});
+          }else if(aDejaEuUnAbonnement){
+            /* Inscription terminee, mais aucun plan actif ni en attente
+               (refuse, annule ou expire). Dashboard ACCESSIBLE ; badge
+               "Aucun plan" (planId nul) ; fiches et cotes verrouillees
+               (endDate dans le passe => subscriptionExpired() vrai). */
+            state=Object.assign(blank(),{
+              step:4, started:false, ...identite,
+              pass:(localAcc&&localAcc.pass)||null,
+              emailVerified:true,
+              planId:null, paid:true, payStatus:'rejected',
+              startDate:null, endDate:new Date(Date.now()-1000).toISOString(),
+              pendingPlanId:null, pendingRef:null, ref:null
             });
             save();
             closeAuth();
@@ -7570,6 +7646,20 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
             state.pendingPlanId=null;
             changed=true;
           }
+        }else if(state.planId||state.pendingPlanId){
+          /* Plus AUCUN abonnement actif ni en attente en base, alors que
+             l'etat local en affiche encore un : l'admin vient d'annuler
+             ou de refuser, ou l'abonnement est arrive a son terme.
+             L'acces au Dashboard reste ouvert (paid inchange), mais le
+             badge repasse a "Aucun plan" et les contenus lies au plan se
+             verrouillent — l'etat local ne doit jamais survivre a la base. */
+          state.planId=null;
+          state.pendingPlanId=null;
+          state.pendingRef=null;
+          state.payStatus='rejected';
+          state.startDate=null;
+          state.endDate=new Date(Date.now()-1000).toISOString();
+          changed=true;
         }
       }
       // Cas normal : le paiement du plan reellement actif (premiere
@@ -7944,6 +8034,8 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
           .replace('{raison}',n.reason||t('notif_pay_rejected_defaut')); type='sub';
       }else if(n.type==='admin_plan_change'){
         texte=t('notif_plan_change').replace('{plan}',plNom); type='plan';
+      }else if(n.type==='payment_pending'){
+        texte=t('notif_pay_pending').replace('{plan}',plNom); type='sub';
       }else return;
       out.push({id:'sb'+n.id, sbId:n.id, type:type, texte:texte,
         ts:new Date(n.created_at).getTime(), sbRead:!!n.read});
