@@ -6639,7 +6639,7 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
     }
   }
 
-  function completePayment(method){
+  async function completePayment(method){
     if(sessionPerimee){
       if(window.VB_toast)window.VB_toast('session_stale_h',t('session_stale_p'));
       return;
@@ -6710,31 +6710,37 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
     // inscriptions, pas les renouvellements.
     if(!wasRenew&&window.VB_countSignup)window.VB_countSignup();
 
-    // Changement d'abonnement reussi : confirmation + notification
+    /* CORRECTIF : la personne n'a PAS "change d'abonnement" a cet
+       instant — elle vient seulement de le DEMANDER, et ca reste en
+       attente jusqu'a validation admin. L'ancien toast/notification
+       disait "Vous avez change d'abonnement" au passe, comme si
+       c'etait deja fait : trompeur, et en contradiction directe avec
+       la vraie notification "paiement en attente" desormais creee en
+       base (voir syncAbonnementSupabase). On ne garde donc qu'un seul
+       message, honnete, au moment de la soumission — la confirmation
+       reelle n'arrive que via la notification serveur, au moment ou
+       l'admin valide reellement. */
     if(ancienPlan&&ancienPlan!==pl.id){
-      /* Passage au Lifetime : jamais de mention de "jours ajoutes"
-         (le Lifetime n'a pas de duree). Message dedie a l'acces a vie. */
       if(pl.id==='p4'){
         if(window.VB_toast)window.VB_toast('plan_changed_h',t('plan_changed_lifetime')+' '+t('pay_pending_note'));
       }else{
         if(window.VB_toast)window.VB_toast('plan_changed_h',t('plan_changed_p')+' '+t('pay_pending_note'));
       }
-      if(window.VB_notify)window.VB_notify('plan',t('notif_plan_change').replace('{plan}',
-        String(t((pl||{}).nameKey||'')).replace(/<[^>]*>/g,'')));
     }else if(ancienPlan){
-      // Meme plan reconduit : c'est un renouvellement, message dedie exact.
       if(window.VB_toast)window.VB_toast('renew_success_h',t('renew_success_p')+' '+t('pay_pending_note'));
-      if(window.VB_notify)window.VB_notify('plan',t('notif_renewed').replace('{plan}',
-        String(t((pl||{}).nameKey||'')).replace(/<[^>]*>/g,'')));
     }
-    syncAbonnementSupabase().then(res=>{
-      if(res&&res.hors_ligne){
-        // CORRECTIF : meme principe que ci-dessus — jamais de detail
-        // technique brut a l'ecran ; l'admin recoit le vrai detail.
-        if(window.VB_logErreurTechnique)window.VB_logErreurTechnique('paiement_sync',res.erreur);
-        if(window.VB_toast)window.VB_toast('err_action_unavailable_h',t('err_action_unavailable_p'));
-      }
-    });   // en parallele, sans jamais bloquer l'affichage — mais jamais silencieux non plus
+    /* CORRECTIF (course de timing) : on ATTEND que l'ecriture reelle en
+       base soit terminee avant d'ouvrir le Dashboard. Avant ce correctif,
+       le Dashboard pouvait s'ouvrir et relire Supabase AVANT que cette
+       ecriture soit terminee — la lecture ne trouvait alors aucune ligne
+       "pending", et effacait a tort le changement pourtant bien demande.
+       Attendre ici (quelques centaines de ms tout au plus) elimine cette
+       course a la racine, plutot que de la contourner. */
+    const resSync=await syncAbonnementSupabase();
+    if(resSync&&resSync.hors_ligne){
+      if(window.VB_logErreurTechnique)window.VB_logErreurTechnique('paiement_sync',resSync.erreur);
+      if(window.VB_toast)window.VB_toast('err_action_unavailable_h',t('err_action_unavailable_p'));
+    }
     showStep(4);
   }
 
@@ -8477,11 +8483,13 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
   /* ---- Bascule de vue ---- */
   function renderAll(){
     document.getElementById('dashPlanName').textContent=(function(){
-      // CORRECTIF : si la personne n'a reellement aucun plan actif (ni
-      // paye, ni planId connu), le badge doit le dire clairement plutot
-      // que de retomber silencieusement sur le plan Starter.
+      // CORRECTIF : le badge doit refleter le plan CONFIRME, jamais un
+      // plan encore 'pending' — sinon un premier paiement pas encore
+      // valide par l'admin s'affiche comme s'il etait deja actif. Regle
+      // explicite : tant que rien n'est confirme, le badge dit "Aucun
+      // plan", meme si state.planId est deja rempli en local.
       const stB=getState();
-      const pl=(stB&&stB.paid&&stB.planId&&window.VB_planById)?window.VB_planById(stB.planId):null;
+      const pl=(stB&&stB.paid&&stB.payStatus==='confirmed'&&stB.planId&&window.VB_planById)?window.VB_planById(stB.planId):null;
       if(!pl)return t('dash_badge_none');
       // Libelle court reserve au badge du header (les cartes de plan gardent le nom complet)
       const court={p4:'LIFETIME'};
