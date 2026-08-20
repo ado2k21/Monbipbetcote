@@ -1793,6 +1793,12 @@ footer{border-top:1px solid var(--ligne);padding:56px 0 36px;background:#030617}
   display:flex;align-items:flex-start;gap:11px;padding:13px 15px;border-radius:var(--r-sm);
   background:rgba(46,212,127,.08);border:1px solid rgba(46,212,127,.3);margin-bottom:4px;
 }
+/* CORRECTIF : sans cette regle, l'attribut 'hidden' pose par renderResume()
+   ne l'emporte jamais sur le display:flex ci-dessus (meme specificite,
+   regle d'auteur) — le bandeau restait donc visible en permanence, meme
+   quand la logique JS (deja correcte) decidait de le masquer. Meme
+   correctif que .dash-sub-planblock[hidden] / .dash-sub-noplan[hidden]. */
+.wiz-resume[hidden]{display:none}
 .wiz-resume svg{flex-shrink:0;margin-top:2px;color:var(--vert-vif)}
 .wiz-resume-txt{flex:1;min-width:0;font-size:13px;color:#CBD8E4;line-height:1.5}
 .wiz-resume-txt b{display:block;color:#F4F3ED;font-size:13.5px;margin-bottom:3px}
@@ -4727,6 +4733,10 @@ dash_activate_cta:"Activer mon plan", dash_rejected_ov_p:"Votre paiement n'a pas
 dash_pending_h:"Paiement en cours de vérification",
 dash_pending_sub:"Votre paiement est en attente de confirmation par notre équipe. Vos pronostics seront débloqués automatiquement dès validation.",
 dash_pending_ov_p:"En attente de validation de votre paiement.",
+dash_sub_msg_rejected:"Votre changement de plan a échoué. Merci de réessayer.",
+dash_sub_msg_expired:"Votre abonnement est expiré. Veuillez réactiver un abonnement maintenant !",
+dash_sub_msg_renew_soon:"Veuillez renouveler votre abonnement avant le {date}.",
+dash_sub_msg_active:"Votre nouveau plan {plan} est activé avec succès.",
 faq2_q:"Garantissez-vous des gains ?",
 legal_tag_cgu:"Légal", legal_tag_confid:"Légal", legal_tag_jeu:"Légal",
 legal_note:"Ce document est une version générale. Avant publication officielle, il doit être relu par un conseiller juridique.",
@@ -5101,6 +5111,10 @@ dash_activate_cta:"Activate my plan", dash_rejected_ov_p:"Your payment didn't go
 dash_pending_h:"Payment under verification",
 dash_pending_sub:"Your payment is awaiting confirmation by our team. Your picks will unlock automatically once validated.",
 dash_pending_ov_p:"Awaiting validation of your payment.",
+dash_sub_msg_rejected:"Your plan change failed. Please try again.",
+dash_sub_msg_expired:"Your subscription has expired. Please reactivate a plan now!",
+dash_sub_msg_renew_soon:"Please renew your subscription before {date}.",
+dash_sub_msg_active:"Your new {plan} plan is now successfully activated.",
 faq2_q:"Do you guarantee winnings?",
 legal_tag_cgu:"Legal", legal_tag_confid:"Legal", legal_tag_jeu:"Legal",
 legal_note:"This document is a general version. Before official publication it must be reviewed by a legal adviser.",
@@ -5475,6 +5489,10 @@ dash_activate_cta:"Aktive plan mwen", dash_rejected_ov_p:"Peman ou pa t pase. Ak
 dash_pending_h:"Peman ap tann verifikasyon",
 dash_pending_sub:"Peman ou an ap tann yon admin konfime li. Pronostik yo ap debloke otomatikman apre sa.",
 dash_pending_ov_p:"Ap tann validasyon peman ou.",
+dash_sub_msg_rejected:"Chanjman plan ou echwe. Tanpri eseye ankò.",
+dash_sub_msg_expired:"Abònman ou ekspire. Tanpri reyaktive yon plan kounye a !",
+dash_sub_msg_renew_soon:"Tanpri renouvle abònman ou anvan {date}.",
+dash_sub_msg_active:"Nouvo plan {plan} ou aktive avèk siksè.",
 faq2_q:"Èske nou garanti benefis?",
 legal_tag_cgu:"Legal", legal_tag_confid:"Legal", legal_tag_jeu:"Legal",
 legal_note:"Dokiman sa a se yon vèsyon jeneral. Anvan piblikasyon ofisyèl la, li dwe reli pa yon konseye jiridik.",
@@ -7677,6 +7695,11 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
 
   window.VB_isExpired=()=>subscriptionExpired(state);
   window.VB_isPending=()=>!!(state&&state.paid&&state.payStatus==='pending');
+  // "Bientot expire" = dans la fenetre de rappel de renouvellement (memes
+  // seuils que RENEW_SEUIL/enPeriodeDeFin), mais PAS encore reellement
+  // expire — utilise uniquement pour choisir le bon message sur la page
+  // Mon Abonnement (voir renderSub), sans dupliquer la logique de seuils.
+  window.VB_inRenewWindow=()=>enPeriodeDeFin(state)&&!subscriptionExpired(state);
   // 'rejected' = un paiement a existe mais n'a jamais ete confirme (refuse
   // par l'admin, ou plus aucun paiement confirme en base). Distinct d'une
   // veritable expiration (plan qui A ete confirme, puis dont la date est
@@ -8543,6 +8566,10 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
     // Pendant l'attente de validation : rien a payer de plus non plus.
     const life=!!(window.VB_isLifetime&&window.VB_isLifetime());
     const changementEnAttente=!!st.pendingPlanId;
+    // Plan actif, confirme, pas encore expire, mais dans sa fenetre de
+    // rappel de renouvellement — pour le message dedie ci-dessous.
+    const bientotExpire=!changementEnAttente&&!pend&&!rej&&!exp&&
+      !!(window.VB_inRenewWindow&&window.VB_inRenewWindow());
     const upg=document.getElementById('dashSubUpgrade');
     upg.hidden=life||pend||changementEnAttente;
     // CORRECTIF : "Activer mon plan" pour qui n'a jamais ete confirme,
@@ -8560,19 +8587,34 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
     document.getElementById('dashSubName').textContent=pl?String(t(pl.nameKey)).replace(/<[^>]*>/g,''):'';
     document.getElementById('dashSubPrix').textContent=pl?money(pl.prix)+' HTG':'';
 
-    // Bandeau visible : un changement de plan est en cours, en attente de
-    // confirmation admin — le plan actuel (ci-dessus) reste actif et
-    // deverrouille tel quel jusqu'a cette confirmation.
+    // Message unique, pilote par l'etat REEL de l'abonnement — un seul
+    // visible a la fois, qui change automatiquement des que l'etat change
+    // (validation, refus, expiration, periode de fin, ou plan sain) :
+    // 1. changement en attente (plan actif + nouvelle demande en cours) ;
+    // 2. premiere souscription en attente (aucun plan actif encore) ;
+    // 3. paiement echoue/refuse (aucun plan actif) ;
+    // 4. plan reellement expire ;
+    // 5. plan actif mais dans sa fenetre de rappel de renouvellement ;
+    // 6. plan actif et sain (aucun rappel a faire).
     const banner=document.getElementById('dashPendingBanner');
+    let msgTxt='';
     if(changementEnAttente){
       const plCible=window.VB_planById?window.VB_planById(st.pendingPlanId):null;
       const nomCible=plCible?String(t(plCible.nameKey)).replace(/<[^>]*>/g,''):'—';
-      document.getElementById('dashPendingBannerTxt').textContent=
-        t('dash_pending_change_banner').replace('{plan}',nomCible);
-      banner.hidden=false;
-    }else{
-      banner.hidden=true;
+      msgTxt=t('dash_pending_change_banner').replace('{plan}',nomCible);
+    }else if(pend){
+      msgTxt=t('dash_pending_ov_p');
+    }else if(rej){
+      msgTxt=t('dash_sub_msg_rejected');
+    }else if(exp){
+      msgTxt=t('dash_sub_msg_expired');
+    }else if(bientotExpire){
+      msgTxt=t('dash_sub_msg_renew_soon').replace('{date}',fmtLong(st.endDate));
+    }else if(aUnPlan){
+      msgTxt=t('dash_sub_msg_active').replace('{plan}',pl?String(t(pl.nameKey)).replace(/<[^>]*>/g,''):'');
     }
+    document.getElementById('dashPendingBannerTxt').textContent=msgTxt;
+    banner.hidden=!msgTxt;
 
     document.getElementById('dashSubHolder').textContent=st.fullname||'—';
     document.getElementById('dashSubEmail').textContent=st.email||'—';
