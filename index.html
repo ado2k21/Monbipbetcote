@@ -2233,6 +2233,13 @@ footer{border-top:1px solid var(--ligne);padding:56px 0 36px;background:#030617}
 .dash-sub-prog-bar{height:6px;border-radius:3px;background:rgba(244,243,237,.08);overflow:hidden}
 .dash-sub-prog-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--or),var(--or-clair));transition:width .7s ease,background .3s ease}
 .dash-sub-prog-fill.is-low{background:linear-gradient(90deg,#B4553F,#E2634F)}
+/* CORRECTIF : garantit que l'attribut 'hidden' l'emporte reellement sur
+   ces regles display:flex — sinon, a specificite egale, la regle de
+   classe definie plus haut dans la feuille gagnerait et l'element
+   resterait visible malgre 'hidden'. */
+.dash-sub-planblock[hidden]{display:none}
+.dash-sub-noplan{margin:4px 0 18px;font-size:13.5px;color:var(--gris);line-height:1.5}
+.dash-sub-noplan[hidden]{display:none}
 .dash-sub-prog-fill.is-life{background:linear-gradient(90deg,var(--vert),var(--vert-vif),var(--or-clair))}
 .dash-sub-cta{margin-top:18px;width:100%}
 .dash-sub-cta[hidden]{display:none}
@@ -4010,22 +4017,23 @@ details p{font-size:15.5px;line-height:1.72;color:#CBD8E4}
         <span id="dashPendingBannerTxt"></span>
       </div>
       <div class="dash-sub">
-        <div class="dash-sub-top">
+        <div class="dash-sub-top dash-sub-planblock" id="dashSubTop">
           <div>
             <div class="dash-sub-name" id="dashSubName"></div>
             <div class="dash-sub-state" id="dashSubState" data-i18n="dash_sub_active">Aktif</div>
           </div>
           <div class="dash-sub-prix" id="dashSubPrix"></div>
         </div>
+        <p class="dash-sub-noplan" id="dashSubNoPlan" data-i18n="dash_sub_noplan" hidden>Ou pa gen okenn plan aktif kounye a.</p>
         <dl class="dash-sub-rows">
           <div class="dash-sub-row"><dt data-i18n="dash_sub_holder">Titilè</dt><dd id="dashSubHolder"></dd></div>
           <div class="dash-sub-row"><dt data-i18n="dash_sub_email">Imèl</dt><dd id="dashSubEmail"></dd></div>
-          <div class="dash-sub-row"><dt data-i18n="wiz_d_start">Dat kòmansman</dt><dd id="dashSubStart"></dd></div>
-          <div class="dash-sub-row"><dt data-i18n="wiz_d_end">Dat ekspirasyon</dt><dd id="dashSubEnd"></dd></div>
-          <div class="dash-sub-row"><dt data-i18n="dash_sub_method">Mwayen peman</dt><dd id="dashSubMethod"></dd></div>
-          <div class="dash-sub-row"><dt data-i18n="wiz_d_ref">Referans</dt><dd id="dashSubRef"></dd></div>
+          <div class="dash-sub-row dash-sub-planblock"><dt data-i18n="wiz_d_start">Dat kòmansman</dt><dd id="dashSubStart"></dd></div>
+          <div class="dash-sub-row dash-sub-planblock"><dt data-i18n="wiz_d_end">Dat ekspirasyon</dt><dd id="dashSubEnd"></dd></div>
+          <div class="dash-sub-row dash-sub-planblock"><dt data-i18n="dash_sub_method">Mwayen peman</dt><dd id="dashSubMethod"></dd></div>
+          <div class="dash-sub-row dash-sub-planblock"><dt data-i18n="wiz_d_ref">Referans</dt><dd id="dashSubRef"></dd></div>
         </dl>
-        <div class="dash-sub-prog" id="dashSubProgWrap">
+        <div class="dash-sub-prog dash-sub-planblock" id="dashSubProgWrap">
           <div class="dash-sub-prog-top">
             <span data-i18n="dash_sub_left">Tan ki rete</span>
             <span id="dashSubLeft"></span>
@@ -4715,7 +4723,7 @@ dash_expired_sub:"Vous gardez l'accès au tableau de bord, mais toutes les cotes
 dash_expired_cta:"Renouveler mon plan",
 dash_expired_p:"Votre abonnement a expiré. Renouvelez pour revoir les cotes.",
 dash_sub_expired:"Expiré",
-dash_activate_cta:"Activer mon plan", dash_rejected_ov_p:"Votre paiement n'a pas abouti. Activez un plan pour voir les cotes.", dash_sub_rejected:"Paiement non réussi",
+dash_activate_cta:"Activer mon plan", dash_rejected_ov_p:"Votre paiement n'a pas abouti. Activez un plan pour voir les cotes.", dash_sub_rejected:"Paiement non réussi", dash_sub_noplan:"Vous n'avez aucun plan actif pour le moment. Activez un plan pour débloquer les fiches et les cotes.",
 dash_pending_h:"Paiement en cours de vérification",
 dash_pending_sub:"Votre paiement est en attente de confirmation par notre équipe. Vos pronostics seront débloqués automatiquement dès validation.",
 dash_pending_ov_p:"En attente de validation de votre paiement.",
@@ -5089,7 +5097,7 @@ dash_expired_sub:"You keep access to the dashboard, but all odds are locked. Ren
 dash_expired_cta:"Renew my plan",
 dash_expired_p:"Your plan has expired. Renew to see the odds again.",
 dash_sub_expired:"Expired",
-dash_activate_cta:"Activate my plan", dash_rejected_ov_p:"Your payment didn't go through. Activate a plan to see the odds.", dash_sub_rejected:"Payment unsuccessful",
+dash_activate_cta:"Activate my plan", dash_rejected_ov_p:"Your payment didn't go through. Activate a plan to see the odds.", dash_sub_rejected:"Payment unsuccessful", dash_sub_noplan:"You don't have any active plan right now. Activate a plan to unlock slips and odds.",
 dash_pending_h:"Payment under verification",
 dash_pending_sub:"Your payment is awaiting confirmation by our team. Your picks will unlock automatically once validated.",
 dash_pending_ov_p:"Awaiting validation of your payment.",
@@ -5463,7 +5471,7 @@ dash_expired_sub:"Ou toujou gen aksè nan dashboard la, men tout cotes yo fèmen
 dash_expired_cta:"Renouvle plan an",
 dash_expired_p:"Abònman ou ekspire. Renouvle pou w wè cotes yo ankò.",
 dash_sub_expired:"Ekspire",
-dash_activate_cta:"Aktive plan mwen", dash_rejected_ov_p:"Peman ou pa t pase. Aktive yon plan pou w wè cotes yo.", dash_sub_rejected:"Peman pa reyisi",
+dash_activate_cta:"Aktive plan mwen", dash_rejected_ov_p:"Peman ou pa t pase. Aktive yon plan pou w wè cotes yo.", dash_sub_rejected:"Peman pa reyisi", dash_sub_noplan:"Ou pa gen okenn plan aktif kounye a. Aktive yon plan pou w debloke fich ak cotes yo.",
 dash_pending_h:"Peman ap tann verifikasyon",
 dash_pending_sub:"Peman ou an ap tann yon admin konfime li. Pronostik yo ap debloke otomatikman apre sa.",
 dash_pending_ov_p:"Ap tann validasyon peman ou.",
@@ -6674,18 +6682,31 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
        avant. */
     const planEnCoursValide=state.paid&&state.payStatus==='confirmed'&&state.endDate&&new Date(state.endDate).getTime()>now.getTime();
 
-    state.ref='VB-'+now.getFullYear()+String(now.getMonth()+1).padStart(2,'0')+'-'+Math.floor(1000+Math.random()*9000);
+    // CORRECTIF MAJEUR : 'state.ref' doit TOUJOURS pointer sur le paiement
+    // du plan ACTIF et CONFIRME, jamais sur une demande de changement en
+    // attente. Avant ce correctif, la nouvelle reference etait ecrite
+    // dans state.ref ET state.pendingRef en meme temps, meme pendant un
+    // simple changement de plan — donc des qu'un admin refusait CE
+    // changement, la lecture basee sur state.ref retrouvait le paiement
+    // REFUSE (pas celui du plan pourtant toujours actif), et effacait a
+    // tort le statut confirme du plan actif. C'est la cause exacte du
+    // bug "plan actif perdu apres un refus". La reference n'est ecrite
+    // dans state.ref que dans le cas SANS plan actif en cours — sinon
+    // elle ne va que dans pendingRef.
+    const nouvelleRef='VB-'+now.getFullYear()+String(now.getMonth()+1).padStart(2,'0')+'-'+Math.floor(1000+Math.random()*9000);
 
     if(planEnCoursValide){
       // Le plan actif ne bouge pas : seul le CHANGEMENT est enregistre,
-      // separement, en attente de confirmation.
+      // separement, en attente de confirmation. state.ref reste intact,
+      // toujours celui du plan actif.
       state.pendingPlanId=pl.id;
-      state.pendingRef=state.ref;
+      state.pendingRef=nouvelleRef;
     }else{
       // Le plan choisi est engage ici, mais son CONTENU reste verrouille
       // (payStatus='pending') tant qu'un admin ne l'a pas confirme.
       // paid=true ouvre seulement la porte du Dashboard (voir requiredStep) ;
       // ce n'est jamais une preuve de paiement reel.
+      state.ref=nouvelleRef;
       state.planId=pl.id;
       state.pendingPlanId=null;
       state.pendingRef=null;
@@ -7489,6 +7510,42 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
   // paiement au moins tente) — jamais base sur une simple presence de
   // donnees locales sans verification.
   window.VB_dashboardReady=()=>requiredStep(state)===4;
+  /* CORRECTIF (acces automatique apres action admin) : au chargement de
+     la page (F5, pas une nouvelle connexion), quelqu'un dont l'inscription
+     est terminee mais qui n'a localement jamais eu de plan (paid=false)
+     reste bloque hors du Dashboard meme si un admin vient de lui activer
+     un plan directement (changerPlanAdmin). Cette fonction verifie une
+     seule fois aupres de Supabase si un abonnement actif/en attente existe
+     REELLEMENT pour cette session, et ouvre le Dashboard automatiquement
+     si c'est le cas — jamais autrement, jamais en devinant. */
+  window.VB_reprendreApresAdmin=async function(sessionUser){
+    const sb=window.VB_getSupabase&&window.VB_getSupabase();
+    if(!sb||!sessionUser)return;
+    try{
+      const {data:subs}=await sb.from('subscriptions')
+        .select('plan_id,status,starts_at,expires_at')
+        .eq('user_id',sessionUser.id).in('status',['active','pending'])
+        .order('starts_at',{ascending:false});
+      if(!subs||!subs.length)return;   // rien de reel : la page d'accueil normale reste correcte
+      const actif=subs.find(x=>x.status==='active')||null;
+      const pendant=subs.find(x=>x.status==='pending')||null;
+      const retenu=actif||pendant;
+      if(!retenu)return;
+      const meta=sessionUser.user_metadata||{};
+      state=Object.assign(blank(),{
+        step:4, started:false,
+        email:sessionUser.email, fullname:(state&&state.fullname)||meta.username||'',
+        site:(state&&state.site)||meta.preferred_site||'paryajpam',
+        supabaseUserId:sessionUser.id, emailVerified:true,
+        planId:retenu.plan_id, paid:true,
+        payStatus:actif?'confirmed':'pending',
+        startDate:retenu.starts_at, endDate:retenu.expires_at,
+        pendingPlanId:(actif&&pendant&&pendant.plan_id!==actif.plan_id)?pendant.plan_id:null
+      });
+      save();
+      if(window.VB_openDash)window.VB_openDash();
+    }catch(e){ /* injoignable : la personne reste sur la page d'accueil, rien de casse */ }
+  };
   /* Synchronise prix/duree REELS depuis Supabase au demarrage. Ne touche
      jamais nameKey/perKey/feats/popular (purement presentation, pas en
      base) — seulement prix et days, qui pilotent l'argent reel partout
@@ -7720,63 +7777,71 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
           state.endDate=dernierPaiementConfirme?(dateFinReelle||new Date(Date.now()-1000).toISOString()):null;
           changed=true;
         }
-      }
-      // Cas normal : le paiement du plan reellement actif (premiere
-      // souscription, ou renouvellement direct sans changement en cours).
-      if(state.ref&&!state.pendingRef){
-        const {data:pays}=await sb.from('payments')
-          .select('status,subscription_id,plan_id')
-          .eq('reference',state.ref).limit(1);
-        if(pays&&pays.length){
-          const pay=pays[0];
-          const nouveau=pay.status==='confirmed'?'confirmed':(pay.status==='failed'||pay.status==='refunded'?'rejected':'pending');
-          if(nouveau!==state.payStatus){
-            state.payStatus=nouveau;
-            if(nouveau==='confirmed'&&pay.subscription_id){
-              try{
-                const {data:sub}=await sb.from('subscriptions')
-                  .select('plan_id,starts_at,expires_at')
-                  .eq('id',pay.subscription_id).single();
-                if(sub){state.planId=sub.plan_id;state.startDate=sub.starts_at;state.endDate=sub.expires_at;}
-              }catch(e){}
+      }else{
+        /* CORRECTIF (empeche l'ecrasement du resultat ci-dessus) : ces deux
+           blocs bases sur state.ref/state.pendingRef ne s'executent
+           desormais QUE si l'identifiant Supabase est absent (cas rare,
+           quasiment jamais en pratique). Auparavant ils s'executaient
+           TOUJOURS, meme apres le bloc ci-dessus — et state.ref pouvait
+           pointer sur un paiement DEJA REFUSE (ancien changement de plan
+           rejete), ce qui repassait a tort payStatus a 'rejected' et
+           faisait perdre l'acces a un plan pourtant toujours actif et
+           confirme. Le bloc ci-dessus est deja la source de verite
+           complete (plan actif, changement en attente, ou aucun des deux) :
+           le refaire via des references locales, potentiellement perimees,
+           ne peut plus qu'introduire des incoherences. */
+        // Cas normal : le paiement du plan reellement actif (premiere
+        // souscription, ou renouvellement direct sans changement en cours).
+        if(state.ref&&!state.pendingRef){
+          const {data:pays}=await sb.from('payments')
+            .select('status,subscription_id,plan_id')
+            .eq('reference',state.ref).limit(1);
+          if(pays&&pays.length){
+            const pay=pays[0];
+            const nouveau=pay.status==='confirmed'?'confirmed':(pay.status==='failed'||pay.status==='refunded'?'rejected':'pending');
+            if(nouveau!==state.payStatus){
+              state.payStatus=nouveau;
+              if(nouveau==='confirmed'&&pay.subscription_id){
+                try{
+                  const {data:sub}=await sb.from('subscriptions')
+                    .select('plan_id,starts_at,expires_at')
+                    .eq('id',pay.subscription_id).single();
+                  if(sub){state.planId=sub.plan_id;state.startDate=sub.starts_at;state.endDate=sub.expires_at;}
+                }catch(e){}
+              }
+              changed=true;
             }
-            changed=true;
           }
         }
-      }
-      // Cas changement en attente : le plan actif ne bouge pas tant que
-      // CE paiement-la (separe) n'est pas confirme.
-      if(state.pendingRef){
-        const {data:pays2}=await sb.from('payments')
-          .select('status,subscription_id,plan_id')
-          .eq('reference',state.pendingRef).limit(1);
-        if(pays2&&pays2.length){
-          const pay2=pays2[0];
-          if(pay2.status==='confirmed'&&pay2.subscription_id){
-            try{
-              const {data:sub2}=await sb.from('subscriptions')
-                .select('plan_id,starts_at,expires_at')
-                .eq('id',pay2.subscription_id).single();
-              if(sub2){
-                // Le changement est confirme : LA il faut basculer —
-                // nouveau plan, nouvelles dates (fixees par l'admin au
-                // moment reel de la confirmation), plus rien en attente.
-                state.planId=sub2.plan_id;
-                state.startDate=sub2.starts_at;
-                state.endDate=sub2.expires_at;
-                state.payStatus='confirmed';
-                state.ref=state.pendingRef;
-                state.pendingPlanId=null;
-                state.pendingRef=null;
-                changed=true;
-              }
-            }catch(e){}
-          }else if(pay2.status==='failed'||pay2.status==='refunded'){
-            // Changement refuse : le plan actif en cours n'est jamais
-            // touche, on efface simplement la tentative.
-            state.pendingPlanId=null;
-            state.pendingRef=null;
-            changed=true;
+        // Cas changement en attente : le plan actif ne bouge pas tant que
+        // CE paiement-la (separe) n'est pas confirme.
+        if(state.pendingRef){
+          const {data:pays2}=await sb.from('payments')
+            .select('status,subscription_id,plan_id')
+            .eq('reference',state.pendingRef).limit(1);
+          if(pays2&&pays2.length){
+            const pay2=pays2[0];
+            if(pay2.status==='confirmed'&&pay2.subscription_id){
+              try{
+                const {data:sub2}=await sb.from('subscriptions')
+                  .select('plan_id,starts_at,expires_at')
+                  .eq('id',pay2.subscription_id).single();
+                if(sub2){
+                  state.planId=sub2.plan_id;
+                  state.startDate=sub2.starts_at;
+                  state.endDate=sub2.expires_at;
+                  state.payStatus='confirmed';
+                  state.ref=state.pendingRef;
+                  state.pendingPlanId=null;
+                  state.pendingRef=null;
+                  changed=true;
+                }
+              }catch(e){}
+            }else if(pay2.status==='failed'||pay2.status==='refunded'){
+              state.pendingPlanId=null;
+              state.pendingRef=null;
+              changed=true;
+            }
           }
         }
       }
@@ -8484,8 +8549,16 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
     // "Renouveler" seulement pour un plan reellement expire.
     upg.textContent=t(rej?'dash_activate_cta':(exp?'dash_expired_cta':'dash_sub_upgrade'));
     const pl=(window.VB_planById?window.VB_planById(st.planId):null);
-    document.getElementById('dashSubName').textContent=pl?String(t(pl.nameKey)).replace(/<[^>]*>/g,''):'—';
-    document.getElementById('dashSubPrix').textContent=pl?money(pl.prix)+' HTG':'—';
+    // CORRECTIF : sans AUCUN plan (jamais confirme/refuse, planId nul), on
+    // n'affiche plus de fausses informations de "plan" (nom, prix, dates,
+    // moyen de paiement, reference, barre de progression) — seules les
+    // informations de COMPTE (titulaire, e-mail) restent visibles, avec un
+    // message clair et le bouton pour activer un premier plan.
+    const aUnPlan=!!pl;
+    document.querySelectorAll('.dash-sub-planblock').forEach(elB=>{elB.hidden=!aUnPlan;});
+    document.getElementById('dashSubNoPlan').hidden=aUnPlan;
+    document.getElementById('dashSubName').textContent=pl?String(t(pl.nameKey)).replace(/<[^>]*>/g,''):'';
+    document.getElementById('dashSubPrix').textContent=pl?money(pl.prix)+' HTG':'';
 
     // Bandeau visible : un changement de plan est en cours, en attente de
     // confirmation admin — le plan actuel (ci-dessus) reste actif et
@@ -9215,7 +9288,19 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
       const nouveauPlan=document.getElementById('admUserPlanSelect').value;
       const raison=(document.getElementById('admUserPlanReason').value||'').trim();
       const err=document.getElementById('admUserPlanErr');
-      if(planActif&&planActif.plan_id===nouveauPlan){
+      // CORRECTIF : le meme plan ne peut etre re-selectionne QUE si le
+      // plan actif arrive reellement a sa date de fin (meme seuil de
+      // rappel que celui deja utilise pour les notifications d'expiration
+      // proche : 1/3/7 jours selon le plan). Empeche une re-activation
+      // inutile d'un plan qui vient tout juste d'etre confirme, tout en
+      // autorisant le renouvellement legitime d'un plan qui se termine.
+      const RAPPEL_ADM={p1:1,p2:3,p3:7};
+      let arriveAEcheance=false;
+      if(planActif&&planActif.expires_at){
+        const seuil=(RAPPEL_ADM[planActif.plan_id]||3)*86400000;
+        arriveAEcheance=(new Date(planActif.expires_at).getTime()-Date.now())<=seuil;
+      }
+      if(planActif&&planActif.plan_id===nouveauPlan&&!arriveAEcheance){
         err.textContent=t('adm_user_change_plan_same');err.style.display='block';return;
       }
       err.style.display='none';
@@ -9523,8 +9608,26 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
         // CORRECTIF IMPORTANT : cette ecriture n'etait auparavant jamais
         // verifiee — un echec silencieux ici affichait quand meme "plan
         // actif" a l'admin alors que rien n'avait reellement change.
-        const {error:subErr}=await sb.from('subscriptions').update(subUpdate).eq('id',p.subscription_id);
+        // GARDE-FOU ABSOLU : cette ecriture ne doit JAMAIS pouvoir toucher
+        // une ligne deja 'active' — que ce soit au moment d'un refus ou
+        // d'une confirmation. Elle ne peut s'appliquer qu'a une ligne
+        // encore 'pending' (celle de CETTE demande precise, valider ou
+        // refuser). C'est la garantie, au niveau base de donnees, qu'un
+        // paiement pending/refuse pour un NOUVEAU plan ne peut jamais
+        // modifier, annuler ou desactiver le plan DEJA ACTIF d'une
+        // personne — meme en cas d'incoherence sur p.subscription_id
+        // (cache admin perime, double-clic, etc.).
+        const {error:subErr,count:subCount}=await sb.from('subscriptions')
+          .update(subUpdate,{count:'exact'})
+          .eq('id',p.subscription_id).eq('status','pending');
         if(subErr)throw subErr;
+        if(!subCount){
+          // La ligne n'etait deja plus 'pending' (deja traitee ailleurs,
+          // ou incoherence de donnees) : le garde-fou a bloque l'ecriture
+          // a raison — on le dit clairement a l'admin plutot que de
+          // laisser croire que l'abonnement a ete mis a jour.
+          throw new Error('Abonnement deja modifie ailleurs (plus en attente) : aucune ecriture appliquee, par securite.');
+        }
       }
       // Journal d'audit — schema reel : id, admin_id, action, target_user_id,
       // old_value (jsonb), new_value (jsonb), reason, created_at.
@@ -11139,6 +11242,16 @@ async function tenterRestaurationSession(){
       if(emailLocal&&emailLocal===emailSession&&window.VB_openDash){
         window.VB_openDash();
       }
+    }else if(window.VB_reprendreApresAdmin){
+      /* CORRECTIF : quelqu'un dont l'inscription est terminee mais qui n'a
+         jamais eu de plan localement (paid=false) ne remplissait jamais
+         cette condition — meme si un admin venait de lui activer un plan
+         directement. Sur un simple rafraichissement (pas une nouvelle
+         connexion via le formulaire), cette personne restait bloquee sur
+         la page d'accueil au lieu d'entrer automatiquement dans son
+         Dashboard fraichement debloque. On verifie ici directement aupres
+         de Supabase, une seule fois, sans bloquer le reste du chargement. */
+      window.VB_reprendreApresAdmin(session.user);
     }
   }catch(e){ /* toute erreur degrade simplement vers la page d'accueil normale */ }
 }
