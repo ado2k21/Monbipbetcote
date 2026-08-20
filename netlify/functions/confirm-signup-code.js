@@ -41,7 +41,12 @@ exports.handler = async function (event) {
     return { statusCode: 400, body: JSON.stringify({ error: 'code_invalide' }) };
   }
 
-  const base = process.env.SUPABASE_URL + '/rest/v1';
+  // Defensif : un '/' en trop en fin de SUPABASE_URL (variable
+  // d'environnement recopiee/rechangee) provoque sinon une double barre
+  // oblique dans le chemin et une erreur PostgREST 'PGRST125 Invalid
+  // path specified in request URL' — on la retire systematiquement.
+  const supabaseUrl = (process.env.SUPABASE_URL || '').replace(/\/+$/, '');
+  const base = supabaseUrl + '/rest/v1';
 
   try {
     const getResp = await fetch(

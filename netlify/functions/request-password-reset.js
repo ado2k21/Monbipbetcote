@@ -15,7 +15,11 @@ exports.handler = async (event) => {
     return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
   }
 
-  const SUPABASE_URL = process.env.SUPABASE_URL;
+  // Defensif : un '/' en trop en fin de SUPABASE_URL (variable
+  // d'environnement recopiee/rechangee) provoque sinon une double barre
+  // oblique dans le chemin et une erreur PostgREST 'PGRST125 Invalid
+  // path specified in request URL' — on la retire systematiquement.
+  const SUPABASE_URL = (process.env.SUPABASE_URL || '').replace(/\/+$/, '');
   const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
   const RESEND_API_KEY = process.env.RESEND_API_KEY;
 
