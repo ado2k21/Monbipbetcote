@@ -4715,6 +4715,7 @@ dash_expired_sub:"Vous gardez l'accès au tableau de bord, mais toutes les cotes
 dash_expired_cta:"Renouveler mon plan",
 dash_expired_p:"Votre abonnement a expiré. Renouvelez pour revoir les cotes.",
 dash_sub_expired:"Expiré",
+dash_activate_cta:"Activer mon plan", dash_rejected_ov_p:"Votre paiement n'a pas abouti. Activez un plan pour voir les cotes.", dash_sub_rejected:"Paiement non réussi",
 dash_pending_h:"Paiement en cours de vérification",
 dash_pending_sub:"Votre paiement est en attente de confirmation par notre équipe. Vos pronostics seront débloqués automatiquement dès validation.",
 dash_pending_ov_p:"En attente de validation de votre paiement.",
@@ -5088,6 +5089,7 @@ dash_expired_sub:"You keep access to the dashboard, but all odds are locked. Ren
 dash_expired_cta:"Renew my plan",
 dash_expired_p:"Your plan has expired. Renew to see the odds again.",
 dash_sub_expired:"Expired",
+dash_activate_cta:"Activate my plan", dash_rejected_ov_p:"Your payment didn't go through. Activate a plan to see the odds.", dash_sub_rejected:"Payment unsuccessful",
 dash_pending_h:"Payment under verification",
 dash_pending_sub:"Your payment is awaiting confirmation by our team. Your picks will unlock automatically once validated.",
 dash_pending_ov_p:"Awaiting validation of your payment.",
@@ -5461,6 +5463,7 @@ dash_expired_sub:"Ou toujou gen aksè nan dashboard la, men tout cotes yo fèmen
 dash_expired_cta:"Renouvle plan an",
 dash_expired_p:"Abònman ou ekspire. Renouvle pou w wè cotes yo ankò.",
 dash_sub_expired:"Ekspire",
+dash_activate_cta:"Aktive plan mwen", dash_rejected_ov_p:"Peman ou pa t pase. Aktive yon plan pou w wè cotes yo.", dash_sub_rejected:"Peman pa reyisi",
 dash_pending_h:"Peman ap tann verifikasyon",
 dash_pending_sub:"Peman ou an ap tann yon admin konfime li. Pronostik yo ap debloke otomatikman apre sa.",
 dash_pending_ov_p:"Ap tann validasyon peman ou.",
@@ -7187,15 +7190,41 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
             requestAnimationFrame(()=>{if(window.VB_openDash)window.VB_openDash();});
           }else if(aDejaEuUnAbonnement){
             /* Inscription terminee, mais aucun plan actif ni en attente
-               (refuse, annule ou expire). Dashboard ACCESSIBLE ; badge
-               "Aucun plan" (planId nul) ; fiches et cotes verrouillees
-               (endDate dans le passe => subscriptionExpired() vrai). */
+               (refuse, annule, ou confirme puis arrive a echeance).
+               Dashboard ACCESSIBLE ; fiches/cotes verrouillees dans les
+               deux cas, mais le MESSAGE affiche doit differer :
+               - dernier paiement 'confirmed' => plan reellement expire
+                 ("Expire", CTA "Renouveler") ;
+               - dernier paiement 'failed' (ou aucun) => jamais confirme
+                 ("Paiement non reussi", CTA "Activer").
+               On distingue les deux via le dernier PAIEMENT (pas le
+               statut de l'abonnement, qui vaut 'cancelled' dans les deux
+               cas et ne permet pas de les differencier). */
+            let dernierPaiementConfirme=false, dateFinReelle=null;
+            try{
+              const {data:dpays}=await sb.from('payments')
+                .select('status,subscription_id').eq('user_id',data.user.id)
+                .order('created_at',{ascending:false}).limit(1);
+              if(dpays&&dpays.length&&dpays[0].status==='confirmed'){
+                dernierPaiementConfirme=true;
+                if(dpays[0].subscription_id){
+                  const {data:dsub}=await sb.from('subscriptions')
+                    .select('expires_at').eq('id',dpays[0].subscription_id).single();
+                  if(dsub)dateFinReelle=dsub.expires_at;
+                }
+              }
+            }catch(e){}
             state=Object.assign(blank(),{
               step:4, started:false, ...identite,
               pass:(localAcc&&localAcc.pass)||null,
               emailVerified:true,
-              planId:null, paid:true, payStatus:'rejected',
-              startDate:null, endDate:new Date(Date.now()-1000).toISOString(),
+              planId:null, paid:true,
+              payStatus:dernierPaiementConfirme?'confirmed':'rejected',
+              startDate:null,
+              // Un plan confirme puis cancelled a forcement une date de fin
+              // reelle dans le passe (sinon il serait encore 'active') ; on
+              // l'utilise telle quelle plutot qu'une date inventee.
+              endDate:dernierPaiementConfirme?(dateFinReelle||new Date(Date.now()-1000).toISOString()):null,
               pendingPlanId:null, pendingRef:null, ref:null
             });
             save();
@@ -7591,6 +7620,12 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
 
   window.VB_isExpired=()=>subscriptionExpired(state);
   window.VB_isPending=()=>!!(state&&state.paid&&state.payStatus==='pending');
+  // 'rejected' = un paiement a existe mais n'a jamais ete confirme (refuse
+  // par l'admin, ou plus aucun paiement confirme en base). Distinct d'une
+  // veritable expiration (plan qui A ete confirme, puis dont la date est
+  // depassee) — les deux verrouillent le contenu, mais le message montre a
+  // la personne doit etre different (voir renderSub / dash_sub_rejected).
+  window.VB_isRejected=()=>!!(state&&state.paid&&state.payStatus==='rejected');
   /* Rafraichissement silencieux : verifie si un admin a valide/refuse le
      paiement depuis la derniere visite, sans jamais bloquer l'affichage.
      Ne fait rien si le compte n'est pas rattache a Supabase (compte
@@ -7658,13 +7693,31 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
              ou de refuser, ou l'abonnement est arrive a son terme.
              L'acces au Dashboard reste ouvert (paid inchange), mais le
              badge repasse a "Aucun plan" et les contenus lies au plan se
-             verrouillent — l'etat local ne doit jamais survivre a la base. */
+             verrouillent — l'etat local ne doit jamais survivre a la base.
+             CORRECTIF : on distingue ici aussi "vraiment expire" (dernier
+             paiement confirme) de "jamais confirme / refuse" (dernier
+             paiement failed) — jamais de date inventee pour forcer une
+             fausse expiration, voir le meme correctif au login. */
+          let dernierPaiementConfirme=false, dateFinReelle=null;
+          try{
+            const {data:dpays}=await sb.from('payments')
+              .select('status,subscription_id').eq('user_id',state.supabaseUserId)
+              .order('created_at',{ascending:false}).limit(1);
+            if(dpays&&dpays.length&&dpays[0].status==='confirmed'){
+              dernierPaiementConfirme=true;
+              if(dpays[0].subscription_id){
+                const {data:dsub}=await sb.from('subscriptions')
+                  .select('expires_at').eq('id',dpays[0].subscription_id).single();
+                if(dsub)dateFinReelle=dsub.expires_at;
+              }
+            }
+          }catch(e){}
           state.planId=null;
           state.pendingPlanId=null;
           state.pendingRef=null;
-          state.payStatus='rejected';
+          state.payStatus=dernierPaiementConfirme?'confirmed':'rejected';
           state.startDate=null;
-          state.endDate=new Date(Date.now()-1000).toISOString();
+          state.endDate=dernierPaiementConfirme?(dateFinReelle||new Date(Date.now()-1000).toISOString()):null;
           changed=true;
         }
       }
@@ -7993,14 +8046,42 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
   /* ---- Notifications : construites a partir de l'etat REEL du compte ----
      Les evenements poussees (changement de plan) sont conserves ;
      les evenements deductibles (fin de plan, rappel, fiches du jour,
-     resultats) sont recalcules a chaque affichage. */
-  const NKEY='vipbetcote.notifs.v1';
+     resultats) sont recalcules a chaque affichage.
+     CORRECTIF IMPORTANT : la cle de stockage locale doit etre PROPRE A
+     CHAQUE COMPTE. Avant ce correctif, une seule cle globale etait
+     partagee par tous les comptes utilises sur le meme appareil — un
+     nouvel inscrit voyait donc l'historique de notifications de tous
+     les comptes testes precedemment sur ce meme telephone/navigateur.
+     La cle inclut maintenant l'identifiant reel du compte (supabaseUserId,
+     ou l'e-mail avant connexion). pushed/lus sont rechargees a chaque
+     ouverture du Dashboard (voir rechargerNotifsLocales), jamais lues
+     une seule fois au chargement de la page. */
+  function nkeyPourCompte(){
+    // Appelle directement window.VB_getState (et non le 'getState' local,
+    // defini plus bas dans ce meme fichier) : cette fonction est invoquee
+    // des l'initialisation du module, avant que la constante locale
+    // 'getState' n'existe encore.
+    const st=window.VB_getState?window.VB_getState():null;
+    const id=(st&&(st.supabaseUserId||st.email))||'anon';
+    return 'vipbetcote.notifs.v1.'+String(id).toLowerCase();
+  }
+  let NKEY=nkeyPourCompte();
   let pushed=[];
   try{pushed=JSON.parse(localStorage.getItem(NKEY))||[];}catch(e){pushed=[];}
   const savePushed=()=>{try{localStorage.setItem(NKEY,JSON.stringify(pushed.slice(0,20)));}catch(e){}};
   let lus={};
   try{lus=JSON.parse(localStorage.getItem(NKEY+'.lus'))||{};}catch(e){lus={};}
   const saveLus=()=>{try{localStorage.setItem(NKEY+'.lus',JSON.stringify(lus));}catch(e){}};
+  // Recharge pushed/lus depuis la cle du compte REELLEMENT connecte a cet
+  // instant — a appeler a chaque ouverture du Dashboard (les comptes
+  // peuvent changer sans recharger la page).
+  function rechargerNotifsLocales(){
+    const nouvelleCle=nkeyPourCompte();
+    if(nouvelleCle===NKEY)return;
+    NKEY=nouvelleCle;
+    try{pushed=JSON.parse(localStorage.getItem(NKEY))||[];}catch(e){pushed=[];}
+    try{lus=JSON.parse(localStorage.getItem(NKEY+'.lus'))||{};}catch(e){lus={};}
+  }
 
   function ilYA(ts){
     const min=Math.floor((Date.now()-ts)/60000);
@@ -8085,11 +8166,12 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
   /* ---- Rendu d'une fiche ---- */
   const isExpired=()=>!!(window.VB_isExpired&&window.VB_isExpired());
   const isPending=()=>!!(window.VB_isPending&&window.VB_isPending());
+  const isRejected=()=>!!(window.VB_isRejected&&window.VB_isRejected());
 
   function ticketEl(tk){
     // Abonnement expire : TOUTES les fiches sont verrouillees,
     // quel que soit le plan detenu.
-    const locked=isExpired()||isPending()||tk.minPlan>userRank();
+    const locked=isExpired()||isPending()||isRejected()||tk.minPlan>userRank();
     const el=document.createElement('article');
     el.className='dtk'+(locked?' locked':'');
 
@@ -8185,7 +8267,7 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
   }
 
   function scoreCardEl(){
-    const locked=isExpired()||isPending()||SCORE_MIN_PLAN>userRank();
+    const locked=isExpired()||isPending()||isRejected()||SCORE_MIN_PLAN>userRank();
     const liste=scoresDuJour();
     const el=document.createElement('article');
     el.className='dtk'+(locked?' locked':'');
@@ -8224,16 +8306,17 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
       const needName=needPlan?String(t(needPlan.nameKey)).replace(/<[^>]*>/g,''):'';
       const exp=isExpired();
       const pend=isPending();
+      const rej=isRejected();
       const icon=pend
         ?'<svg class="ic" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>'
         :'<svg class="ic" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>';
       ov.innerHTML=icon+
-        (pend||exp?'':'<span class="dtk-need">'+t('dash_need_plan')+' <b>'+needName+'</b></span>')+
-        '<p>'+t(pend?'dash_pending_ov_p':(exp?'dash_expired_p':'dash_locked_p'))+'</p>';
+        (pend||exp||rej?'':'<span class="dtk-need">'+t('dash_need_plan')+' <b>'+needName+'</b></span>')+
+        '<p>'+t(pend?'dash_pending_ov_p':(rej?'dash_rejected_ov_p':(exp?'dash_expired_p':'dash_locked_p')))+'</p>';
       if(!pend){
         const b=document.createElement('button');
         b.type='button';b.className='btn btn-or';
-        b.textContent=exp?t('dash_expired_cta'):t('dash_locked_cta').replace('{plan}',needName);
+        b.textContent=rej?t('dash_activate_cta'):(exp?t('dash_expired_cta'):t('dash_locked_cta').replace('{plan}',needName));
         b.addEventListener('click',()=>{closeDash();if(window.VB_openWizardPay)window.VB_openWizardPay();});
         ov.appendChild(b);
       }
@@ -8387,8 +8470,9 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
     const stateEl=document.getElementById('dashSubState');
     const exp=isExpired();
     const pend=isPending();
-    stateEl.textContent=t(pend?'dash_sub_pending':(exp?'dash_sub_expired':'dash_sub_active'));
-    stateEl.classList.toggle('is-expired',exp&&!pend);
+    const rej=isRejected();
+    stateEl.textContent=t(pend?'dash_sub_pending':(rej?'dash_sub_rejected':(exp?'dash_sub_expired':'dash_sub_active')));
+    stateEl.classList.toggle('is-expired',(exp||rej)&&!pend);
     stateEl.classList.toggle('is-pending',pend);
     // Lifetime : aucune option de renouvellement n'apparait.
     // Pendant l'attente de validation : rien a payer de plus non plus.
@@ -8396,7 +8480,9 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
     const changementEnAttente=!!st.pendingPlanId;
     const upg=document.getElementById('dashSubUpgrade');
     upg.hidden=life||pend||changementEnAttente;
-    upg.textContent=t(exp?'dash_expired_cta':'dash_sub_upgrade');
+    // CORRECTIF : "Activer mon plan" pour qui n'a jamais ete confirme,
+    // "Renouveler" seulement pour un plan reellement expire.
+    upg.textContent=t(rej?'dash_activate_cta':(exp?'dash_expired_cta':'dash_sub_upgrade'));
     const pl=(window.VB_planById?window.VB_planById(st.planId):null);
     document.getElementById('dashSubName').textContent=pl?String(t(pl.nameKey)).replace(/<[^>]*>/g,''):'—';
     document.getElementById('dashSubPrix').textContent=pl?money(pl.prix)+' HTG':'—';
@@ -8618,6 +8704,10 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
     const logo=document.querySelector('.logo-mark-img img');
     const dl=document.getElementById('dashLogo');
     if(logo&&logo.src&&!dl.getAttribute('src'))dl.src=logo.src;
+    // CORRECTIF : recharger les notifications locales AVANT tout rendu,
+    // au cas ou le compte connecte a change depuis le dernier chargement
+    // de la page (sinon la liste du compte precedent resterait affichee).
+    rechargerNotifsLocales();
     dash.classList.add('open');
     dash.scrollTop=0;
     document.body.style.overflow='hidden';
