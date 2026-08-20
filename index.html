@@ -3741,6 +3741,7 @@ details p{font-size:15.5px;line-height:1.72;color:#CBD8E4}
       </div>
       <span class="field-err" id="mfaEnrollErr" style="display:none;text-align:center;margin-bottom:14px" data-i18n="mfa_err_code">Kòd la pa kòrèk</span>
       <button type="button" class="btn btn-or" id="mfaEnrollSubmit" style="width:100%" data-i18n="mfa_btn_activate">Aktive 2FA</button>
+      <button type="button" class="btn-link" id="mfaEnrollBack" style="width:100%;margin-top:8px" data-i18n="auth_back">Retounen</button>
     </div>
     <div class="mfa-stage" data-mfa="challenge" hidden>
       <h3 data-i18n="mfa_challenge_h">Verifikasyon an 2 etap</h3>
@@ -10546,7 +10547,11 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
         body:JSON.stringify({email:email})
       });
       const data=await resp.json().catch(()=>({}));
-      if(!resp.ok)return {ok:false, erreur:(data&&data.error)||('HTTP '+resp.status)};
+      if(!resp.ok){
+        const base=(data&&data.error)||('HTTP '+resp.status);
+        const detail=(data&&data.detail)?(typeof data.detail==='string'?data.detail:JSON.stringify(data.detail)):'';
+        return {ok:false, erreur:detail?(base+' — '+detail):base};
+      }
       return {ok:true};
     }catch(e){
       return {ok:false, erreur:(e&&e.message)?e.message:String(e)};
@@ -10980,6 +10985,22 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
     const sb=window.VB_getSupabase&&window.VB_getSupabase();
     if(!sb||!onSuccessCourant)return;
     if(window.VB_handleAdminMFA)await window.VB_handleAdminMFA(onSuccessCourant,emailCourant,adminIdCourant,seSouvenirCourant);
+  });
+
+  /* Bouton retour de l'etape 'enroll' : jusqu'ici seule etape sans aucun
+     moyen d'annuler. Nettoie le facteur TOTP 'unverified' que
+     ouvrirInscription vient de creer (best-effort, jamais bloquant —
+     le nettoyage automatique au prochain essai s'en chargerait de toute
+     facon), puis referme l'overlay SANS appeler onSuccessCourant : ce
+     n'est pas une activation reussie, la personne peut reessayer plus
+     tard depuis Parametres. */
+  document.getElementById('mfaEnrollBack').addEventListener('click',async()=>{
+    const sb=window.VB_getSupabase&&window.VB_getSupabase();
+    if(sb&&factorIdCourant){
+      try{await sb.auth.mfa.unenroll({factorId:factorIdCourant});}catch(e){}
+    }
+    factorIdCourant=null;
+    hideOverlay();
   });
 
   document.getElementById('mfaEnrollSubmit').addEventListener('click',async()=>{
