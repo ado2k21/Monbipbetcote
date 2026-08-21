@@ -4702,6 +4702,7 @@ auth_taken_h:"Cette adresse e-mail est déjà enregistrée",
 auth_taken_sub:"Un compte existe déjà avec cet e-mail. Rendez-vous sur la page de connexion pour y accéder.",
 auth_suspended_h:"Compte suspendu",
 auth_suspended_p:"Ce compte est actuellement suspendu. Contactez le service client pour plus d'informations.",
+auth_suspended_reason_p:"Votre compte a été suspendu pour : {reason}. Veuillez contacter le service client !",
 mfa_enroll_h:"Sécurisez votre compte admin",
 mfa_enroll_p:"Scannez ce code QR avec Google Authenticator (ou une application similaire), puis entrez le code à 6 chiffres pour l'activer.",
 mfa_challenge_h:"Vérification en 2 étapes",
@@ -5080,6 +5081,7 @@ auth_taken_h:"This email address is already registered",
 auth_taken_sub:"An account already exists with this email. Head to the login page to sign in.",
 auth_suspended_h:"Account suspended",
 auth_suspended_p:"This account is currently suspended. Contact customer support for more information.",
+auth_suspended_reason_p:"Your account has been suspended for: {reason}. Please contact customer support!",
 mfa_enroll_h:"Secure your admin account",
 mfa_enroll_p:"Scan this QR code with Google Authenticator (or a similar app), then enter the 6-digit code to activate it.",
 mfa_challenge_h:"Two-step verification",
@@ -5458,6 +5460,7 @@ auth_taken_h:"Imèl sa a deja anrejistre",
 auth_taken_sub:"Gen yon kont ki deja gen imèl sa a. Ale nan paj koneksyon an pou w antre.",
 auth_suspended_h:"Kont sispann",
 auth_suspended_p:"Kont sa a sispann pou kounye a. Kontakte sèvis kliyan pou plis enfòmasyon.",
+auth_suspended_reason_p:"Kont ou sispann pou: {reason}. Tanpri kontakte sèvis kliyan!",
 mfa_enroll_h:"Sekirize kont admin ou",
 mfa_enroll_p:"Eskane kòd QR sa a ak Google Authenticator (oswa yon app similè), epi antre kòd 6 chif la pou aktive li.",
 mfa_challenge_h:"Verifikasyon an 2 etap",
@@ -6982,7 +6985,9 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
         body:JSON.stringify({email:pwr.email, code:pwr.code, newPassword:np.value})
       });
       const data=await resp.json().catch(()=>({}));
-      confirmRes=resp.ok?{ok:true}:{ok:false, erreur:(data&&data.error)||'erreur'};
+      confirmRes=resp.ok
+        ?{ok:true, suspended:!!(data&&data.suspended), suspendedReason:(data&&data.suspendedReason)||null}
+        :{ok:false, erreur:(data&&data.error)||'erreur'};
     }catch(e){
       confirmRes={ok:false, erreur:e.message};
     }
@@ -7010,28 +7015,60 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
       if(state.email&&state.email.toLowerCase()===pwr.email.toLowerCase())
         {state.pass=acc.pass;save();}
     }
-    /* Apres un changement de mot de passe reussi : si ce compte a deja une
-       inscription complete (paiement reussi), on ouvre directement le
-       dashboard — inutile de faire retaper le nouveau mot de passe a
-       quelqu'un qui vient de le prouver a l'instant. Vrai quel que soit
-       le point d'entree (page de connexion ou depuis le dashboard). */
-    const compteComplet=isComplete(acc);
+    const emailReset=pwr.email, mdpReset=np.value;
     pwr={stage:'mail',email:'',code:null,verified:false,origin:'login'};
     leavePwReset();
-    if(window.VB_toast)window.VB_toast('pwr_toast_h',t('pwr_toast_p'));
-    if(compteComplet){
-      state=Object.assign(blank(),{
-        step:4, started:false, fullname:acc.fullname, email:acc.email, pass:acc.pass,
-        site:acc.site||'paryajpam',
-        planId:acc.planId, emailVerified:true, paid:true, payMethod:acc.payMethod,
-        startDate:acc.startDate, endDate:acc.endDate, ref:acc.ref
-      });
-      save();
-      closeAuth();
-      requestAnimationFrame(()=>{if(window.VB_openDash)window.VB_openDash();});
-    }else{
+
+    /* Compte suspendu : le mot de passe est bien change (utile pour plus
+       tard), mais jamais de dashboard, jamais de session ouverte — la
+       suspension est prioritaire sur tout, meme juste apres une preuve
+       d'identite reussie. Verification faite CE SERVEUR au moment de
+       confirm-password-reset (jamais devinee cote client). */
+    if(confirmRes.suspended){
+      if(window.VB_toast)window.VB_toast('auth_suspended_h', confirmRes.suspendedReason?t('auth_suspended_reason_p').replace('{reason}',confirmRes.suspendedReason):t('auth_suspended_p'));
       showMode('login');
+      return;
     }
+
+    if(window.VB_toast)window.VB_toast('pwr_toast_h',t('pwr_toast_p'));
+
+    /* Plus jamais d'ouverture de dashboard a partir du seul cache local :
+       une VRAIE session Supabase est etablie ici, avec le mot de passe
+       qui vient d'etre prouve. Sans cette vraie session, les donnees
+       protegees par la RLS (abonnement, fiches) ne se chargeraient de
+       toute facon jamais correctement — ce correctif est donc aussi une
+       correction fonctionnelle, pas seulement une correction de securite. */
+    const acc2=accounts.find(emailReset.toLowerCase());
+    const compteComplet=isComplete(acc2);
+    if(!compteComplet){
+      showMode('login');
+      return;
+    }
+    const sbReset=window.VB_getSupabase&&window.VB_getSupabase();
+    let sessionOk=false;
+    if(sbReset){
+      try{
+        const {data:sdata,error:serr}=await sbReset.auth.signInWithPassword({email:emailReset, password:mdpReset});
+        sessionOk=!serr&&sdata&&sdata.user;
+        if(sessionOk&&window.VB_demarrerSurveillanceSuspension)window.VB_demarrerSurveillanceSuspension(sdata.user.id);
+      }catch(e){}
+    }
+    if(!sessionOk){
+      // Reseau indisponible au moment precis de la reconnexion : on
+      // n'ouvre jamais le dashboard sans session reelle, on renvoie
+      // simplement vers l'ecran de connexion avec le nouveau mot de passe.
+      showMode('login');
+      return;
+    }
+    state=Object.assign(blank(),{
+      step:4, started:false, fullname:acc2.fullname, email:acc2.email, pass:acc2.pass,
+      site:acc2.site||'paryajpam',
+      planId:acc2.planId, emailVerified:true, paid:true, payMethod:acc2.payMethod,
+      startDate:acc2.startDate, endDate:acc2.endDate, ref:acc2.ref
+    });
+    save();
+    closeAuth();
+    requestAnimationFrame(()=>{if(window.VB_openDash)window.VB_openDash();});
   });
 
   document.getElementById('pwrCancel').addEventListener('click',()=>{
@@ -7126,7 +7163,7 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
           let profil=null;
           try{
             const {data:prof}=await sb.from('profiles')
-              .select('role,username,suspended_at').eq('id',data.user.id).single();
+              .select('role,username,suspended_at,suspended_reason').eq('id',data.user.id).single();
             profil=prof;
             if(prof&&prof.role)role=prof.role;
           }catch(e){}
@@ -7136,9 +7173,10 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
              active, meme brievement. */
           if(profil&&profil.suspended_at){
             try{await sb.auth.signOut();}catch(e){}
-            if(window.VB_toast)window.VB_toast('auth_suspended_h',t('auth_suspended_p'));
+            if(window.VB_toast)window.VB_toast('auth_suspended_h', profil.suspended_reason?t('auth_suspended_reason_p').replace('{reason}',profil.suspended_reason):t('auth_suspended_p'));
             return;
           }
+          if(window.VB_demarrerSurveillanceSuspension)window.VB_demarrerSurveillanceSuspension(data.user.id);
           if(role==='admin'){
             // Le 2FA est OBLIGATOIRE pour un compte admin : jamais
             // contourne, jamais facultatif. L'ouverture du tableau de
@@ -9417,20 +9455,31 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
     }
   }
 
-  /* Suspension / reactivation : bloque uniquement la CONNEXION (verifie
-     cote client des la reponse Supabase — voir le formulaire de
-     connexion). N'efface jamais l'historique ni l'abonnement. */
+  /* Suspension / reactivation : appelle une fonction serveur atomique
+     (admin_suspend_user / admin_reactivate_user) plutot que d'ecrire
+     directement dans 'profiles'. Cette fonction, cote base de donnees :
+       - verifie elle-meme que l'appelant est admin (jamais confiance au
+         client) ;
+       - met a jour profiles ET met en pause / reprend l'abonnement actif
+         dans la MEME operation, pour qu'aucun etat intermediaire
+         incoherent ne soit jamais visible (jamais un profil suspendu
+         avec un abonnement encore 'active', meme une fraction de
+         seconde) ;
+       - a la reactivation, recalcule expires_at en ajoutant le temps de
+         pause ecoule, pour ne jamais faire perdre un seul jour paye.
+     Le blocage reel de connexion vient desormais de la RLS + de l'ecoute
+     Realtime (voir tenterRestaurationSession et l'abonnement Realtime
+     plus bas), plus seulement d'une verification au moment du login. */
   async function suspendreUtilisateur(u,suspendre,raison){
     const sb=window.VB_getSupabase&&window.VB_getSupabase();
     if(!sb)return;
     const btn=document.getElementById('admUserSuspendBtn');
     if(btn)btn.disabled=true;
     try{
-      const maj=suspendre
-        ?{suspended_at:new Date().toISOString(), suspended_by:(currentUser&&currentUser.id)||null, suspended_reason:raison||null}
-        :{suspended_at:null, suspended_by:null, suspended_reason:null};
-      const {error:majErr}=await sb.from('profiles').update(maj).eq('id',u.id);
-      if(majErr)throw majErr;
+      const {error:rpcErr}=suspendre
+        ?await sb.rpc('admin_suspend_user',{target_id:u.id, reason:raison||null})
+        :await sb.rpc('admin_reactivate_user',{target_id:u.id});
+      if(rpcErr)throw rpcErr;
       try{
         await sb.from('audit_log').insert({
           admin_id:(currentUser&&currentUser.id)||null,
@@ -11253,6 +11302,54 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
    Reessayable : le script Supabase (CDN, differe) peut ne pas encore
    etre pret au tout premier appel — meme filet de securite que celui
    deja utilise pour le client Supabase lui-meme. */
+/* ---------- Surveillance en direct de la suspension ----------
+   Sans ca, un onglet deja ouvert au moment ou l'admin suspend le compte
+   resterait actif jusqu'au prochain F5 — c'est le bug corrige ici. Deux
+   mecanismes complementaires :
+     - Realtime Supabase : ecoute en direct les changements sur SA
+        PROPRE ligne profiles (protege par la RLS existante — personne
+        ne peut ecouter la ligne d'un autre). Des que suspended_at
+        change, deconnexion immediate, sans attendre quoi que ce soit.
+     - Sondage de secours toutes les 60s : si jamais la connexion
+        Realtime tombe (reseau instable, veille mobile...), le compte
+        est quand meme repere suspendu au plus tard 1 minute apres,
+        jamais indefiniment. */
+let vbSuspensionChannel=null, vbSuspensionPoll=null;
+function vbArreterSurveillanceSuspension(){
+  if(vbSuspensionChannel){
+    try{const sb=window.VB_getSupabase&&window.VB_getSupabase();if(sb)sb.removeChannel(vbSuspensionChannel);}catch(e){}
+    vbSuspensionChannel=null;
+  }
+  if(vbSuspensionPoll){clearInterval(vbSuspensionPoll);vbSuspensionPoll=null;}
+}
+async function vbDeconnexionPourSuspension(reason){
+  vbArreterSurveillanceSuspension();
+  const sb=window.VB_getSupabase&&window.VB_getSupabase();
+  try{if(sb)await sb.auth.signOut();}catch(e){}
+  if(window.VB_toast)window.VB_toast('auth_suspended_h', reason?t('auth_suspended_reason_p').replace('{reason}',reason):t('auth_suspended_p'));
+  try{window.location.href='/';}catch(e){}
+}
+function vbDemarrerSurveillanceSuspension(userId){
+  vbArreterSurveillanceSuspension();
+  const sb=window.VB_getSupabase&&window.VB_getSupabase();
+  if(!sb||!userId)return;
+  try{
+    vbSuspensionChannel=sb.channel('profile-suspension-'+userId)
+      .on('postgres_changes',{event:'UPDATE',schema:'public',table:'profiles',filter:'id=eq.'+userId},payload=>{
+        const nv=payload&&payload.new;
+        if(nv&&nv.suspended_at)vbDeconnexionPourSuspension(nv.suspended_reason);
+      })
+      .subscribe();
+  }catch(e){}
+  vbSuspensionPoll=setInterval(async()=>{
+    try{
+      const {data:prof}=await sb.from('profiles').select('suspended_at,suspended_reason').eq('id',userId).single();
+      if(prof&&prof.suspended_at)vbDeconnexionPourSuspension(prof.suspended_reason);
+    }catch(e){}
+  },60000);
+}
+window.VB_demarrerSurveillanceSuspension=vbDemarrerSurveillanceSuspension;
+
 let dejaRestaure=false;
 async function tenterRestaurationSession(){
   if(dejaRestaure)return;   // jamais deux fois : la 2e tentative ne fait rien si la 1re a reussi
@@ -11268,15 +11365,17 @@ async function tenterRestaurationSession(){
     let profil=null;
     try{
       const {data:prof}=await sb.from('profiles')
-        .select('role,suspended_at').eq('id',session.user.id).single();
+        .select('role,suspended_at,suspended_reason').eq('id',session.user.id).single();
       profil=prof;
     }catch(e){}
     if(profil&&profil.suspended_at){
       // Compte suspendu : aucune session active n'est jamais gardee,
       // meme retrouvee au chargement.
       try{await sb.auth.signOut();}catch(e){}
+      if(window.VB_toast)window.VB_toast('auth_suspended_h', profil.suspended_reason?t('auth_suspended_reason_p').replace('{reason}',profil.suspended_reason):t('auth_suspended_p'));
       return;
     }
+    if(window.VB_demarrerSurveillanceSuspension)window.VB_demarrerSurveillanceSuspension(session.user.id);
 
     if(profil&&profil.role==='admin'){
       // Un simple F5 pendant la meme visite ne redemande jamais le 2FA
