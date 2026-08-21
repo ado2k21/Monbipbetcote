@@ -7794,7 +7794,22 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
             // Le plan actif reel fait toujours foi. Un "pending" ne
             // compte comme changement en attente que s'il differe du
             // plan actif — sinon (meme plan) on l'ignore ici.
-            const changementUid=(pendUid&&pendUid.plan_id!==actifUid.plan_id)?pendUid.plan_id:null;
+            let changementUid=null;
+            if(pendUid&&pendUid.plan_id!==actifUid.plan_id){
+              // CORRECTIF : le statut de l'abonnement seul ne suffit jamais a
+              // decider d'afficher ce message — seul un PAIEMENT reellement
+              // 'pending' en base, pour ce meme plan, l'autorise. Sans cette
+              // verification, un abonnement reste "pending" alors que son
+              // paiement a deja ete confirme/refuse (incoherence deja
+              // rencontree) ferait reapparaitre ce message a tort, meme
+              // apres un refresh.
+              try{
+                const {data:payPendUid}=await sb.from('payments')
+                  .select('id').eq('user_id',state.supabaseUserId)
+                  .eq('status','pending').eq('plan_id',pendUid.plan_id).limit(1);
+                if(payPendUid&&payPendUid.length)changementUid=pendUid.plan_id;
+              }catch(e){}
+            }
             if(actifUid.plan_id!==state.planId||actifUid.starts_at!==state.startDate||
                actifUid.expires_at!==state.endDate||state.payStatus!=='confirmed'||
                state.pendingPlanId!==changementUid){
