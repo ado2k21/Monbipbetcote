@@ -1778,6 +1778,9 @@ footer{border-top:1px solid var(--ligne);padding:56px 0 36px;background:#030617}
 .wiz-done-ic.is-pending{
   background:rgba(201,164,76,.14);color:var(--or-clair);border-color:rgba(201,164,76,.42);
 }
+.is-suspended{
+  background:rgba(226,99,79,.14);color:#E2634F;border-color:rgba(226,99,79,.42);
+}
 .wiz-done h3{font-family:var(--display);font-size:21px;color:#F4F3ED}
 .wiz-done p{color:var(--gris);font-size:14px;max-width:340px;line-height:1.6}
 .wiz-done-sum{
@@ -4499,7 +4502,9 @@ dash_stats_bysport:"Par discipline",
 dash_stats_note:"Le taux de réussite porte sur les fiches ayant un résultat final. Les fiches en cours ne sont pas comptées. Les performances passées ne garantissent pas les résultats futurs.",
 dash_note:"Les scores de confiance sont une évaluation de notre équipe d'experts, pas une garantie. Les résultats passés ne garantissent jamais les résultats futurs. Jouez de façon responsable.",
 dash_sub_h:"Mon abonnement", dash_sub_p:"Détails de votre plan et de vos dates.",
-dash_sub_active:"Actif", dash_sub_pending:"En attente de validation", dash_sub_holder:"Titulaire", dash_sub_email:"E-mail", dash_sub_method:"Moyen de paiement",
+dash_sub_active:"Actif", dash_sub_pending:"En attente de validation",
+dash_sub_suspended:"Compte suspendu",
+dash_sub_msg_suspended:"Votre compte est suspendu pour : {reason}. Veuillez contacter le service client !", dash_sub_holder:"Titulaire", dash_sub_email:"E-mail", dash_sub_method:"Moyen de paiement",
 dash_pending_change_banner:"Vous avez un changement vers {plan} en attente de confirmation. Votre plan actuel reste actif jusqu'à cette confirmation.",
 dash_sub_left:"Temps restant", dash_sub_days:"{n} jour(s)", dash_sub_upgrade:"Changer ou renouveler mon plan",
 mk_btts_l:"Les deux équipes marquent", mk_over_l:"Plus / Moins de buts", mk_1x2_l:"1X2",
@@ -4878,7 +4883,9 @@ dash_stats_bysport:"By sport",
 dash_stats_note:"The success rate covers slips with a final result. Pending slips aren't counted. Past performance does not guarantee future results.",
 dash_note:"Confidence scores are an assessment by our expert team, not a guarantee. Past results never guarantee future ones. Please play responsibly.",
 dash_sub_h:"My plan", dash_sub_p:"Your plan details and dates.",
-dash_sub_active:"Active", dash_sub_pending:"Pending verification", dash_sub_holder:"Account holder", dash_sub_email:"Email", dash_sub_method:"Payment method",
+dash_sub_active:"Active", dash_sub_pending:"Pending verification",
+dash_sub_suspended:"Account suspended",
+dash_sub_msg_suspended:"Your account is suspended for: {reason}. Please contact customer support!", dash_sub_holder:"Account holder", dash_sub_email:"Email", dash_sub_method:"Payment method",
 dash_pending_change_banner:"You have a change to {plan} pending confirmation. Your current plan stays active until then.",
 dash_sub_left:"Time remaining", dash_sub_days:"{n} day(s)", dash_sub_upgrade:"Change or renew my plan",
 mk_btts_l:"Both teams to score", mk_over_l:"Over / Under goals", mk_1x2_l:"1X2",
@@ -5257,7 +5264,9 @@ dash_stats_bysport:"Pa disiplin",
 dash_stats_note:"To reyisit la kalkile sou fich ki gen yon rezilta final. Fich kap tann yo pa konte. Pèfòmans ki pase pa garanti rezilta kap vini.",
 dash_note:"Nòt konfyans yo se yon evalyasyon ekip ekspè nou an, se pa yon garanti. Rezilta ki pase pa janm garanti rezilta kap vini. Jwe ak responsablite.",
 dash_sub_h:"Abònman m", dash_sub_p:"Detay plan ou ak dat yo.",
-dash_sub_active:"Aktif", dash_sub_pending:"Ap tann validasyon", dash_sub_holder:"Titilè", dash_sub_email:"Imèl", dash_sub_method:"Mwayen peman",
+dash_sub_active:"Aktif", dash_sub_pending:"Ap tann validasyon",
+dash_sub_suspended:"Kont sispann",
+dash_sub_msg_suspended:"Kont ou sispann pou: {reason}. Tanpri kontakte sèvis kliyan!", dash_sub_holder:"Titilè", dash_sub_email:"Imèl", dash_sub_method:"Mwayen peman",
 dash_pending_change_banner:"Ou gen yon chanjman pou {plan} k ap tann konfimasyon. Plan aktyèl ou rete aktif jiskaske sa konfime.",
 dash_sub_left:"Tan ki rete", dash_sub_days:"{n} jou", dash_sub_upgrade:"Chanje oswa renouvle plan an",
 mk_btts_l:"De ekip yo make", mk_over_l:"Plis / Mwens gòl", mk_1x2_l:"1X2",
@@ -8288,7 +8297,7 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
 
   const getState=()=>(window.VB_getState?window.VB_getState():null);
   const userPlan=()=>{const st=getState();return st&&st.planId?st.planId:'p1';};
-  const userRank=()=>rank[userPlan()]||1;
+  const userRank=()=>(window.VB_estSuspendu&&window.VB_estSuspendu())?0:(rank[userPlan()]||1);
 
   /* ---- Rendu d'une fiche ---- */
   const isExpired=()=>!!(window.VB_isExpired&&window.VB_isExpired());
@@ -8598,9 +8607,31 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
     const exp=isExpired();
     const pend=isPending();
     const rej=isRejected();
-    stateEl.textContent=t(pend?'dash_sub_pending':(rej?'dash_sub_rejected':(exp?'dash_sub_expired':'dash_sub_active')));
-    stateEl.classList.toggle('is-expired',(exp||rej)&&!pend);
-    stateEl.classList.toggle('is-pending',pend);
+    const susp=!!(window.VB_estSuspendu&&window.VB_estSuspendu());
+    stateEl.textContent=t(susp?'dash_sub_suspended':(pend?'dash_sub_pending':(rej?'dash_sub_rejected':(exp?'dash_sub_expired':'dash_sub_active'))));
+    stateEl.classList.toggle('is-expired',(exp||rej)&&!pend&&!susp);
+    stateEl.classList.toggle('is-pending',pend&&!susp);
+    stateEl.classList.toggle('is-suspended',susp);
+    // Compte suspendu : etat prioritaire sur tout le reste. Aucune action
+    // de souscription/renouvellement/changement de plan n'est proposee,
+    // aucune information de plan n'est affichee comme active — jamais,
+    // meme si un plan etait actif au moment de la suspension (il est mis
+    // en pause cote serveur, voir admin_suspend_user).
+    if(susp){
+      document.getElementById('dashSubUpgrade').hidden=true;
+      document.querySelectorAll('.dash-sub-planblock').forEach(elB=>{elB.hidden=true;});
+      document.getElementById('dashSubNoPlan').hidden=true;
+      const bannerS=document.getElementById('dashPendingBanner');
+      const motif=(window.VB_suspensionMotif&&window.VB_suspensionMotif())||'';
+      document.getElementById('dashPendingBannerTxt').textContent=
+        motif?t('dash_sub_msg_suspended').replace('{reason}',motif):t('auth_suspended_p');
+      bannerS.hidden=false;
+      document.getElementById('dashSubHolder').textContent=st.fullname||'—';
+      document.getElementById('dashSubEmail').textContent=st.email||'—';
+      const wrapS=document.getElementById('dashSubProgWrap');
+      if(wrapS)wrapS.style.display='none';
+      return;
+    }
     // Lifetime : aucune option de renouvellement n'apparait.
     // Pendant l'attente de validation : rien a payer de plus non plus.
     const life=!!(window.VB_isLifetime&&window.VB_isLifetime());
@@ -8940,6 +8971,7 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
   });
 
   window.VB_openDash=openDash;
+  window.VB_renderAll=renderAll;
 })();
 
 /* ================= DASHBOARD ADMIN ================= */
@@ -11315,6 +11347,9 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
         est quand meme repere suspendu au plus tard 1 minute apres,
         jamais indefiniment. */
 let vbSuspensionChannel=null, vbSuspensionPoll=null;
+let vbEstSuspendu=false, vbMotifSuspension='';
+window.VB_estSuspendu=()=>vbEstSuspendu;
+window.VB_suspensionMotif=()=>vbMotifSuspension;
 function vbArreterSurveillanceSuspension(){
   if(vbSuspensionChannel){
     try{const sb=window.VB_getSupabase&&window.VB_getSupabase();if(sb)sb.removeChannel(vbSuspensionChannel);}catch(e){}
@@ -11323,6 +11358,15 @@ function vbArreterSurveillanceSuspension(){
   if(vbSuspensionPoll){clearInterval(vbSuspensionPoll);vbSuspensionPoll=null;}
 }
 async function vbDeconnexionPourSuspension(reason){
+  // Verrou IMMEDIAT, synchrone, avant tout appel reseau : le dashboard
+  // (s'il est ouvert) doit refleter la suspension a l'instant, sans
+  // attendre la fin de la deconnexion Supabase ni un refresh. C'est ce
+  // qui masque les cotes deja chargees en memoire et fait apparaitre la
+  // banniere avec le motif reel dans "Mon Abonnement" avant meme que la
+  // navigation vers l'accueil ne se produise.
+  vbEstSuspendu=true;
+  vbMotifSuspension=reason||'';
+  if(window.VB_renderAll)try{window.VB_renderAll();}catch(e){}
   vbArreterSurveillanceSuspension();
   const sb=window.VB_getSupabase&&window.VB_getSupabase();
   try{if(sb)await sb.auth.signOut();}catch(e){}
