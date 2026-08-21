@@ -9675,14 +9675,50 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
         :'');
 
     if(p.status==='pending'&&!(u&&u.suspended_at)){
-      document.getElementById('admPayValider').addEventListener('click',function(){
+      document.getElementById('admPayValider').addEventListener('click',async function(){
+        // Verification fraiche, au moment du clic : le bouton peut etre
+        // reste actif si la fiche a ete ouverte AVANT la suspension du
+        // compte. Sans ca, le clic finirait par heurter le garde-fou de
+        // l'abonnement (guard 'plus en attente') avec un message
+        // trompeur, au lieu du vrai motif (compte suspendu). La boite de
+        // confirmation oui/non ne doit meme pas apparaitre dans ce cas.
+        const encoreSuspendu=await (async()=>{
+          try{
+            const sbFresh=window.VB_getSupabase&&window.VB_getSupabase();
+            if(!sbFresh)return false;
+            const {data:profFresh}=await sbFresh.from('profiles')
+              .select('suspended_at').eq('id',p.user_id).single();
+            return !!(profFresh&&profFresh.suspended_at);
+          }catch(e){return false;}
+        })();
+        if(encoreSuspendu){
+          const errS=document.getElementById('admPayActionErr');
+          errS.textContent=t('adm_pay_blocked_suspended');
+          errS.style.display='block';
+          return;
+        }
         demanderConfirmation(this,t('adm_confirm_q_valider'),()=>traiterPaiement(p,'confirmed'));
       });
-      document.getElementById('admPayRefuser').addEventListener('click',function(){
+      document.getElementById('admPayRefuser').addEventListener('click',async function(){
         const raison=(document.getElementById('admPayReason').value||'').trim();
         const err=document.getElementById('admPayActionErr');
         if(!raison){err.textContent=t('adm_pay_reason_required');err.style.display='block';return;}
         err.style.display='none';
+        // Meme verification fraiche que pour "Confirmer", voir ci-dessus.
+        const encoreSuspendu=await (async()=>{
+          try{
+            const sbFresh=window.VB_getSupabase&&window.VB_getSupabase();
+            if(!sbFresh)return false;
+            const {data:profFresh}=await sbFresh.from('profiles')
+              .select('suspended_at').eq('id',p.user_id).single();
+            return !!(profFresh&&profFresh.suspended_at);
+          }catch(e){return false;}
+        })();
+        if(encoreSuspendu){
+          err.textContent=t('adm_pay_blocked_suspended');
+          err.style.display='block';
+          return;
+        }
         demanderConfirmation(this,t('adm_confirm_q_refuser'),()=>traiterPaiement(p,'rejected',raison));
       });
     }
