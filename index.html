@@ -4688,6 +4688,7 @@ adm_pay_reason_h:"Raison du refus", adm_pay_action_h:"Décision",
 adm_pay_reason_lbl:"Raison (obligatoire si refus)", adm_pay_reason_ph:"Ex. : référence introuvable, montant incorrect...",
 adm_pay_valider:"Valider", adm_pay_refuser:"Refuser",
 adm_pay_reason_required:"Une raison est obligatoire pour refuser un paiement.",
+adm_pay_blocked_suspended:"Ce compte est suspendu : aucune décision (confirmer ou refuser) n'est possible tant que le compte reste suspendu. Réactivez d'abord le compte.",
 adm_pay_action_error:"Action impossible. Vérifiez la connexion et réessayez.",
 adm_pay_toast_confirmed_h:"Paiement validé", adm_pay_toast_confirmed_p:"L'abonnement est désormais actif.",
 adm_pay_toast_rejected_h:"Paiement refusé", adm_pay_toast_rejected_p:"L'utilisateur verra la raison du refus.",
@@ -5069,6 +5070,7 @@ adm_pay_reason_h:"Reason for rejection", adm_pay_action_h:"Decision",
 adm_pay_reason_lbl:"Reason (required if rejecting)", adm_pay_reason_ph:"E.g.: reference not found, wrong amount...",
 adm_pay_valider:"Approve", adm_pay_refuser:"Reject",
 adm_pay_reason_required:"A reason is required to reject a payment.",
+adm_pay_blocked_suspended:"This account is suspended: no decision (confirm or reject) is possible while the account remains suspended. Reactivate the account first.",
 adm_pay_action_error:"Action failed. Check your connection and try again.",
 adm_pay_toast_confirmed_h:"Payment approved", adm_pay_toast_confirmed_p:"The subscription is now active.",
 adm_pay_toast_rejected_h:"Payment rejected", adm_pay_toast_rejected_p:"The user will see the rejection reason.",
@@ -5450,6 +5452,7 @@ adm_pay_reason_h:"Rezon refi a", adm_pay_action_h:"Desizyon",
 adm_pay_reason_lbl:"Rezon (obligatwa si refi)", adm_pay_reason_ph:"Egz. : referans pa jwenn, move montan...",
 adm_pay_valider:"Valide", adm_pay_refuser:"Refize",
 adm_pay_reason_required:"Yon rezon obligatwa pou refize yon peman.",
+adm_pay_blocked_suspended:"Kont sa a sispann : pa gen okenn desizyon (konfime oswa refize) posib pandan kont lan sispann. Reyaktive kont lan anvan.",
 adm_pay_action_error:"Aksyon an echwe. Verifye koneksyon an epi eseye ankò.",
 adm_pay_toast_confirmed_h:"Peman valide", adm_pay_toast_confirmed_p:"Abònman an aktif kounye a.",
 adm_pay_toast_rejected_h:"Peman refize", adm_pay_toast_rejected_p:"Itilizatè a ap wè rezon refi a.",
@@ -9645,15 +9648,18 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
         :'')+
       (p.status==='pending'?
         '<div class="admdash-section-h">'+t('adm_pay_action_h')+'</div>'+
+        (u&&u.suspended_at?
+          '<div class="field-err" style="display:block;margin-bottom:12px">'+t('adm_pay_blocked_suspended')+'</div>'
+          :'')+
         '<label class="field"><span class="field-lbl">'+t('adm_pay_reason_lbl')+'</span>'+
-        '<textarea id="admPayReason" placeholder="'+t('adm_pay_reason_ph')+'"></textarea></label>'+
+        '<textarea id="admPayReason" placeholder="'+t('adm_pay_reason_ph')+'"'+(u&&u.suspended_at?' disabled':'')+'></textarea></label>'+
         '<div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap">'+
-        '<button type="button" class="btn btn-confirm" id="admPayValider" style="flex:1">'+t('adm_pay_valider')+'</button>'+
-        '<button type="button" class="btn btn-reject" id="admPayRefuser" style="flex:1">'+t('adm_pay_refuser')+'</button>'+
+        '<button type="button" class="btn btn-confirm" id="admPayValider" style="flex:1"'+(u&&u.suspended_at?' disabled':'')+'>'+t('adm_pay_valider')+'</button>'+
+        '<button type="button" class="btn btn-reject" id="admPayRefuser" style="flex:1"'+(u&&u.suspended_at?' disabled':'')+'>'+t('adm_pay_refuser')+'</button>'+
         '</div><div id="admPayActionErr" class="field-err" style="display:none;margin-top:8px"></div>'
         :'');
 
-    if(p.status==='pending'){
+    if(p.status==='pending'&&!(u&&u.suspended_at)){
       document.getElementById('admPayValider').addEventListener('click',function(){
         demanderConfirmation(this,t('adm_confirm_q_valider'),()=>traiterPaiement(p,'confirmed'));
       });
