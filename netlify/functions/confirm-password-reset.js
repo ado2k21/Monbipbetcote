@@ -6,15 +6,26 @@
 // vrai changement de mot de passe sans passer par le systeme de lien
 // email natif de Supabase (qui casserait la coherence visuelle du site).
 //
-// v133 : ajoute la verification du statut de suspension (profiles.
-// suspended_at) APRES le changement de mot de passe reussi. Le mot de
-// passe est toujours change normalement (utile pour plus tard), mais la
-// reponse indique desormais au client si le compte est suspendu et avec
-// quel motif exact — pour que le mot de passe oublie ne puisse JAMAIS
-// servir a contourner une suspension. Cette verification est faite ICI,
-// cote serveur, jamais devinee ou recalculee cote navigateur.
+// v133 :
+//   - le code est desormais compare par HASH (jamais en clair), coherent
+//     avec confirm-signup-code.js ;
+//   - verrou a 5 tentatives maximum par code, meme principe que
+//     confirm-signup-code.js — au-dela, le code est refuse meme s'il
+//     finit par etre devine ;
+//   - conserve la verification de suspension ajoutee precedemment : le
+//     mot de passe est change normalement, mais la reponse indique au
+//     client si le compte est suspendu et avec quel motif, pour que le
+//     mot de passe oublie ne puisse jamais contourner une suspension.
 //
 // Variables d'environnement necessaires : SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+
+const crypto = require('crypto');
+
+const MAX_ATTEMPTS = 5;
+
+function hashCode(code) {
+  return crypto.createHash('sha256').update(code).digest('hex');
+}
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
@@ -41,13 +52,12 @@ exports.handler = async (event) => {
     }
     const emailNorm = email.trim().toLowerCase();
 
-    // Le code doit correspondre EXACTEMENT, pas deja utilise, pas expire.
-    // C'est la seule verification qui compte reellement — jamais celle
-    // du navigateur, qui pourrait etre contournee.
+    // Le code doit correspondre EXACTEMENT (par hash), pas deja utilise,
+    // pas expire. C'est la seule verification qui compte reellement —
+    // jamais celle du navigateur, qui pourrait etre contournee.
     const lookupUrl =
       `${SUPABASE_URL}/rest/v1/password_reset_codes` +
       `?email=eq.${encodeURIComponent(emailNorm)}` +
-      `&code=eq.${encodeURIComponent(code)}` +
       `&used=eq.false&order=created_at.desc&limit=1`;
     const lookupResp = await fetch(lookupUrl, {
       headers: { apikey: SUPABASE_SERVICE_ROLE_KEY, Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}` }
@@ -63,6 +73,26 @@ exports.handler = async (event) => {
     }
     if (new Date(row.expires_at).getTime() < Date.now()) {
       return { statusCode: 400, body: JSON.stringify({ error: 'code_expire' }) };
+    }
+    if ((row.attempts || 0) >= MAX_ATTEMPTS) {
+      return { statusCode: 429, body: JSON.stringify({ error: 'trop_de_tentatives' }) };
+    }
+    if (hashCode(code) !== row.code_hash) {
+      // On compte la tentative ratee, sans jamais reveler la difference
+      // entre "code inconnu" et "code expire" au-dela de ces deux cas.
+      try {
+        await fetch(`${SUPABASE_URL}/rest/v1/password_reset_codes?id=eq.${row.id}`, {
+          method: 'PATCH',
+          headers: {
+            apikey: SUPABASE_SERVICE_ROLE_KEY,
+            Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+            'Content-Type': 'application/json',
+            Prefer: 'return=minimal'
+          },
+          body: JSON.stringify({ attempts: (row.attempts || 0) + 1 })
+        });
+      } catch (e) {}
+      return { statusCode: 400, body: JSON.stringify({ error: 'code_invalide' }) };
     }
 
     // Retrouver le vrai compte Supabase Auth correspondant a cet email.
@@ -136,11 +166,6 @@ exports.handler = async (event) => {
           suspendedReason = prof.suspended_reason || null;
         }
       }
-      // Si cette lecture echoue pour une raison quelconque, on repond
-      // simplement suspended:false — le client fera de toute facon une
-      // vraie reconnexion Supabase juste apres, qui sera elle-meme
-      // bloquee par la verification normale si le compte est suspendu.
-      // Aucun risque de contournement silencieux.
     } catch (e) {}
 
     return { statusCode: 200, body: JSON.stringify({ ok: true, suspended, suspendedReason }) };

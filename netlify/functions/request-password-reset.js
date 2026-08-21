@@ -1,14 +1,29 @@
 // netlify/functions/request-password-reset.js
 //
 // Etape 1 du mot de passe oublie : genere un code a 6 chiffres CE SERVEUR,
-// le stocke dans password_reset_codes (jamais accessible au navigateur),
-// et l'envoie par e-mail via Resend. Le code n'est JAMAIS genere ni
-// verifie cote client — sinon n'importe qui pourrait reinitialiser le
-// mot de passe de n'importe quel compte en devinant simplement un email.
+// le stocke HACHE (jamais en clair) dans password_reset_codes, et l'envoie
+// par e-mail via Resend. Le code n'est JAMAIS genere ni verifie cote
+// client — sinon n'importe qui pourrait reinitialiser le mot de passe de
+// n'importe quel compte en devinant simplement un email.
+//
+// v133 : meme durcissement que request-signup-code.js —
+//   - limite anti-abus : 5 demandes maximum par email sur 15 minutes ;
+//   - le code est desormais stocke HACHE (SHA-256), jamais en clair,
+//     coherent avec signup_codes.
 //
 // Variables d'environnement necessaires :
 //   RESEND_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 //   (les 3 deja utilisees par les autres fonctions)
+
+const crypto = require('crypto');
+
+const CODE_TTL_MINUTES = 15;
+const MAX_CODES_PER_WINDOW = 5;
+const WINDOW_MINUTES = 15;
+
+function hashCode(code) {
+  return crypto.createHash('sha256').update(code).digest('hex');
+}
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
@@ -37,12 +52,25 @@ exports.handler = async (event) => {
     }
     const emailNorm = email.trim().toLowerCase();
 
+    // Anti-abus : trop de demandes recentes pour cette adresse ? Meme
+    // principe que signup_codes — sans cette limite, cette fonction peut
+    // etre marteler pour faire exploser la facture Resend ou pour tester
+    // en boucle quels emails ont un compte (voir plus bas).
+    const fenetre = new Date(Date.now() - WINDOW_MINUTES * 60000).toISOString();
+    const countUrl =
+      `${SUPABASE_URL}/rest/v1/password_reset_codes?select=id` +
+      `&email=eq.${encodeURIComponent(emailNorm)}` +
+      `&created_at=gte.${encodeURIComponent(fenetre)}&limit=${MAX_CODES_PER_WINDOW + 1}`;
+    const countResp = await fetch(countUrl, {
+      headers: { apikey: SUPABASE_SERVICE_ROLE_KEY, Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}` }
+    });
+    const countRows = countResp.ok ? await countResp.json() : [];
+    if (countRows.length >= MAX_CODES_PER_WINDOW) {
+      return { statusCode: 429, body: JSON.stringify({ error: 'trop_de_demandes' }) };
+    }
+
     // Le compte doit reellement exister cote Supabase Auth (Admin API) —
     // sinon on ne cree jamais de code pour un email qui n'a pas de compte.
-    // Le filtre "?email=..." de l'API Admin Supabase n'est pas garanti
-    // dans toutes les versions — on lit la liste complete (large page, le
-    // volume de comptes reste modeste pour ce projet) et on cherche
-    // nous-memes, plutot que de dependre d'un comportement incertain.
     const usersResp = await fetch(
       `${SUPABASE_URL}/auth/v1/admin/users?per_page=1000`,
       { headers: { apikey: SUPABASE_SERVICE_ROLE_KEY, Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}` } }
@@ -57,9 +85,11 @@ exports.handler = async (event) => {
       return { statusCode: 404, body: JSON.stringify({ error: 'compte introuvable' }) };
     }
 
-    // Code a 6 chiffres, genere ICI (jamais par le navigateur), valable 15 min.
-    const code = String(Math.floor(100000 + Math.random() * 900000));
-    const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+    // Code a 6 chiffres, genere ICI (jamais par le navigateur), valable
+    // 15 min, HACHE avant stockage — jamais en clair en base, meme pour
+    // un admin ayant acces direct a la table.
+    const code = String(crypto.randomInt(100000, 1000000));
+    const expiresAt = new Date(Date.now() + CODE_TTL_MINUTES * 60000).toISOString();
 
     const insertResp = await fetch(`${SUPABASE_URL}/rest/v1/password_reset_codes`, {
       method: 'POST',
@@ -69,7 +99,7 @@ exports.handler = async (event) => {
         'Content-Type': 'application/json',
         Prefer: 'return=minimal'
       },
-      body: JSON.stringify({ email: emailNorm, code, expires_at: expiresAt, used: false })
+      body: JSON.stringify({ email: emailNorm, code_hash: hashCode(code), expires_at: expiresAt, used: false, attempts: 0 })
     });
     if (!insertResp.ok) {
       const detail = await insertResp.text();
