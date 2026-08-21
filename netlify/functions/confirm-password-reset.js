@@ -6,6 +6,14 @@
 // vrai changement de mot de passe sans passer par le systeme de lien
 // email natif de Supabase (qui casserait la coherence visuelle du site).
 //
+// v133 : ajoute la verification du statut de suspension (profiles.
+// suspended_at) APRES le changement de mot de passe reussi. Le mot de
+// passe est toujours change normalement (utile pour plus tard), mais la
+// reponse indique desormais au client si le compte est suspendu et avec
+// quel motif exact — pour que le mot de passe oublie ne puisse JAMAIS
+// servir a contourner une suspension. Cette verification est faite ICI,
+// cote serveur, jamais devinee ou recalculee cote navigateur.
+//
 // Variables d'environnement necessaires : SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 
 exports.handler = async (event) => {
@@ -13,7 +21,7 @@ exports.handler = async (event) => {
     return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
   }
 
-  const SUPABASE_URL = process.env.SUPABASE_URL;
+  const SUPABASE_URL = (process.env.SUPABASE_URL || '').replace(/\/+$/, '');
   const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
@@ -107,7 +115,35 @@ exports.handler = async (event) => {
       // Ne bloque jamais le succes principal si cette seule mise a jour rate.
     }
 
-    return { statusCode: 200, body: JSON.stringify({ ok: true }) };
+    // ---- Verification de suspension, APRES le changement reussi ----
+    // Le mot de passe oublie ne doit jamais pouvoir contourner une
+    // suspension : on lit ici, cote serveur, le vrai statut du profil
+    // et on le renvoie au client. C'est au client de decider de ne PAS
+    // ouvrir le dashboard si suspended === true — mais la verite vient
+    // toujours d'ici, jamais d'un cache local.
+    let suspended = false;
+    let suspendedReason = null;
+    try {
+      const profResp = await fetch(
+        `${SUPABASE_URL}/rest/v1/profiles?id=eq.${user.id}&select=suspended_at,suspended_reason`,
+        { headers: { apikey: SUPABASE_SERVICE_ROLE_KEY, Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}` } }
+      );
+      if (profResp.ok) {
+        const profRows = await profResp.json();
+        const prof = profRows[0];
+        if (prof && prof.suspended_at) {
+          suspended = true;
+          suspendedReason = prof.suspended_reason || null;
+        }
+      }
+      // Si cette lecture echoue pour une raison quelconque, on repond
+      // simplement suspended:false — le client fera de toute facon une
+      // vraie reconnexion Supabase juste apres, qui sera elle-meme
+      // bloquee par la verification normale si le compte est suspendu.
+      // Aucun risque de contournement silencieux.
+    } catch (e) {}
+
+    return { statusCode: 200, body: JSON.stringify({ ok: true, suspended, suspendedReason }) };
   } catch (err) {
     return { statusCode: 500, body: JSON.stringify({ error: err.message }) };
   }
