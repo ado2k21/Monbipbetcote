@@ -1750,6 +1750,12 @@ footer{border-top:1px solid var(--ligne);padding:56px 0 36px;background:#030617}
 .wiz-stripe-logos .wiz-stripe-word{
   font-family:var(--display);font-weight:800;font-size:12px;letter-spacing:.02em;color:#8E87F5;
 }
+/* Lien de secours Stripe (etape 4) : visible seulement si le paiement
+   a ete lance par carte, pour rouvrir la page Stripe si le navigateur
+   a bloque l'ouverture automatique de l'onglet. */
+a.wiz-stripe{text-decoration:none}
+.wiz-stripe-relay{margin-top:18px;padding-top:16px;border-top:1px solid var(--ligne);text-align:center}
+.wiz-stripe-relay p{font-size:12.5px;line-height:1.55;color:var(--gris);margin:0 0 11px}
 
 /* --- Robustesse du mot de passe --- */
 .pwmeter{margin-top:2px}
@@ -3617,6 +3623,13 @@ details p{font-size:15.5px;line-height:1.72;color:#CBD8E4}
                 <div><dt data-i18n="wiz_d_ref">Referans</dt><dd id="wizDoneRef"></dd></div>
               </dl>
               <button type="button" class="btn btn-or authpage-submit" id="wizDoneCta" data-i18n="wiz_d_cta">Ale nan dashboard la</button>
+              <div class="wiz-stripe-relay" id="wizStripeRelay" hidden>
+                <p id="wizStripeRelayTxt"></p>
+                <a class="wiz-stripe" id="wizStripeRelayLink" href="#" target="_blank" rel="noopener noreferrer">
+                  <svg class="ic" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 10h19"/></svg>
+                  <span></span>
+                </a>
+              </div>
             </div>
           </div>
 
@@ -4515,6 +4528,8 @@ logo_baseline:"Gagnez à chaque fois",
 auth_err_password_digit:"Le mot de passe doit contenir au moins un chiffre",
 auth_pw_weak:"Faible", auth_pw_mid:"Moyen", auth_pw_strong:"Fort",
 wiz_p_or:"ou", wiz_p_stripe:"Payer avec Stripe",
+wiz_d_stripe_relay:"Si la page de paiement Stripe ne s'est pas ouverte, terminez le paiement ici. Votre abonnement sera activé après vérification du paiement.",
+wiz_d_stripe_open:"Ouvrir la page de paiement Stripe",
 legal_updated:"Mise à jour : août 2026",
 hero_why:"POUKISA'W DWE ENSKRI NAN VIPBETCOTE??",
 auth_lbl_username:"Nom d'utilisateur", auth_ph_username:"Choisissez un nom d'utilisateur",
@@ -4897,6 +4912,8 @@ logo_baseline:"Win every time you play",
 auth_err_password_digit:"Password must contain at least one number",
 auth_pw_weak:"Weak", auth_pw_mid:"Medium", auth_pw_strong:"Strong",
 wiz_p_or:"or", wiz_p_stripe:"Pay with Stripe",
+wiz_d_stripe_relay:"If the Stripe payment page did not open, finish your payment here. Your plan will be activated once the payment has been checked.",
+wiz_d_stripe_open:"Open the Stripe payment page",
 legal_updated:"Updated: August 2026",
 hero_why:"POUKISA'W DWE ENSKRI NAN VIPBETCOTE??",
 auth_lbl_username:"Username", auth_ph_username:"Choose a username",
@@ -5279,6 +5296,8 @@ logo_baseline:"Genyen chak lè w jwe",
 auth_err_password_digit:"Modpas la dwe gen omwen yon chif",
 auth_pw_weak:"Fèb", auth_pw_mid:"Mwayen", auth_pw_strong:"Fò",
 wiz_p_or:"oswa", wiz_p_stripe:"Peye ak Stripe",
+wiz_d_stripe_relay:"Si paj peman Stripe la pa t ouvri, fini peman an isit la. Abònman ou ap aktive apre nou verifye peman an.",
+wiz_d_stripe_open:"Ouvri paj peman Stripe la",
 legal_updated:"Mizajou : out 2026",
 hero_why:"POUKISA'W DWE ENSKRI NAN VIPBETCOTE??",
 auth_lbl_username:"Non itilizatè", auth_ph_username:"Chwazi yon non itilizatè",
@@ -5884,6 +5903,18 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
     {id:'p3', nameKey:'pl3_name', perKey:'pl3_per', prix:999,  days:30,   feats:['pf_c1000','pf_betcote','pf_lien','pf_score']},
     {id:'p4', nameKey:'pl4_name', perKey:'pl4_per', prix:2500, days:null, feats:['pf_c1000p','pf_betcote','pf_lien','pf_score','pf_illim']}
   ];
+
+  /* Liens de paiement Stripe (Payment Links), un par plan, dans l'ordre
+     p1 -> p4. Regle de securite inchangee : Stripe encaisse, mais le
+     paiement reste TOUJOURS ecrit en 'pending' cote base — seul un
+     admin peut faire passer un abonnement a 'active', jamais le site
+     lui-meme ni un retour de Stripe. */
+  const STRIPE_LINKS={
+    p1:'https://buy.stripe.com/4gM14ngfD0PSesRe2c9MY01',
+    p2:'https://buy.stripe.com/bJe9AT3sR7eg5Wl7DO9MY02',
+    p3:'https://buy.stripe.com/28E3cvfbzbuw70pf6g9MY03',
+    p4:'https://buy.stripe.com/4gMaEXd3rbuwckJe2c9MY04'
+  };
   const planById=id=>PLANS.find(p=>p.id===id)||null;
   const T=()=>translations[currentLang]||translations.fr;
   const t=k=>(T()[k]!=null?T()[k]:(translations.fr[k]||''));
@@ -6811,6 +6842,19 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
 
   document.getElementById('wizStripeBtn').addEventListener('click',()=>{
     payErr.style.display='none';
+    const planCible=state.pendingPlanId||state.planId;
+    const lien=STRIPE_LINKS[planCible]||null;
+    /* L'ouverture de la page Stripe doit rester DANS le geste de clic :
+       un window.open place apres un 'await' est bloque par les
+       navigateurs mobiles. On ne l'ouvre que si le paiement est
+       reellement permis — sinon completePayment affiche le refus et
+       aucune page de paiement ne doit s'ouvrir pour rien. Si le
+       navigateur bloque quand meme l'onglet, l'etape 4 propose un lien
+       de secours (voir renderStep4). */
+    const permis=renouvellementPermis(state,planCible);
+    if(lien&&permis&&permis.ok){
+      try{window.open(lien,'_blank','noopener');}catch(e){}
+    }
     completePayment('stripe');
   });
 
@@ -6839,6 +6883,18 @@ document.querySelectorAll('[data-goto]').forEach(btn=>{
     document.getElementById('wizDoneStart').textContent=enAttenteChangement?t('wiz_d_pending_dates'):fmt(state.startDate);
     document.getElementById('wizDoneEnd').textContent=enAttenteChangement?t('wiz_d_pending_dates'):(state.endDate?fmt(state.endDate):t('wiz_d_never'));
     document.getElementById('wizDoneRef').textContent=(enAttenteChangement?state.pendingRef:state.ref)||'—';
+    /* Paiement par carte : lien de secours vers la page Stripe du plan
+       reellement choisi, affiche uniquement dans ce cas. */
+    const relay=document.getElementById('wizStripeRelay');
+    const lienStripe=(pl&&STRIPE_LINKS[pl.id])?STRIPE_LINKS[pl.id]:null;
+    const montrerRelay=(state.payMethod==='stripe'&&!!lienStripe);
+    relay.hidden=!montrerRelay;
+    if(montrerRelay){
+      document.getElementById('wizStripeRelayTxt').textContent=t('wiz_d_stripe_relay');
+      const a=document.getElementById('wizStripeRelayLink');
+      a.href=lienStripe;
+      a.querySelector('span').textContent=t('wiz_d_stripe_open');
+    }
   }
 
   /* ================= REINITIALISATION DU MOT DE PASSE =================
